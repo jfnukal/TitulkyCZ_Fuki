@@ -8,6 +8,7 @@ Při každé nové verzi se zvýší číslo v `app/build.gradle.kts` (versionCo
 - Telefon: nová hlavní obrazovka v dlaždicích (návrh „TitulkyCZ Metro HUD“): Hrát, Konzole, Televize, Čeština, AI překlad, Dialogy, Menu, Tabulky překladů, Vzhled titulků, Verze; písmo Plus Jakarta Sans, ikony Material Symbols. PlayStation v telefonu skrytý.
 - Automatická aktualizace: při spuštění kontrola GitHub Releases, nabídka „Aktualizovat“ → stažení a instalace. V „O aplikaci“ tlačítko Zkontrolovat aktualizace.
 - AI klíč a nahrání tabulky jdou i z hlavní obrazovky.
+- Všechny obrazovky (připojení Xboxu, jazyk, uvítání, TV hlavní obrazovka) v témže stylu: tmavě modré pozadí, ostré rohy, písmo Plus Jakarta Sans, akční tlačítka modře, vybraná položka světlejší se žlutou lištou, malá hlavička místo velkého loga, nenápadné číslo verze místo „BETA“.
 - GitHub Actions „Kontrola“: po každém nahrání ověří, že se aplikace sestaví.
 
 ## 0.20.1-fuki9

@@ -48,12 +48,12 @@ class MainActivity : Activity() {
     private fun t(klic: String) = Texty.t(jazyk, klic)
 
     // barvy
-    private val CERNA = Color.parseColor("#0B0B0E")
-    private val KARTA = Color.parseColor("#1A1A21")
-    private val CERVENA = Color.parseColor("#E5091A")
-    private val ZELENA = Color.parseColor("#14A23C")
-    private val SEDA = Color.parseColor("#3A3A44")
-    private val TEXT2 = Color.parseColor("#A8A8B3")
+    private val CERNA = Metro.POZADI // [Fuki] Metro HUD
+    private val KARTA = Color.parseColor("#151B2A")
+    private val CERVENA = Metro.CERVENA
+    private val ZELENA = Metro.MODRA // [Fuki] akční tlačítka modře (dlaždice)
+    private val SEDA = Color.parseColor("#2F3444")
+    private val TEXT2 = Color.parseColor("#9AA3B5")
 
     companion object {
         /** QR Platba na příspěvky (bez částky – každý si zvolí sám). Prázdné = karta se neukáže. */
@@ -179,16 +179,13 @@ class MainActivity : Activity() {
 
     /** Malá značka "BETA 0.9" do pravého horního rohu. */
     private fun betaZnacka() = TextView(this).apply {
-        text = if (verze.startsWith("NG")) "NEXT GEN ${verze.removePrefix("NG").trim()}" else "BETA $verze"
-        textSize = 15f * SKALA
-        typeface = Typeface.DEFAULT_BOLD
-        letterSpacing = 0.15f
-        setTextColor(CERVENA)
-        background = GradientDrawable().apply {
-            setColor(Color.TRANSPARENT); cornerRadius = 999f
-            setStroke((2 * resources.displayMetrics.density).toInt(), CERVENA)
-        }
-        setPadding(dp(16), dp(4), dp(16), dp(4))
+        text = verze
+        textSize = 12f * SKALA
+        typeface = Metro.pismo(this@MainActivity, 600)
+        letterSpacing = 0.06f
+        setTextColor(Metro.OBRYS)
+        setBackgroundColor(Color.parseColor("#151B2A"))
+        setPadding(dp(10), dp(4), dp(10), dp(4))
     }
 
     private fun ukazBetu() {
@@ -360,7 +357,7 @@ class MainActivity : Activity() {
         })
         konzole.addView(rx)
         konzole.addView(text(t("xboxPopis"), 14f, TEXT2), odsazeni(top = 6))
-        konzole.addView(View(this).apply { setBackgroundColor(Color.parseColor("#33334A")) },
+        konzole.addView(View(this).apply { setBackgroundColor(Color.parseColor("#424750")) },
             LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1)).apply { topMargin = dp(10); bottomMargin = dp(8) })
         val r = vodorovne().apply { gravity = Gravity.CENTER_VERTICAL }
         ps5RadekText = "🎮  PlayStation 5" + if (udaje.sparovano) "   ✔ ${t("sparovano")}" else ""
@@ -387,7 +384,7 @@ class MainActivity : Activity() {
         }
         // televize (spárovaná): přidat Android telefon / tablet – kód v okně, telefon ho jen opíše
         if (!telefon && udaje.sparovano) {
-            konzole.addView(View(this).apply { setBackgroundColor(Color.parseColor("#33334A")) },
+            konzole.addView(View(this).apply { setBackgroundColor(Color.parseColor("#424750")) },
                 LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1)).apply { topMargin = dp(10); bottomMargin = dp(8) })
             val rz = vodorovne().apply { gravity = Gravity.CENTER_VERTICAL }
             val pridane = prefsBeta.getString("pridaneZarizeni", "") ?: ""
@@ -1614,13 +1611,21 @@ class MainActivity : Activity() {
 
     private fun zaobleni(barva: Int, radius: Float = 16f, ramecek: Int? = null) = GradientDrawable().apply {
         setColor(barva)
-        cornerRadius = if (radius >= 999f) 999f * resources.displayMetrics.density else radius * resources.displayMetrics.density
-        if (ramecek != null) setStroke(dp(3), ramecek)
+        // [Fuki] Metro HUD: ostré rohy
+        cornerRadius = 0f
+        if (ramecek != null) setStroke(dp(2), ramecek)
     }
 
     /** Pozadí, které při výběru ovladačem dostane výrazný rámeček. */
     private fun vyber(barva: Int, ramecekTrvale: Int? = null, radius: Float = 16f) = StateListDrawable().apply {
-        addState(intArrayOf(android.R.attr.state_focused), zaobleni(barva, radius, Color.WHITE))
+        // [Fuki] Metro HUD: vybraná položka = světlejší + žlutá lišta dole (jako titulek)
+        val svetlejsi = androidx.core.graphics.ColorUtils.blendARGB(barva, Color.WHITE, 0.16f)
+        fun sListou() = android.graphics.drawable.LayerDrawable(arrayOf(zaobleni(svetlejsi, radius, ramecekTrvale), android.graphics.drawable.ColorDrawable(Metro.ZLUTA))).apply {
+            setLayerGravity(1, Gravity.BOTTOM or Gravity.FILL_HORIZONTAL)
+            setLayerHeight(1, dp(4))
+        }
+        addState(intArrayOf(android.R.attr.state_focused), sListou())
+        addState(intArrayOf(android.R.attr.state_pressed), zaobleni(svetlejsi, radius, ramecekTrvale))
         addState(intArrayOf(), zaobleni(barva, radius, ramecekTrvale))
     }
 
@@ -1636,26 +1641,36 @@ class MainActivity : Activity() {
         text = s
         textSize = velikost * SKALA
         setTextColor(barva)
-        if (tucne) typeface = Typeface.DEFAULT_BOLD
+        typeface = Metro.pismo(this@MainActivity, if (tucne) 600 else 400)
     }
 
-    private fun sekce(s: String) = text(s, 22f, Color.WHITE, tucne = true).apply { setPadding(0, 0, 0, dp(8)) }
+    // [Fuki] Metro HUD: nadpis sekce velký a tenký, malými písmeny (jako pivot)
+    private fun sekce(s: String) = TextView(this).apply {
+        text = s.lowercase()
+        textSize = 26f * SKALA
+        setTextColor(Metro.TEXT)
+        typeface = Metro.pismo(this@MainActivity, 300)
+        setPadding(0, 0, 0, dp(8))
+    }
 
     private fun karta() = svisle().apply {
         background = zaobleni(KARTA)
         setPadding(dp(22), dp(16), dp(22), dp(16))
     }
 
+    // [Fuki] Metro HUD: malá hlavička (ikona + název) místo velkého loga
     private fun nadpisLogo() = ImageView(this).apply {
-        setImageResource(R.drawable.logo)
+        setImageResource(R.drawable.hlavicka)
         adjustViewBounds = true
-        layoutParams = LinearLayout.LayoutParams(dp(260), ViewGroup.LayoutParams.WRAP_CONTENT).apply { bottomMargin = dp(14) }
+        scaleType = ImageView.ScaleType.FIT_START
+        layoutParams = LinearLayout.LayoutParams(dp(220), ViewGroup.LayoutParams.WRAP_CONTENT).apply { bottomMargin = dp(18) }
     }
 
     private fun tlacitko(s: String, velikost: Float, akce: () -> Unit) = TextView(this).apply {
         text = s
         textSize = velikost * SKALA
         setTextColor(Color.WHITE)
+        typeface = Metro.pismo(this@MainActivity, 400)
         isFocusable = true
         isClickable = true
         background = vyber(KARTA)
@@ -1663,14 +1678,14 @@ class MainActivity : Activity() {
     }
 
     private fun tlacitkoCervene(s: String, akce: () -> Unit) = tlacitko(s, 24f, akce).apply {
-        typeface = Typeface.DEFAULT_BOLD
+        typeface = Metro.pismo(this@MainActivity, 600)
         gravity = Gravity.CENTER
         background = vyber(CERVENA, radius = 999f)
         setPadding(dp(28), dp(14), dp(28), dp(14))
     }
 
     private fun tlacitkoZelene(s: String, akce: () -> Unit) = tlacitko(s, 20f, akce).apply {
-        typeface = Typeface.DEFAULT_BOLD
+        typeface = Metro.pismo(this@MainActivity, 600)
         gravity = Gravity.CENTER
         background = vyber(ZELENA, radius = 999f)
         setPadding(dp(26), dp(10), dp(26), dp(10))
@@ -1685,7 +1700,7 @@ class MainActivity : Activity() {
         if (!podpis.isNullOrBlank()) texty.addView(text(podpis, 14f, TEXT2), odsazeni(top = 2))
         radek.addView(texty, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { rightMargin = dp(12) })
         val pill = tlacitko("", 19f) {}.apply {
-            typeface = Typeface.DEFAULT_BOLD
+            typeface = Metro.pismo(this@MainActivity, 700)
             gravity = Gravity.CENTER
             minWidth = dp(120)
             setPadding(dp(20), dp(8), dp(20), dp(8))
@@ -1693,6 +1708,7 @@ class MainActivity : Activity() {
         fun obnov() {
             val ano = cti()
             pill.text = if (ano) zap else vyp
+            pill.setTextColor(if (ano) Metro.ZLUTA else Metro.OBRYS)
             pill.background = vyber(if (ano) ZELENA else SEDA, radius = 999f)
         }
         pill.setOnClickListener { zapis(!cti()); obnov() }
