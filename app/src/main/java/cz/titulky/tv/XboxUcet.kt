@@ -168,10 +168,8 @@ object XboxUcet {
         "Referer" to "https://www.xbox.com/"
     )
 
-    /** Token pro streamování z vlastní konzole (platí ~4 h, drží se v paměti). Volat mimo hlavní vlákno. */
-    fun pristup(ctx: Context): Pristup {
-        pristup?.let { if (System.currentTimeMillis() < it.platiDo) return it }
-        // Microsoft → Xbox Live uživatel
+    /** Microsoft → Xbox Live uživatelský token (podklad pro další oprávnění). */
+    private fun uzivatelskyToken(ctx: Context): String {
         val (s1, t1) = post(
             "https://user.auth.xboxlive.com/user/authenticate",
             JSONObject()
@@ -184,7 +182,64 @@ object XboxUcet {
             "application/json", hlavickyXbl
         )
         if (s1 != 200) error("user/authenticate $s1")
-        val uzivatel = JSONObject(t1).getString("Token")
+        return JSONObject(t1).getString("Token")
+    }
+
+    /** [Fuki] Token pro služby Xbox Live (uhs, token, platí do) – drží se v paměti ~1 h. */
+    @Volatile private var xbl: Triple<String, String, Long>? = null
+
+    private fun tokenXboxLive(ctx: Context): Pair<String, String> {
+        xbl?.let { if (System.currentTimeMillis() < it.third) return it.first to it.second }
+        val (s, t) = post(
+            "https://xsts.auth.xboxlive.com/xsts/authorize",
+            JSONObject()
+                .put("Properties", JSONObject()
+                    .put("SandboxId", "RETAIL")
+                    .put("UserTokens", JSONArray().put(uzivatelskyToken(ctx))))
+                .put("RelyingParty", "http://xboxlive.com")
+                .put("TokenType", "JWT").toString(),
+            "application/json", hlavickyXbl
+        )
+        if (s != 200) error("xsts xboxlive $s")
+        val j = JSONObject(t)
+        val uhs = j.getJSONObject("DisplayClaims").getJSONArray("xui").getJSONObject(0).getString("uhs")
+        val token = j.getString("Token")
+        xbl = Triple(uhs, token, System.currentTimeMillis() + 55 * 60_000L)
+        return uhs to token
+    }
+
+    /** Názvy „her“, které hrou nejsou (domovská obrazovka, obchod…). */
+    private val NEHRY = setOf("home", "domů", "online", "xbox app", "microsoft store", "settings", "nastavení", "store")
+
+    /**
+     * [Fuki] Co se právě hraje na Xboxu (podle stavu účtu na Xbox Live). Null = nic / domovská obrazovka.
+     * Volat mimo hlavní vlákno.
+     */
+    fun hraNaXboxu(ctx: Context): String? {
+        val (uhs, token) = tokenXboxLive(ctx)
+        val (s, t) = pozadavek("GET", "https://userpresence.xboxlive.com/users/me?level=all", null,
+            hlavicky = mapOf("Authorization" to "XBL3.0 x=$uhs;$token", "x-xbl-contract-version" to "3", "Accept-Language" to "en-US"))
+        if (s == 401 || s == 403) { xbl = null; error("presence $s") }
+        if (s != 200) error("presence $s")
+        val zarizeni = JSONObject(t).optJSONArray("devices") ?: return null
+        var nahradni: String? = null
+        for (i in 0 until zarizeni.length()) {
+            val tituly = zarizeni.getJSONObject(i).optJSONArray("titles") ?: continue
+            for (k in 0 until tituly.length()) {
+                val ti = tituly.getJSONObject(k)
+                val nazev = ti.optString("name").trim()
+                if (nazev.isEmpty() || nazev.lowercase() in NEHRY || ti.optString("id") == "750323071") continue
+                if (ti.optString("placement") == "Full" && ti.optString("state", "Active") == "Active") return nazev
+                if (nahradni == null) nahradni = nazev
+            }
+        }
+        return nahradni
+    }
+
+    /** Token pro streamování z vlastní konzole (platí ~4 h, drží se v paměti). Volat mimo hlavní vlákno. */
+    fun pristup(ctx: Context): Pristup {
+        pristup?.let { if (System.currentTimeMillis() < it.platiDo) return it }
+        val uzivatel = uzivatelskyToken(ctx)
 
         // Xbox Live → oprávnění pro streamování (gssv)
         val (s2, t2) = post(

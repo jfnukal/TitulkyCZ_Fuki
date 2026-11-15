@@ -4,6 +4,11 @@
 Od verze 0.10 se vyvíjí jen jedna aplikace (dřívější NextGen, větev `master`) – umí „Jen televize“ i „S telefonem“.
 Při každé nové verzi se zvýší číslo v `app/build.gradle.kts` (versionCode + versionName) a sem se dopíše, co je nového.
 
+## 0.20.1-fuki17
+- Hru pozná Xbox: každou minutu se zjistí, co se na Xboxu hraje (stav účtu na Xbox Live). Podle toho se hned zapne správná tabulka překladů a AI si připraví profil hry (postavy, pojmy) bez čekání na titulky.
+- Chytrá doba zobrazení: krátká replika zmizí rychle, dlouhá vydrží déle. V Úpravách volba Kratší / Normálně / Déle (děti).
+- Ukazatel rychlosti v Pokročilých: čas čtení a překladu posledního titulku podle zdroje (tabulka, paměť, AI, google…) a průměry za 30 s.
+
 ## 0.20.1-fuki16
 - Telefon – Úpravy → Pokročilé: posuvník „Pozadí (krytí)“ pro ruční nastavení průhlednosti pozadí za titulky (po 5 %).
 

@@ -146,6 +146,45 @@ class AiPrekladac(context: Context, private val zapis: (String) -> Unit) {
         }.joinToString("\n")
     }
 
+    /**
+     * [Fuki] Hru poznal Xbox → profil (postavy, rod, pojmy) hned podle názvu, bez čekání na repliky.
+     */
+    fun znamaHra(nazev: String, cil: String) {
+        if (zavreno || nazev.isBlank() || nazev.equals(nazevHry, ignoreCase = true) || profilBezi) return
+        nazevHry = nazev
+        profil = ""
+        profilBezi = true
+        runCatching { profilVlakno.execute {
+            try {
+                val jazyk = JAZYKY[cil] ?: "Czech"
+                val dotaz = buildString {
+                    append("Someone is playing the console video game \"$nazev\" right now.\n")
+                    append("Use Google Search and write a compact profile (max 250 words) ")
+                    append("that will help translate its subtitles into $jazyk. Use exactly this format:\n")
+                    append("GAME: $nazev\n")
+                    append("SETTING AND TONE: ...\n")
+                    append("CHARACTERS: Name – gender (male/female/creature), role, how they talk; ...\n")
+                    append("TERMS: English term – recommended $jazyk translation (or 'keep'); ...\n")
+                    append("ADDRESS: which characters use informal/formal address with each other\n")
+                }
+                val telo = JSONObject()
+                    .put("contents", JSONArray().put(JSONObject().put("role", "user")
+                        .put("parts", JSONArray().put(JSONObject().put("text", dotaz)))))
+                    .put("tools", JSONArray().put(JSONObject().put("google_search", JSONObject())))
+                val odpoved = volej(telo, cteniMs = 45_000)?.trim().orEmpty()
+                if (odpoved.isNotEmpty()) {
+                    profil = odpoved
+                    log("[AI: profil hry $nazev připraven (podle Xboxu)]")
+                    runCatching { File(appContext.filesDir, "profil_hry.txt").writeText(odpoved) }
+                }
+            } catch (e: Exception) {
+                log("[AI profil chyba: ${e.javaClass.simpleName} ${e.message?.take(120)}]")
+            } finally {
+                profilBezi = false
+            }
+        } }
+    }
+
     /** Po 8 replikách se zeptat na hru (s vyhledáváním Google). Když ji nepozná, zkusí to znovu později. */
     private fun zkusProfil(cil: String) {
         if (profil.isNotEmpty() || profilBezi || pokusuOProfil >= 3) return

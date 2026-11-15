@@ -59,6 +59,14 @@ class RemotePlayService : Service() {
         val a = stPreklady.getOrPut(z) { LongArray(2) }
         a[0]++; a[1] += ms
     }
+    /** [Fuki] časy posledního překladu (zdroj → ms) pro ukazatel rychlosti */
+    private val casyPosledni = LinkedHashMap<String, Long>()
+    private fun zapisRychlost(zdroj: String, ms: Long) {
+        synchronized(casyPosledni) {
+            casyPosledni[zdroj.ifEmpty { "?" }] = ms
+            rychlostPosledni = "čtení $casCteni ms · " + casyPosledni.entries.joinToString(" · ") { "${it.key} ${it.value} ms" }
+        }
+    }
     private fun statistika(ted: Long) {
         if (stOd == 0L) { stOd = ted; return }
         if (ted - stOd < 30_000) return
@@ -67,8 +75,10 @@ class RemotePlayService : Service() {
             zapis(zprava)
             // [Fuki] odkud byly překlady a jak rychlé
             if (stPreklady.isNotEmpty()) {
-                zapis("[překlady za 30 s: " + stPreklady.entries.sortedByDescending { it.value[0] }
-                    .joinToString(", ") { "${it.key} ${it.value[0]}× ⌀${it.value[1] / it.value[0]} ms" } + "]")
+                val prehled = stPreklady.entries.sortedByDescending { it.value[0] }
+                    .joinToString(", ") { "${it.key} ${it.value[0]}× ⌀${it.value[1] / it.value[0]} ms" }
+                zapis("[překlady za 30 s: $prehled]")
+                rychlostPrumer = prehled
                 stPreklady.clear()
             }
         }
@@ -996,6 +1006,7 @@ class RemotePlayService : Service() {
     private fun prelozAUkaz(surove: List<String>, box: FloatArray?, radku: Int, barvyJmen: IntArray, cislo: Long, oprava: Boolean = false) {
         if (!nast.dialogy) return
         if (cislo > posledniPrekladany) posledniPrekladany = cislo
+        synchronized(casyPosledni) { casyPosledni.clear() }
         // číslice nalepená před slovem ("3Miss Grimshaw..") je smetí ze čtení
         val puvodni = surove.map { Regex("^[0-9](?=[A-Z][a-z])").replace(it, "") }
         // Hra (např. RDR2) dělí dlouhou větu na dva titulky: "we need to" → "get that fire lit quick."
@@ -1061,6 +1072,7 @@ class RemotePlayService : Service() {
         val zacatekAi = System.currentTimeMillis()
         if (ai.zapnuto && !vseZTabulky) ai.preloz(cislo, repliky, cil) { lepsi ->
             stPreklad("ai", System.currentTimeMillis() - zacatekAi)
+            zapisRychlost("AI", System.currentTimeMillis() - zacatekAi)
             ukazJestli(lepsi, dobry = true, zAi = true)
         }
         // 1) hned rychlý překlad z televize (~0,2 s), 2) pak ho nahradí lepší z Googlu
@@ -1075,6 +1087,7 @@ class RemotePlayService : Service() {
         prelozVse(repliky, rychle = false) { cesky ->
             zapis("  → ČESKY (čtení ${casCteni} ms, překlad ${System.currentTimeMillis() - zacatekPrekladu} ms ${prekladac.zdroj}, chyb Googlu ${prekladac.chybGooglu}): " + cesky.replace("\n", " / "))
             stPreklad(prekladac.zdroj, System.currentTimeMillis() - zacatekPrekladu)
+            zapisRychlost(prekladac.zdroj, System.currentTimeMillis() - zacatekPrekladu)
             ukazJestli(cesky, dobry = true)
         }
     }
@@ -1115,7 +1128,9 @@ class RemotePlayService : Service() {
         ui.removeCallbacks(schovatCesky)
         if (ukazanoKdy == 0L || System.currentTimeMillis() - ukazanoKdy > 400) ukazanoKdy = System.currentTimeMillis()
         ukazanaDelka = cesky.length
-        ukaz(cesky, 15000, box, radku, barvyJmen)
+        // pojistka, kdyby se nepoznalo zmizení anglického titulku: delší text vydrží déle
+        val nasobek = getSharedPreferences("gamelingo", MODE_PRIVATE).getFloat(PREF_DOBA, 1f)
+        ukaz(cesky, ((6000L + 120L * cesky.length).coerceAtMost(20_000L) * nasobek).toLong(), box, radku, barvyJmen)
     }
 
     /**
@@ -1123,7 +1138,9 @@ class RemotePlayService : Service() {
      * (aspoň 1,8 s + 60 ms na každé písmeno od chvíle, kdy se ukázal).
      */
     private fun schovejCesky() {
-        val minDoba = 1800L + 60L * ukazanaDelka
+        // [Fuki] chytrá doba: krátká replika zmizí rychle, dlouhá vydrží; nastavení Kratší / Normálně / Déle
+        val nasobek = getSharedPreferences("gamelingo", MODE_PRIVATE).getFloat(PREF_DOBA, 1f)
+        val minDoba = ((1200L + 65L * ukazanaDelka).coerceAtMost(9000L) * nasobek).toLong()
         val zbyva = ukazanoKdy + minDoba - System.currentTimeMillis()
         ui.removeCallbacks(schovatCesky)
         ukazanoKdy = 0L
@@ -1844,7 +1861,35 @@ class RemotePlayService : Service() {
         }
     }
 
+    /** [Fuki] Co se hraje na Xboxu – každou minutu; při změně hry tabulka a profil pro AI. */
+    @Volatile private var chybaHry = false
+    private val sledovaniHry: Runnable = object : Runnable {
+        override fun run() {
+            if (!aktivni || !naXboxu) return
+            val ctx = this@RemotePlayService
+            Thread {
+                val nazev = runCatching { XboxUcet.hraNaXboxu(ctx) }
+                    .onFailure { if (!chybaHry) { chybaHry = true; ui.post { zapis("[Xbox: nevím, co se hraje – ${it.message?.take(80)}]") } } }
+                    .getOrNull()
+                if (nazev != null) chybaHry = false
+                ui.post {
+                    if (nazev == null || nazev == hraNaXboxu) return@post
+                    hraNaXboxu = nazev
+                    zapis("[Xbox: hraje se $nazev]")
+                    if (Tabulka.pocet > 0) {
+                        val t = Tabulka.nastavHru(nazev)
+                        zapis(if (t != null) "[tabulka pro tuto hru: $t]" else "[pro tuto hru tabulka není – tabulky vypnuty]")
+                    }
+                    if (ai.zapnuto) ai.znamaHra(nazev, nast.jazykNeboCs)
+                }
+            }.apply { isDaemon = true; name = "hra-xbox" }.start()
+            ui.postDelayed(this, 60_000)
+        }
+    }
+
     private fun spustXbox(id: String) {
+        ui.removeCallbacks(sledovaniHry)
+        ui.postDelayed(sledovaniHry, 8000)
         posledniHlaska = ""
         snimkuCelkem = 0
         naXboxu = true
@@ -2224,6 +2269,13 @@ class RemotePlayService : Service() {
         @Volatile var obeZapnute = false
         /** Právě se hraje / připojuje na Xboxu (jinak PS5). */
         @Volatile var naXboxu = false
+        /** [Fuki] Hra, kterou hlásí Xbox (prázdné = neznámá). */
+        @Volatile var hraNaXboxu = ""
+        /** [Fuki] Ukazatel rychlosti: poslední překlad a průměry za 30 s. */
+        @Volatile var rychlostPosledni = ""
+        @Volatile var rychlostPrumer = ""
+        /** [Fuki] Násobek doby zobrazení titulků (0,7 kratší / 1 normálně / 1,6 déle). */
+        const val PREF_DOBA = "dobaTitulku"
         /** Služba běží (připojená, nebo čeká na PS5). */
         @Volatile var aktivni = false
         /** Překlad vypnutý tlačítkem v aplikaci (spojení s PS5 drží dál → zapnutí je okamžité). */

@@ -94,11 +94,14 @@ class TelefonActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        ui.removeCallbacks(obnovZive)
+        ui.post(obnovZive)
         ui.removeCallbacks(obnova)
         ui.post(obnova)
     }
 
     override fun onPause() {
+        ui.removeCallbacks(obnovZive)
         ui.removeCallbacks(obnova)
         super.onPause()
     }
@@ -355,6 +358,20 @@ class TelefonActivity : Activity() {
 
     /** [Fuki] Rozbalené „Pokročilé“ v úpravách. */
     private var pokrocile = false
+    /** [Fuki] Živé údaje v úpravách: hra z Xboxu a rychlost překladu (obnovuje se každou sekundu). */
+    private var hraText: TextView? = null
+    private var rychlostText: TextView? = null
+    private val obnovZive = object : Runnable {
+        override fun run() {
+            val hra = RemotePlayService.hraNaXboxu
+            hraText?.text = if (hra.isNotEmpty()) "Hraje se: $hra (podle Xboxu) – tabulka a AI se nastavily samy." else "Hru zatím Xbox nehlásí – AI ji pozná podle titulků."
+            rychlostText?.text = buildString {
+                append("Poslední titulek: ").append(RemotePlayService.rychlostPosledni.ifEmpty { "zatím nic" })
+                append("\nZa posledních 30 s: ").append(RemotePlayService.rychlostPrumer.ifEmpty { "zatím nic" })
+            }
+            ui.postDelayed(this, 1000)
+        }
+    }
 
     /** [Fuki] Volba v řadě (Dole / Uprostřed / Nahoře …): vybraná = světlejší modrá se žlutou lištou. */
     private fun volbaDl(popis: String, zvoleno: Boolean, akce: () -> Unit) = TextView(this).apply {
@@ -398,6 +415,7 @@ class TelefonActivity : Activity() {
      */
     private fun postavUpravy(): LinearLayout {
         nactiRozvrh()
+        rychlostText = null
         val c = this
         val obal = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -534,6 +552,16 @@ class TelefonActivity : Activity() {
             ulozAPosliRozvrh(); ui.removeCallbacks(konecUprav); ui.postDelayed(konecUprav, 2000); obnovUpravy()
         })
 
+        // ---- jak dlouho nechat titulky (chytrá doba podle délky × násobek)
+        stitek("Jak dlouho nechat titulky")
+        val doby = listOf("Kratší" to 0.7f, "Normálně" to 1f, "Déle (děti)" to 1.6f)
+        val tedDoba = prefs.getFloat(RemotePlayService.PREF_DOBA, 1f)
+        pridej(radekVoleb(doby.map { (n, v) -> n to (kotlin.math.abs(tedDoba - v) < 0.05f) }) { i ->
+            prefs.edit().putFloat(RemotePlayService.PREF_DOBA, doby[i].second).apply()
+            obnovUpravy()
+        })
+        napoveda("Krátká replika zmizí rychle, dlouhá vydrží déle. „Déle“ se hodí, když čtení nestíhají děti.")
+
         // ---- co překládat navíc (dialogy se překládají vždy)
         stitek("Co překládat navíc k dialogům")
         val rezim = if (!Volby.zapnuto) 0 else if (Volby.rezimText) 2 else if (Volby.rezimMenu) 3 else 1
@@ -567,6 +595,8 @@ class TelefonActivity : Activity() {
             if (Tabulka.pocet > 0) Metro.ZLUTA else Metro.TEXT_NA_MODRE) { vyberTabulku() },
             LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply { leftMargin = dp(4) })
         pridej(radekAi)
+        hraText = Metro.text(c, "", 12f, Metro.OBRYS, 400).apply { setLineSpacing(0f, 1.2f) }
+        pridej(hraText!!, 6)
 
         // ---- pokročilé
         pridej(infoDl(if (pokrocile) "Pokročilé ▴" else "Pokročilé ▾",
@@ -598,6 +628,10 @@ class TelefonActivity : Activity() {
                 }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
                 pridej(radek, 8)
             }
+            stitek("Rychlost překladu")
+            rychlostText = Metro.text(c, "", 12f, Metro.TEXT, 400).apply { setLineSpacing(0f, 1.3f) }
+            pridej(rychlostText!!)
+            napoveda("tabulka = hotový lidský překlad · paměť = už přeloženo dřív · AI = Gemini · google / edge / tv = strojový překlad")
             napoveda("V náhledu teď jdou posouvat i rámečky: modrý = kde aplikace čte titulky, žlutý = kde hra ukazuje volby.")
             posuvnik(t("tvSirka"), 20, 100, { (rozvrh[2] * 100).toInt() }, { rozvrh[2] = it / 100f })
             // [Fuki] pozadí za titulky ručně po 5 % (0 % = úplně průhledné, 100 % = plně černé)
