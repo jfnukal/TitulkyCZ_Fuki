@@ -1,6 +1,16 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+}
+
+// [Fuki] klíč k Gemini se bere z local.properties (ten se na GitHub nenahrává):
+//   gemini.key=AIza....
+//   gemini.model=gemini-3.5-flash-lite   (nepovinné)
+val mistni = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
 }
 
 android {
@@ -8,16 +18,33 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "cz.titulky.tv"
+        applicationId = "cz.titulky.tv.fuki"
         minSdk = 26
         targetSdk = 34
-        versionCode = 32
-        versionName = "0.20.1"
+        // [Fuki] versionCode = 100 + číslo verze Fuki (každá nová verze musí mít vyšší číslo kvůli aktualizacím)
+        versionCode = 109
+        versionName = "0.20.1-fuki9"
+        buildConfigField("String", "GEMINI_KEY", "\"" + mistni.getProperty("gemini.key", "") + "\"")
+        buildConfigField("String", "GEMINI_MODEL", "\"" + mistni.getProperty("gemini.model", "gemini-3.5-flash-lite") + "\"")
         // jen procesory, které mají televize (ARM) – aplikace je tak o třetinu menší
         ndk { abiFilters += listOf("armeabi-v7a", "arm64-v8a") }
     }
+    buildFeatures { buildConfig = true }
+    // [Fuki] podpis vydání: klíč z proměnných prostředí (GitHub Actions – Secrets) nebo z local.properties
+    val klicSoubor = System.getenv("KEYSTORE_FILE") ?: mistni.getProperty("keystore.file")
+    signingConfigs {
+        if (klicSoubor != null && file(klicSoubor).exists()) create("vydani") {
+            storeFile = file(klicSoubor)
+            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: mistni.getProperty("keystore.password")
+            keyAlias = System.getenv("KEY_ALIAS") ?: mistni.getProperty("key.alias")
+            keyPassword = System.getenv("KEY_PASSWORD") ?: mistni.getProperty("key.password")
+        }
+    }
     buildTypes {
-        release { isMinifyEnabled = false }
+        release {
+            isMinifyEnabled = false
+            signingConfigs.findByName("vydani")?.let { signingConfig = it }
+        }
     }
     // kontrola "lint" při podepsaném sestavení padá na novém Javě (25) → vypnout, aplikaci neovlivní
     lint {

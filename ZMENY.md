@@ -4,6 +4,53 @@
 Od verze 0.10 se vyvíjí jen jedna aplikace (dřívější NextGen, větev `master`) – umí „Jen televize“ i „S telefonem“.
 Při každé nové verzi se zvýší číslo v `app/build.gradle.kts` (versionCode + versionName) a sem se dopíše, co je nového.
 
+## 0.20.1-fuki9
+- Podpisová značka Fuki: úvodní animace „Fuki“ při spuštění (jednou za spuštění, ~3,2 s, přeskočit klepnutím nebo OK/Zpět/Enter, při vypnutých animacích v systému se neukáže) a podpis „created by Fuki. | jarek.fuki@gmail.com“ v patičce (TV hlavní obrazovka, telefon – Úpravy).
+
+## 0.20.1-fuki8 – TitulkyCZ_Fuki
+- Nový název **TitulkyCZ_Fuki** a nové logo (ikona, banner pro TV, logo v aplikaci).
+- O aplikaci: vychází z PlayCaption (Adam Růžička, odkaz na původní projekt), od 0.20.1 samostatně vyvíjí Fuki; QR „Podpora“ = kafe pro Adama.
+- Uvítání: hlášení problémů na GitHub (Issues) místo FB skupiny PlayCaption.
+- Připraveno pro GitHub: nové README, podepsané vydání přes GitHub Actions (tag v*), versionCode 100 + číslo verze.
+
+## 0.20.1-fuki7
+- Telefon – Úpravy: tlačítko „📚 Nahrát tabulku“ → výběr souboru (Stažené soubory, Disk…) → aplikace si tabulku zkopíruje a hned načte. Bez adb.
+- Tabulky se načítají už při otevření aplikace, stav v Úpravách se po načtení sám obnoví.
+
+## 0.20.1-fuki6
+- Telefon – Úpravy: posuvník „Pozadí“ 0–100 % = jak moc černé pozadí je za titulky na televizi (100 % = jako dřív, 0 % = jen písmo s výrazným stínem). Mění se hned, na TV se při posouvání ukáže ukázkový titulek.
+
+## 0.20.1-fuki5
+- Telefon – žlutý rámeček má třetí režim „📋 Menu“: každý řádek v rámečku (menu, úkoly, deník, inventář) se přeloží zvlášť (tabulka → Google) a na televizi se ukáže český seznam vedle rámečku; nemusí být nic zvýrazněné, vydrží, dokud je menu vidět.
+- Telefon – nastavení AI přímo v aplikaci (tlačítko „🤖 AI překlad“ v Úpravách): zadat klíč Gemini, zapnout/vypnout. Klíč z aplikace má přednost před local.properties.
+- Telefon – v Úpravách stav tabulek hotových překladů (počet vět).
+
+## 0.20.1-fuki4
+- Tabulka: rozdělená replika (hra ukáže dlouhou větu ve dvou titulcích) se najde podle začátku/konce věty → hned celá česká věta (test na RDR2: ~85 % půlek správně, ~2 % jiná věta).
+- Tabulka podle hry: hlavička souboru „#hra:“ / „#alias:“; když AI pozná hru, používá se jen její tabulka (jiná hra = tabulky vypnuté).
+- AI dostane i jména a názvy tak, jak je překládá čeština hry („Miss Grimshaw → slečna Grimshawová“).
+- Záznam: každých 30 s „[překlady za 30 s: tabulka 12× ⌀3 ms, ai 5× ⌀820 ms, google …]“.
+- Úklid: z repozitáře odstraněny Adamovy testovací záznamy a předávací poznámka.
+
+## 0.20.1-fuki3
+- Tabulky hotových překladů (komunitní čeština): soubory *.tsv / *.tsv.gz ve složce Android/data/cz.titulky.tv.fuki/files/tabulky/.
+  - Přečtený titulek se v tabulce najde i s drobnou chybou čtení → lidský překlad okamžitě a bez internetu (v záznamu „tabulka“).
+  - Když je replika v tabulce, AI se nevolá. Co v tabulce není, překládá Google / AI jako dřív.
+- tools/prevod_rdr2.py: převod oficiální angličtiny RDR2 (XML z Nexus mod 10249) + češtiny LokalizaceNET na tabulku.
+
+## 0.20.1-fuki2
+- AI překlad s kontextem hry (Google Gemini, vlastní klíč v local.properties: gemini.key=…).
+  - Po 8 replikách AI (s vyhledáváním Google) pozná hru a sestaví profil: postavy a jejich rod, místa, termíny, tykání/vykání. Uloží se do files/profil_hry.txt.
+  - Každá replika se přeloží s profilem a posledními 6 replikami → správný rod („udělala jsem“), jména, termíny.
+  - Běží souběžně s Googlem: nejdřív se ukáže rychlý překlad, AI ho do ~1 s nahradí. Bez klíče se nic nemění.
+  - V záznamu řádky „→ AI (… ms)“ a „[AI: hra = …]“.
+
+## 0.20.1-fuki1 (vlastní verze Fuki, ID cz.titulky.tv.fuki)
+- Jméno postavy bez dvojtečky („Enki Finally…“, „Nor I did this?“) se pozná a nepřekládá („Ani“ místo „Nor“ už ne); věta se nepřekládá znovu.
+- Pomalý překlad starší repliky se už neukáže přes novější titulek.
+- Paměť překladů se ukládá na disk (platí i po restartu), až 5000 vět.
+- Víc replik naráz se překládá souběžně (3 vlákna).
+
 ## 0.20 (versionCode 31)
 - PS5 na telefonu: obraz jde z dekodéru přímo do paměti (jako u Xboxu) – čtení titulků 20–40 ms místo ~80 ms. Televize beze změny.
 - PS5 na telefonu: kodek H.265 (čistší obraz, ostřejší písmo) – automaticky, jen když ho telefon umí; jinak H.264.

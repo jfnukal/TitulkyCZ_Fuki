@@ -2,7 +2,7 @@ package cz.titulky.tv
 
 import android.content.Context
 
-/** Jazyky, do kterých PlayCaption překládá (a ve kterých má prostředí). */
+/** Jazyky, do kterých TitulkyCZ_Fuki překládá (a ve kterých má prostředí). */
 data class Jazyk(val kod: String, val nazev: String, val vlajka: String)
 
 object Texty {
@@ -76,15 +76,15 @@ object Texty {
         "qrOtevrit" to listOf("Otevřít v prohlížeči", "Otvoriť v prehliadači", "Im Browser öffnen", "Otwórz w przeglądarce", "Ouvrir dans le navigateur", "Abrir en el navegador", "Apri nel browser"),
         "qrCekam" to listOf("Čekám na přihlášení z telefonu…", "Čakám na prihlásenie z telefónu…", "Warte auf die Anmeldung vom Handy…", "Czekam na logowanie z telefonu…", "En attente de la connexion depuis le téléphone…", "Esperando el inicio de sesión desde el móvil…", "In attesa dell'accesso dal telefono…"),
         "qrVTelevizi" to listOf("Zkusit přihlášení přímo v televizi", "Skúsiť prihlásenie priamo v televízore", "Anmeldung direkt am Fernseher versuchen", "Spróbuj zalogować się na telewizorze", "Essayer la connexion sur la TV", "Probar a iniciar sesión en la TV", "Prova l'accesso sulla TV"),
-        "betaNadpis" to listOf("Ahoj a vítej v PlayCaption! 👋", "Ahoj a vitaj v PlayCaption! 👋", "Hallo und willkommen bei PlayCaption! 👋", "Cześć, witaj w PlayCaption! 👋", "Salut et bienvenue dans PlayCaption ! 👋", "¡Hola y bienvenido a PlayCaption! 👋", "Ciao e benvenuto in PlayCaption! 👋"),
+        "betaNadpis" to listOf("Ahoj a vítej v TitulkyCZ_Fuki! 👋", "Ahoj a vitaj v TitulkyCZ_Fuki! 👋", "Hallo und willkommen bei TitulkyCZ_Fuki! 👋", "Cześć, witaj w TitulkyCZ_Fuki! 👋", "Salut et bienvenue dans TitulkyCZ_Fuki ! 👋", "¡Hola y bienvenido a TitulkyCZ_Fuki! 👋", "Ciao e benvenuto in TitulkyCZ_Fuki! 👋"),
         "betaText" to listOf(
-            "Aplikace je zdarma a zatím ve vývoji (beta), takže občas něco nemusí fungovat.\nBudeme rádi za každou zpětnou vazbu i hlášení problémů ve Facebook skupině PlayCaption – snažíme se je řešit co nejdřív.",
-            "Aplikácia je zadarmo a zatiaľ vo vývoji (beta), takže občas niečo nemusí fungovať.\nBudeme radi za každú spätnú väzbu aj nahlásenie problémov vo Facebook skupine PlayCaption – snažíme sa ich riešiť čo najskôr.",
-            "Die App ist kostenlos und noch in Entwicklung (Beta), daher kann manchmal etwas nicht funktionieren.\nWir freuen uns über jedes Feedback und Fehlermeldungen in der Facebook-Gruppe PlayCaption – wir versuchen, sie so schnell wie möglich zu lösen.",
-            "Aplikacja jest darmowa i wciąż w fazie rozwoju (beta), więc czasem coś może nie działać.\nBędziemy wdzięczni za każdą opinię i zgłoszenie problemu w grupie PlayCaption na Facebooku – staramy się je rozwiązywać jak najszybciej.",
-            "L'application est gratuite et encore en développement (bêta), donc parfois quelque chose peut ne pas fonctionner.\nNous serons ravis de recevoir vos retours et signalements de problèmes dans le groupe Facebook PlayCaption – nous essayons de les résoudre au plus vite.",
-            "La aplicación es gratuita y aún está en desarrollo (beta), así que a veces algo puede no funcionar.\nNos encantará recibir tus comentarios y reportes de problemas en el grupo de Facebook PlayCaption – intentamos resolverlos lo antes posible.",
-            "L'app è gratuita e ancora in sviluppo (beta), quindi a volte qualcosa potrebbe non funzionare.\nSaremo felici di ricevere feedback e segnalazioni di problemi nel gruppo Facebook PlayCaption – cerchiamo di risolverli il prima possibile."),
+            "Aplikace je zdarma a ve vývoji (beta), takže občas něco nemusí fungovat.\nProblémy a nápady piš na github.com/jfnukal/TitulkyCZ_Fuki (Issues).",
+            "Aplikácia je zadarmo a vo vývoji (beta), takže občas niečo nemusí fungovať.\nProblémy a nápady píš na github.com/jfnukal/TitulkyCZ_Fuki (Issues).",
+            "The app is free and in development (beta), so something may not work.\nReport problems and ideas at github.com/jfnukal/TitulkyCZ_Fuki (Issues).",
+            "The app is free and in development (beta), so something may not work.\nReport problems and ideas at github.com/jfnukal/TitulkyCZ_Fuki (Issues).",
+            "The app is free and in development (beta), so something may not work.\nReport problems and ideas at github.com/jfnukal/TitulkyCZ_Fuki (Issues).",
+            "The app is free and in development (beta), so something may not work.\nReport problems and ideas at github.com/jfnukal/TitulkyCZ_Fuki (Issues).",
+            "The app is free and in development (beta), so something may not work.\nReport problems and ideas at github.com/jfnukal/TitulkyCZ_Fuki (Issues)."),
         "betaOk" to listOf("OK, jdeme na to", "OK, ideme na to", "OK, los geht's", "OK, zaczynamy", "OK, c'est parti", "OK, vamos", "OK, iniziamo"),
         "betaDal" to listOf("Pokračuje samo za pár sekund · OK = hned dál", "Pokračuje samo o pár sekúnd · OK = hneď ďalej", "Geht in ein paar Sekunden weiter · OK = sofort weiter", "Za chwilę przejdzie dalej · OK = od razu dalej", "Continue dans quelques secondes · OK = continuer", "Continúa en unos segundos · OK = seguir ya", "Prosegue tra pochi secondi · OK = vai avanti"),
         "betaSkupina" to listOf("Naskenuj a napiš nám", "Naskenuj a napíš nám", "Scannen und schreiben", "Zeskanuj i napisz", "Scanne et écris-nous", "Escanea y escríbenos", "Scansiona e scrivici"),
@@ -97,25 +97,25 @@ object Texty {
             "💡 La rapidez y precisión de los subtítulos dependen sobre todo de la velocidad de tu conexión a internet y de la potencia de tu dispositivo. Mejor con cable de red o Wi-Fi de 5 GHz.",
             "💡 Velocità e precisione dei sottotitoli dipendono soprattutto dalla velocità della connessione internet e dalle prestazioni del dispositivo. Meglio con cavo di rete o Wi-Fi a 5 GHz."),
         "zasluhy" to listOf(
-            "PlayCaption © 2026 Adam Růžička. Spojení s PS5 a přenos obrazu zajišťuje open-source projekt Chiaki / chiaki-ng (licence AGPLv3) – velké díky jeho autorům. Spojení s Xboxem vychází z projektů xbox-xcloud-player (MIT) a XStreaming (AGPLv3) a knihovny WebRTC. PlayCaption je také open-source pod AGPLv3: github.com/AdamRuzick4/PlayCaption-app",
-            "PlayCaption © 2026 Adam Růžička. Spojenie s PS5 a prenos obrazu zabezpečuje open-source projekt Chiaki / chiaki-ng (licencia AGPLv3) – veľká vďaka jeho autorom. Spojenie s Xboxom vychádza z projektov xbox-xcloud-player (MIT) a XStreaming (AGPLv3) a knižnice WebRTC. PlayCaption je tiež open-source pod AGPLv3: github.com/AdamRuzick4/PlayCaption-app",
-            "PlayCaption © 2026 Adam Růžička. Die Verbindung zur PS5 und die Bildübertragung übernimmt das Open-Source-Projekt Chiaki / chiaki-ng (AGPLv3) – großer Dank an seine Autoren. PlayCaption ist ebenfalls Open Source (AGPLv3): github.com/AdamRuzick4/PlayCaption-app",
-            "PlayCaption © 2026 Adam Růžička. Połączenie z PS5 i przesyłanie obrazu zapewnia projekt open-source Chiaki / chiaki-ng (AGPLv3) – wielkie dzięki jego autorom. PlayCaption jest również open-source (AGPLv3): github.com/AdamRuzick4/PlayCaption-app",
-            "PlayCaption © 2026 Adam Růžička. La connexion à la PS5 et le flux vidéo reposent sur le projet open source Chiaki / chiaki-ng (AGPLv3) – un grand merci à ses auteurs. PlayCaption est aussi open source (AGPLv3) : github.com/AdamRuzick4/PlayCaption-app",
-            "PlayCaption © 2026 Adam Růžička. La conexión con la PS5 y la transmisión de imagen las proporciona el proyecto de código abierto Chiaki / chiaki-ng (AGPLv3) – muchas gracias a sus autores. PlayCaption también es de código abierto (AGPLv3): github.com/AdamRuzick4/PlayCaption-app",
-            "PlayCaption © 2026 Adam Růžička. La connessione alla PS5 e lo streaming sono forniti dal progetto open source Chiaki / chiaki-ng (AGPLv3) – grazie mille ai suoi autori. Anche PlayCaption è open source (AGPLv3): github.com/AdamRuzick4/PlayCaption-app"),
+            "TitulkyCZ_Fuki – samostatná verze, kterou od verze 0.20.1 vyvíjí Fuki (github.com/jfnukal/TitulkyCZ_Fuki). Vychází z aplikace PlayCaption, kterou vytvořil Adam Růžička – velké díky! Původní projekt: github.com/AdamRuzick4/PlayCaption-app. Spojení s PS5 a přenos obrazu zajišťuje open-source projekt Chiaki / chiaki-ng (AGPLv3), spojení s Xboxem vychází z projektů xbox-xcloud-player (MIT) a XStreaming (AGPLv3) a knihovny WebRTC. TitulkyCZ_Fuki je open-source pod licencí AGPLv3. Není spojena se společnostmi Microsoft ani Sony.",
+            "TitulkyCZ_Fuki – samostatná verzia, ktorú od verzie 0.20.1 vyvíja Fuki (github.com/jfnukal/TitulkyCZ_Fuki). Vychádza z aplikácie PlayCaption, ktorú vytvoril Adam Růžička – veľká vďaka! Pôvodný projekt: github.com/AdamRuzick4/PlayCaption-app. Spojenie s PS5 a prenos obrazu zabezpečuje open-source projekt Chiaki / chiaki-ng (AGPLv3), spojenie s Xboxom vychádza z projektov xbox-xcloud-player (MIT) a XStreaming (AGPLv3) a knižnice WebRTC. TitulkyCZ_Fuki je open-source pod licenciou AGPLv3. Nie je spojená so spoločnosťami Microsoft ani Sony.",
+            "TitulkyCZ_Fuki – independent version developed by Fuki since 0.20.1 (github.com/jfnukal/TitulkyCZ_Fuki). Based on PlayCaption by Adam Růžička – many thanks! Original project: github.com/AdamRuzick4/PlayCaption-app. PS5 connection: Chiaki / chiaki-ng (AGPLv3); Xbox connection based on xbox-xcloud-player (MIT), XStreaming (AGPLv3) and WebRTC. Open source under AGPLv3. Not affiliated with Microsoft or Sony.",
+            "TitulkyCZ_Fuki – independent version developed by Fuki since 0.20.1 (github.com/jfnukal/TitulkyCZ_Fuki). Based on PlayCaption by Adam Růžička – many thanks! Original project: github.com/AdamRuzick4/PlayCaption-app. PS5 connection: Chiaki / chiaki-ng (AGPLv3); Xbox connection based on xbox-xcloud-player (MIT), XStreaming (AGPLv3) and WebRTC. Open source under AGPLv3. Not affiliated with Microsoft or Sony.",
+            "TitulkyCZ_Fuki – independent version developed by Fuki since 0.20.1 (github.com/jfnukal/TitulkyCZ_Fuki). Based on PlayCaption by Adam Růžička – many thanks! Original project: github.com/AdamRuzick4/PlayCaption-app. PS5 connection: Chiaki / chiaki-ng (AGPLv3); Xbox connection based on xbox-xcloud-player (MIT), XStreaming (AGPLv3) and WebRTC. Open source under AGPLv3. Not affiliated with Microsoft or Sony.",
+            "TitulkyCZ_Fuki – independent version developed by Fuki since 0.20.1 (github.com/jfnukal/TitulkyCZ_Fuki). Based on PlayCaption by Adam Růžička – many thanks! Original project: github.com/AdamRuzick4/PlayCaption-app. PS5 connection: Chiaki / chiaki-ng (AGPLv3); Xbox connection based on xbox-xcloud-player (MIT), XStreaming (AGPLv3) and WebRTC. Open source under AGPLv3. Not affiliated with Microsoft or Sony.",
+            "TitulkyCZ_Fuki – independent version developed by Fuki since 0.20.1 (github.com/jfnukal/TitulkyCZ_Fuki). Based on PlayCaption by Adam Růžička – many thanks! Original project: github.com/AdamRuzick4/PlayCaption-app. PS5 connection: Chiaki / chiaki-ng (AGPLv3); Xbox connection based on xbox-xcloud-player (MIT), XStreaming (AGPLv3) and WebRTC. Open source under AGPLv3. Not affiliated with Microsoft or Sony."),
         "brzy" to listOf("připravujeme", "pripravujeme", "in Vorbereitung", "wkrótce", "bientôt", "próximamente", "in arrivo"),
         "prijemTlacitko" to listOf("📱  Titulky čte telefon (rychlejší)", "📱  Titulky číta telefón (rýchlejšie)"),
         "prijemNadpis" to listOf("Titulky z telefonu", "Titulky z telefónu"),
         "prijemCekam" to listOf("Čekám na telefon…", "Čakám na telefón…"),
         "prijemPripojen" to listOf("✔ Telefon připojen – titulky chodí", "✔ Telefón pripojený – titulky chodia"),
         "prijemPopis" to listOf(
-            "Televize se teď k PS5 nepřipojuje – titulky čte a překládá telefon, televize je jen ukazuje. Je to rychlejší a hodí se i pro slabší televize.\n\n1. V Android telefonu otevři PlayCaption.\n2. Jen poprvé klepni na „Vyhledat televizi“ a vyber tuhle televizi ({tv}). Telefon si přihlášení vezme z televize. Kdo je v telefonu už přihlášený sám, tenhle krok přeskočí.\n3. Pak už jen zmáčkni „Hotovo – hrát“ – telefon se k televizi připojí sám.\n4. Telefon nech ležet s otevřenou aplikací (ideálně na nabíječce).\n\nTelefon i televize musí být na stejné Wi-Fi.",
-            "Televízor sa teraz k PS5 nepripája – titulky číta a prekladá telefón, televízor ich len ukazuje. Je to rýchlejšie a hodí sa aj pre slabšie televízory.\n\n1. V Android telefóne otvor PlayCaption.\n2. Len prvýkrát klepni na „Vyhľadať televízor“ a vyber tento televízor ({tv}). Telefón si prihlásenie vezme z televízora. Kto je v telefóne už prihlásený sám, tento krok preskočí.\n3. Potom už len stlač „Hotovo – hrať“ – telefón sa k televízoru pripojí sám.\n4. Telefón nechaj ležať s otvorenou aplikáciou (ideálne na nabíjačke).\n\nTelefón aj televízor musia byť na rovnakej Wi-Fi."),
+            "Televize se teď k PS5 nepřipojuje – titulky čte a překládá telefon, televize je jen ukazuje. Je to rychlejší a hodí se i pro slabší televize.\n\n1. V Android telefonu otevři TitulkyCZ_Fuki.\n2. Jen poprvé klepni na „Vyhledat televizi“ a vyber tuhle televizi ({tv}). Telefon si přihlášení vezme z televize. Kdo je v telefonu už přihlášený sám, tenhle krok přeskočí.\n3. Pak už jen zmáčkni „Hotovo – hrát“ – telefon se k televizi připojí sám.\n4. Telefon nech ležet s otevřenou aplikací (ideálně na nabíječce).\n\nTelefon i televize musí být na stejné Wi-Fi.",
+            "Televízor sa teraz k PS5 nepripája – titulky číta a prekladá telefón, televízor ich len ukazuje. Je to rýchlejšie a hodí sa aj pre slabšie televízory.\n\n1. V Android telefóne otvor TitulkyCZ_Fuki.\n2. Len prvýkrát klepni na „Vyhľadať televízor“ a vyber tento televízor ({tv}). Telefón si prihlásenie vezme z televízora. Kto je v telefóne už prihlásený sám, tento krok preskočí.\n3. Potom už len stlač „Hotovo – hrať“ – telefón sa k televízoru pripojí sám.\n4. Telefón nechaj ležať s otvorenou aplikáciou (ideálne na nabíjačke).\n\nTelefón aj televízor musia byť na rovnakej Wi-Fi."),
         "prijemHrat" to listOf("Hrát", "Hrať"),
         "prijemZpet" to listOf("Zpět – titulky čte televize", "Späť – titulky číta televízor"),
         "tvVyber" to listOf("Posílat titulky do televize", "Posielať titulky do televízora"),
-        "tvHledam" to listOf("Hledám televize s PlayCaption…\n(na televizi musí být zapnuté „Titulky čte telefon“)", "Hľadám televízory s PlayCaption…\n(na televízore musí byť zapnuté „Titulky číta telefón“)"),
+        "tvHledam" to listOf("Hledám televize s TitulkyCZ_Fuki…\n(na televizi musí být zapnuté „Titulky čte telefon“)", "Hľadám televízory s TitulkyCZ_Fuki…\n(na televízore musí byť zapnuté „Titulky číta telefón“)"),
         "tvNenalezena" to listOf("Žádná televize nenalezena – na televizi zapni „Titulky čte telefon“ a zkus znovu", "Žiadny televízor sa nenašiel – na televízore zapni „Titulky číta telefón“ a skús znova"),
         "tvJenTelefon" to listOf("Jen telefon (titulky jen tady)", "Len telefón (titulky len tu)"),
         "tvPosilam" to listOf("Titulky se posílají do: {tv}", "Titulky sa posielajú do: {tv}"),
@@ -177,7 +177,7 @@ object Texty {
         "slabaPresto" to listOf("Pokračovat", "Pokračovať"),
         "segTv" to listOf("📺 Televize", "📺 Televízor"),
         "segTel" to listOf("📱 Telefon", "📱 Telefón"),
-        "tvNenalezenaToast" to listOf("Televize nenalezena. Na televizi otevři PlayCaption a zvol „S telefonem“.", "Televízor sa nenašiel. Na televízore otvor PlayCaption a zvoľ „S telefónom“."),
+        "tvNenalezenaToast" to listOf("Televize nenalezena. Na televizi otevři TitulkyCZ_Fuki a zvol „S telefonem“.", "Televízor sa nenašiel. Na televízore otvor TitulkyCZ_Fuki a zvoľ „S telefónom“."),
         "titOblZap" to listOf("🔵 Čtení titulků: RUČNĚ (modrý rámeček)", "🔵 Čítanie titulkov: RUČNE (modrý rámček)"),
         "titOblVyp" to listOf("🔵 Čtení titulků: automaticky", "🔵 Čítanie titulkov: automaticky"),
         "titOblNavod" to listOf("Čte se jen v modrém rámečku. Posuň ho na titulky ve hře. Klepni na tlačítko = zpět na automatické.", "Číta sa len v modrom rámčeku. Posuň ho na titulky v hre. Ťukni na tlačidlo = späť na automatické."),
@@ -193,22 +193,22 @@ object Texty {
         "volbyNapZamceno" to listOf("Rámeček voleb je zamčený. Odemkni 🔓, pokud ho chceš posunout.", "Rámček volieb je zamknutý. Odomkni 🔓, ak ho chceš posunúť."),
         "tvBeziKratce" to listOf("📺 Titulky běží v TV ✔ · telefon dej na nabíječku", "📺 Titulky bežia v TV ✔ · telefón daj na nabíjačku"),
         "prevzitZTv" to listOf("📺 Vyhledat televizi", "📺 Vyhľadať televízor"),
-        "prevzitHledam" to listOf("Hledám televizi s PlayCaption…", "Hľadám televízor s PlayCaption…"),
-        "prevzitNenalezena" to listOf("Televize nenalezena.\n\nJe zapnutá a na stejné Wi-Fi? Na televizi v PlayCaption klikni na „+ Přidat Android zařízení“.", "Televízor sa nenašiel.\n\nJe zapnutý a na rovnakej Wi-Fi? Na televízore v PlayCaption klikni na „+ Pridať Android zariadenie“."),
+        "prevzitHledam" to listOf("Hledám televizi s TitulkyCZ_Fuki…", "Hľadám televízor s TitulkyCZ_Fuki…"),
+        "prevzitNenalezena" to listOf("Televize nenalezena.\n\nJe zapnutá a na stejné Wi-Fi? Na televizi v TitulkyCZ_Fuki klikni na „+ Přidat Android zařízení“.", "Televízor sa nenašiel.\n\nJe zapnutý a na rovnakej Wi-Fi? Na televízore v TitulkyCZ_Fuki klikni na „+ Pridať Android zariadenie“."),
         "pridatNalezena" to listOf("Nalezená zařízení – vyber svoji televizi", "Nájdené zariadenia – vyber svoj televízor"),
-        "pridatNalezenaTv" to listOf("Našel jsem televizi s PlayCaption – klepni na „Vyhledat televizi“ a opiš kód. Přihlašovat se nemusíš.", "Našiel som televízor s PlayCaption – klepni na „Vyhľadať televízor“ a opíš kód. Prihlasovať sa nemusíš."),
+        "pridatNalezenaTv" to listOf("Našel jsem televizi s TitulkyCZ_Fuki – klepni na „Vyhledat televizi“ a opiš kód. Přihlašovat se nemusíš.", "Našiel som televízor s TitulkyCZ_Fuki – klepni na „Vyhľadať televízor“ a opíš kód. Prihlasovať sa nemusíš."),
         "pridatZnovu" to listOf("Zkusit znovu", "Skúsiť znova"),
         "pridatAdresa" to listOf("Zadat adresu televize", "Zadať adresu televízora"),
         "pridatAdresaText" to listOf("Adresu najdeš v okně „Přidat Android zařízení“ na televizi (např. 192.168.1.20).", "Adresu nájdeš v okne „Pridať Android zariadenie“ na televízore (napr. 192.168.1.20)."),
         "pridatZarizeni" to listOf("Android zařízení", "Android zariadenie"),
         "pridatZadne" to listOf("– zatím žádné", "– zatiaľ žiadne"),
-        "maTvNadpis" to listOf("📺 Máš PlayCaption už přihlášenou v televizi?", "📺 Máš PlayCaption už prihlásenú v televízore?"),
+        "maTvNadpis" to listOf("📺 Máš TitulkyCZ_Fuki už přihlášenou v televizi?", "📺 Máš TitulkyCZ_Fuki už prihlásenú v televízore?"),
         "maTv" to listOf("Nepřihlašuj se znovu. V televizi dej „+ Přidat Android zařízení“ a v telefonu klepni na „📺 Vyhledat televizi“. Telefon si přihlášení vezme z televize.", "Neprihlasuj sa znova. V televízore daj „+ Pridať Android zariadenie“ a v telefóne klepni na „📺 Vyhľadať televízor“. Telefón si prihlásenie vezme z televízora."),
         "nemamTv" to listOf("Nemám televizi – přihlásit se tady ↓", "Nemám televízor – prihlásiť sa tu ↓"),
         "pridatBtn" to listOf("+ Přidat Android zařízení", "+ Pridať Android zariadenie"),
         "pridatNadpis" to listOf("Přidat Android zařízení", "Pridať Android zariadenie"),
         "pridatKrok1" to listOf("1. Naskenuj QR kód a nainstaluj aplikaci do telefonu / tabletu.", "1. Naskenuj QR kód a nainštaluj aplikáciu do telefónu / tabletu."),
-        "pridatKrok1BezQr" to listOf("1. Nainstaluj aplikaci PlayCaption do telefonu / tabletu.", "1. Nainštaluj aplikáciu PlayCaption do telefónu / tabletu."),
+        "pridatKrok1BezQr" to listOf("1. Nainstaluj aplikaci TitulkyCZ_Fuki do telefonu / tabletu.", "1. Nainštaluj aplikáciu TitulkyCZ_Fuki do telefónu / tabletu."),
         "pridatKrok2" to listOf("2. V aplikaci klepni na „Vyhledat televizi“ a vyber tuhle televizi.", "2. V aplikácii klepni na „Vyhľadať televízor“ a vyber tento televízor."),
         "pridatKrok3" to listOf("3. Opiš tento kód:", "3. Opíš tento kód:"),
         "pridatPlati" to listOf("Kód platí ještě {s} s", "Kód platí ešte {s} s"),
@@ -217,9 +217,9 @@ object Texty {
         "pridatNovyKod" to listOf("Nový kód", "Nový kód"),
         "pridatZavrit" to listOf("Zavřít", "Zavrieť"),
         "pridatHotovo" to listOf("✔ Spárováno: {jmeno}\nTelefon / tablet teď umí titulky do televize i jen u sebe.", "✔ Spárované: {jmeno}\nTelefón / tablet teraz vie titulky do televízora aj len u seba."),
-        "prevzitNeodpovida" to listOf("Televize neodpovídá. Zkontroluj, že je na ní PlayCaption v režimu „S telefonem“, a zkus to znovu.", "Televízor neodpovedá. Skontroluj, že je na ňom PlayCaption v režime „S telefónom“, a skús to znova."),
+        "prevzitNeodpovida" to listOf("Televize neodpovídá. Zkontroluj, že je na ní TitulkyCZ_Fuki v režimu „S telefonem“, a zkus to znovu.", "Televízor neodpovedá. Skontroluj, že je na ňom TitulkyCZ_Fuki v režime „S telefónom“, a skús to znova."),
         "prevzitNesparovano" to listOf("Tahle televize není spárovaná s PS5 – nevadí. Spáruj s PS5 rovnou telefon, televize pak jen ukazuje titulky (na televizi zvol „S telefonem“).", "Tento televízor nie je spárovaný s PS5 – nevadí. Spáruj s PS5 priamo telefón, televízor potom len ukazuje titulky (na televízore zvoľ „S telefónom“)."),
-        "upozorneniNadpis" to listOf("📱 Používáš PlayCaption v telefonu?", "📱 Používaš PlayCaption v telefóne?"),
+        "upozorneniNadpis" to listOf("📱 Používáš TitulkyCZ_Fuki v telefonu?", "📱 Používaš TitulkyCZ_Fuki v telefóne?"),
         "upozorneniText" to listOf("Při používání mobilní aplikace (Android telefon / tablet) NENÍ potřeba přihlašování k PS účtu v televizi.\n\nPřihlas se jen v mobilním zařízení – televize pak jen ukazuje titulky.", "Pri používaní mobilnej aplikácie (Android telefón / tablet) NIE JE potrebné prihlasovanie k PS účtu v televízore.\n\nPrihlás sa len v mobilnom zariadení – televízor potom len ukazuje titulky."),
         "upozorneni2Text" to listOf("Pro hraní s telefonem / tabletem vyber dole na hlavní obrazovce dlaždici „📱➜📺 S telefonem“.\n\nPak v telefonu klepni na „Připojit“ a přihlas se tam.", "Pre hranie s telefónom / tabletom vyber dole na hlavnej obrazovke dlaždicu „📱➜📺 S telefónom“.\n\nPotom v telefóne klepni na „Pripojiť“ a prihlás sa tam."),
         "upozorneniZpet" to listOf("Zpět (budu používat mobilní aplikaci)", "Späť (budem používať mobilnú aplikáciu)"),
@@ -232,10 +232,29 @@ object Texty {
         "prevzitChybaKod" to listOf("Špatný nebo propadlý kód. Zkus to znovu.", "Zlý alebo neplatný kód. Skús to znova."),
         "rezimVolby" to listOf("🟨 Volby odpovědí", "🟨 Voľby odpovedí"),
         "rezimText" to listOf("📄 Text (dopis, SMS)", "📄 Text (list, SMS)"),
+        "tvPozadi" to listOf("Pozadí", "Pozadie"),
+        "tabulkaNahrat" to listOf("📚 Nahrát tabulku (.tsv / .tsv.gz)", "📚 Nahrať tabuľku (.tsv / .tsv.gz)"),
+        "tabulkaNahravam" to listOf("Nahrávám tabulku…", "Nahrávam tabuľku…"),
+        "tabulkaHotovo" to listOf("Tabulka nahrána: {n} vět", "Tabuľka nahraná: {n} viet"),
+        "tabulkaChyba" to listOf("Tabulku se nepodařilo nahrát: {e}", "Tabuľku sa nepodarilo nahrať: {e}"),
+        "tabulkaSpatna" to listOf("Vyber soubor .tsv nebo .tsv.gz (např. rdr2_cs.tsv.gz)", "Vyber súbor .tsv alebo .tsv.gz (napr. rdr2_cs.tsv.gz)"),
+        "rezimMenu" to listOf("📋 Menu", "📋 Menu"),
+        "rezimMenuNap" to listOf("Přeloží každý řádek v rámečku zvlášť – menu, úkoly, deník, inventář. Rámeček dej přes menu, český seznam se ukáže vedle.", "Preloží každý riadok v rámčeku zvlášť – menu, úlohy, denník, inventár. Rámček daj cez menu, slovenský zoznam sa ukáže vedľa."),
+        "aiNadpis" to listOf("🤖 AI překlad s kontextem hry", "🤖 AI preklad s kontextom hry"),
+        "aiZap" to listOf("🤖 AI překlad: ZAPNUTO", "🤖 AI preklad: ZAPNUTÝ"),
+        "aiVyp" to listOf("🤖 AI překlad: vypnuto", "🤖 AI preklad: vypnutý"),
+        "aiBezKlice" to listOf("🤖 AI překlad: zadat klíč", "🤖 AI preklad: zadať kľúč"),
+        "aiNap" to listOf("Gemini pozná hru a překládá s ohledem na postavy (rod), jména a předchozí věty. Klíč získáš zdarma na aistudio.google.com → Get API key. Text titulků se posílá Googlu.", "Gemini spozná hru a prekladá s ohľadom na postavy (rod), mená a predchádzajúce vety. Kľúč získaš na aistudio.google.com → Get API key. Text titulkov sa posiela Googlu."),
+        "aiKlic" to listOf("API klíč Gemini (AIza…)", "API kľúč Gemini (AIza…)"),
+        "aiUlozit" to listOf("Uložit", "Uložiť"),
+        "aiVypnout" to listOf("Vypnout AI", "Vypnúť AI"),
+        "aiZrusit" to listOf("Zrušit", "Zrušiť"),
+        "tabulkyStav" to listOf("📚 Tabulky hotových překladů: {n} vět", "📚 Tabuľky hotových prekladov: {n} viet"),
+        "tabulkyZadne" to listOf("📚 Tabulky hotových překladů: žádné (složka Android/data/…/files/tabulky)", "📚 Tabuľky hotových prekladov: žiadne (priečinok Android/data/…/files/tabulky)"),
         "rezimVolbyNap" to listOf("Přeloží odpovědi v rozhovoru – ukáže se, jen když je jedna zvýrazněná.", "Preloží odpovede v rozhovore – ukáže sa, len keď je jedna zvýraznená."),
         "rezimTextNap" to listOf("Přeloží celý text v rámečku najednou – dopis, SMS, popis úkolu. Rámeček dej přes text.", "Preloží celý text v rámčeku naraz – list, SMS, popis úlohy. Rámček daj cez text."),
         "hratVyber" to listOf("Vyber a zmáčkni OK – hra se spustí sama.", "Vyber a stlač OK – hra sa spustí sama."),
-        "ngKrok1" to listOf("V telefonu otevři\nPlayCaption", "V telefóne otvor\nPlayCaption"),
+        "ngKrok1" to listOf("V telefonu otevři\nTitulkyCZ_Fuki", "V telefóne otvor\nTitulkyCZ_Fuki"),
         "ngKrok2" to listOf("Spáruj telefon\n(viz níže ↓)", "Spáruj telefón\n(pozri nižšie ↓)"),
         "ngKrok2N" to listOf("JEN POPRVÉ", "LEN PRVÝKRÁT"),
         "ngParNadpis" to listOf("Jak spárovat telefon (stačí jednou):", "Ako spárovať telefón (stačí raz):"),
@@ -247,49 +266,49 @@ object Texty {
         "prijemZpetKratce" to listOf("↩ Zpět – jen televize", "↩ Späť – len televízor"),
         "podporaIban" to listOf("Ze Slovenska / z ciziny: IBAN CZ05 0600 0000 0002 0798 0632", "Zo Slovenska / zo zahraničia: IBAN CZ05 0600 0000 0002 0798 0632"),
         "podpora" to listOf("Podpora", "Podpora", "Unterstützung", "Wsparcie", "Soutien", "Apoyo", "Supporto"),
-        "podporaNadpis" to listOf("Líbí se ti PlayCaption?", "Páči sa ti PlayCaption?", "Gefällt dir PlayCaption?", "Podoba ci się PlayCaption?", "Tu aimes PlayCaption ?", "¿Te gusta PlayCaption?", "Ti piace PlayCaption?"),
+        "podporaNadpis" to listOf("Podpoř autora PlayCaption (Adam Růžička)", "Podpor autora PlayCaption (Adam Růžička)", "Support the author of PlayCaption (Adam Růžička)", "Support the author of PlayCaption (Adam Růžička)", "Support the author of PlayCaption (Adam Růžička)", "Support the author of PlayCaption (Adam Růžička)", "Support the author of PlayCaption (Adam Růžička)"),
         "podporaText" to listOf(
-            "Podpoř další vývoj – kup mi kafe ☕\nNaskenuj QR kód v bankovní aplikaci, částku si zvol sám.",
-            "Podpor ďalší vývoj – kúp mi kávu ☕\nNaskenuj QR kód v bankovej aplikácii, sumu si zvoľ sám.",
-            "Unterstütze die Weiterentwicklung – spendier mir einen Kaffee ☕\nScanne den QR-Code in deiner Banking-App, den Betrag wählst du selbst.",
-            "Wesprzyj dalszy rozwój – postaw mi kawę ☕\nZeskanuj kod QR w aplikacji bankowej, kwotę wybierasz sam.",
-            "Soutiens le développement – offre-moi un café ☕\nScanne le QR code dans ton appli bancaire, tu choisis le montant.",
-            "Apoya el desarrollo – invítame a un café ☕\nEscanea el código QR en tu app del banco, tú eliges la cantidad.",
-            "Sostieni lo sviluppo – offrimi un caffè ☕\nScansiona il codice QR nella tua app bancaria, l'importo lo scegli tu."),
-        "hratInfo" to listOf("✔ PlayCaption běží – přepni na PlayStation a hraj", "✔ PlayCaption beží – prepni na PlayStation a hraj", "✔ PlayCaption läuft – wechsle zur PlayStation und spiel", "✔ PlayCaption działa – przełącz na PlayStation i graj", "✔ PlayCaption est actif – passe sur la PlayStation et joue", "✔ PlayCaption activo – cambia a la PlayStation y juega", "✔ PlayCaption attivo – passa alla PlayStation e gioca"),
+            "Bez PlayCaption by tahle aplikace nebyla – kup Adamovi kafe ☕\nNaskenuj QR kód v bankovní aplikaci, částku si zvol sám.",
+            "Bez PlayCaption by táto aplikácia nebola – kúp Adamovi kávu ☕\nNaskenuj QR kód v bankovej aplikácii, sumu si zvoľ sám.",
+            "Without PlayCaption this app would not exist – buy Adam a coffee ☕\nScan the QR code in your banking app, choose any amount.",
+            "Without PlayCaption this app would not exist – buy Adam a coffee ☕\nScan the QR code in your banking app, choose any amount.",
+            "Without PlayCaption this app would not exist – buy Adam a coffee ☕\nScan the QR code in your banking app, choose any amount.",
+            "Without PlayCaption this app would not exist – buy Adam a coffee ☕\nScan the QR code in your banking app, choose any amount.",
+            "Without PlayCaption this app would not exist – buy Adam a coffee ☕\nScan the QR code in your banking app, choose any amount."),
+        "hratInfo" to listOf("✔ TitulkyCZ_Fuki běží – přepni na PlayStation a hraj", "✔ TitulkyCZ_Fuki beží – prepni na PlayStation a hraj", "✔ TitulkyCZ_Fuki läuft – wechsle zur PlayStation und spiel", "✔ TitulkyCZ_Fuki działa – przełącz na PlayStation i graj", "✔ TitulkyCZ_Fuki est actif – passe sur la PlayStation et joue", "✔ TitulkyCZ_Fuki activo – cambia a la PlayStation y juega", "✔ TitulkyCZ_Fuki attivo – passa alla PlayStation e gioca"),
         "zpet" to listOf("Zpět", "Späť", "Zurück", "Wstecz", "Retour", "Atrás", "Indietro"),
         "povoleni" to listOf("Povolit zobrazení přes jiné aplikace", "Povoliť zobrazenie cez iné aplikácie", "Über anderen Apps anzeigen erlauben", "Zezwól na wyświetlanie nad innymi aplikacjami", "Autoriser l'affichage par-dessus", "Permitir mostrar sobre otras apps", "Consenti la visualizzazione sopra altre app"),
         "povoleniNavodBtn" to listOf("Nejde to? Návod", "Nejde to? Návod", "Geht nicht? Anleitung", "Nie działa? Instrukcja", "Ça ne marche pas ? Aide", "¿No funciona? Ayuda", "Non funziona? Guida"),
         "povoleniNavodNadpis" to listOf("Jak povolit zobrazení přes jiné aplikace", "Ako povoliť zobrazenie cez iné aplikácie", "Überlagerung erlauben", "Jak zezwolić na wyświetlanie nad aplikacjami", "Autoriser la superposition", "Permitir mostrar sobre otras apps", "Consentire la sovrapposizione"),
         "povoleniNavod" to listOf(
-            "Bez tohoto povolení nemůže PlayCaption ukázat titulky přes obraz z PS5.\n\n" +
-            "1) Zkus v televizi: Nastavení → Aplikace → Zvláštní přístup aplikací → Zobrazení přes jiné aplikace (nebo „Překrytí“) → PlayCaption → Povolit.\n" +
-            "   Někde: Nastavení → Aplikace → PlayCaption → Oprávnění.\n\n" +
+            "Bez tohoto povolení nemůže TitulkyCZ_Fuki ukázat titulky přes obraz z PS5.\n\n" +
+            "1) Zkus v televizi: Nastavení → Aplikace → Zvláštní přístup aplikací → Zobrazení přes jiné aplikace (nebo „Překrytí“) → TitulkyCZ_Fuki → Povolit.\n" +
+            "   Někde: Nastavení → Aplikace → TitulkyCZ_Fuki → Oprávnění.\n\n" +
             "2) Některé televize tuhle volbu schovávají (hlavně starší a slabší modely). Pak jde povolit jen z počítače:\n" +
             "   • V televizi zapni režim vývojáře (Nastavení → Informace → 7× klikni na Sestavení) a v Možnostech vývojáře zapni Ladění USB / síťové ladění.\n" +
             "   • V počítači (Android SDK – adb):\n" +
             "     adb connect %IP%:5555\n" +
             "     adb shell appops set cz.titulky.tv SYSTEM_ALERT_WINDOW allow\n\n" +
-            "3) Pak PlayCaption vynuceně ukonči a spusť znovu.\n\nPomoc: Facebook skupina PlayCaption – testování.",
-            "Bez tohto povolenia nemôže PlayCaption zobraziť titulky cez obraz z PS5.\n\n" +
-            "1) Skús v televízore: Nastavenia → Aplikácie → Špeciálny prístup aplikácií → Zobrazenie cez iné aplikácie (alebo „Prekrytie“) → PlayCaption → Povoliť.\n" +
-            "   Niekde: Nastavenia → Aplikácie → PlayCaption → Povolenia.\n\n" +
+            "3) Pak TitulkyCZ_Fuki vynuceně ukonči a spusť znovu.\n\nPomoc: Facebook skupina TitulkyCZ_Fuki – testování.",
+            "Bez tohto povolenia nemôže TitulkyCZ_Fuki zobraziť titulky cez obraz z PS5.\n\n" +
+            "1) Skús v televízore: Nastavenia → Aplikácie → Špeciálny prístup aplikácií → Zobrazenie cez iné aplikácie (alebo „Prekrytie“) → TitulkyCZ_Fuki → Povoliť.\n" +
+            "   Niekde: Nastavenia → Aplikácie → TitulkyCZ_Fuki → Povolenia.\n\n" +
             "2) Niektoré televízory túto voľbu skrývajú (hlavne staršie a slabšie modely). Potom sa dá povoliť len z počítača:\n" +
             "   • V televízore zapni režim vývojára (Nastavenia → Informácie → 7× klikni na Zostava) a v Možnostiach vývojára zapni Ladenie USB / sieťové ladenie.\n" +
             "   • V počítači (Android SDK – adb):\n" +
             "     adb connect %IP%:5555\n" +
             "     adb shell appops set cz.titulky.tv SYSTEM_ALERT_WINDOW allow\n\n" +
-            "3) Potom PlayCaption vynútene ukonči a spusti znova.\n\nPomoc: Facebook skupina PlayCaption – testovanie.",
-            "Without this permission PlayCaption can't show subtitles over the PS5 picture.\n\n1) TV: Settings → Apps → Special app access → Display over other apps → PlayCaption → Allow.\n\n2) If the option is hidden: enable developer options + USB/network debugging, then on a PC:\n     adb connect %IP%:5555\n     adb shell appops set cz.titulky.tv SYSTEM_ALERT_WINDOW allow\n\n3) Force stop PlayCaption and start it again.",
-            "Without this permission PlayCaption can't show subtitles over the PS5 picture.\n\n1) TV: Settings → Apps → Special app access → Display over other apps → PlayCaption → Allow.\n\n2) If the option is hidden: enable developer options + USB/network debugging, then on a PC:\n     adb connect %IP%:5555\n     adb shell appops set cz.titulky.tv SYSTEM_ALERT_WINDOW allow\n\n3) Force stop PlayCaption and start it again.",
-            "Without this permission PlayCaption can't show subtitles over the PS5 picture.\n\n1) TV: Settings → Apps → Special app access → Display over other apps → PlayCaption → Allow.\n\n2) If the option is hidden: enable developer options + USB/network debugging, then on a PC:\n     adb connect %IP%:5555\n     adb shell appops set cz.titulky.tv SYSTEM_ALERT_WINDOW allow\n\n3) Force stop PlayCaption and start it again.",
-            "Without this permission PlayCaption can't show subtitles over the PS5 picture.\n\n1) TV: Settings → Apps → Special app access → Display over other apps → PlayCaption → Allow.\n\n2) If the option is hidden: enable developer options + USB/network debugging, then on a PC:\n     adb connect %IP%:5555\n     adb shell appops set cz.titulky.tv SYSTEM_ALERT_WINDOW allow\n\n3) Force stop PlayCaption and start it again.",
-            "Without this permission PlayCaption can't show subtitles over the PS5 picture.\n\n1) TV: Settings → Apps → Special app access → Display over other apps → PlayCaption → Allow.\n\n2) If the option is hidden: enable developer options + USB/network debugging, then on a PC:\n     adb connect %IP%:5555\n     adb shell appops set cz.titulky.tv SYSTEM_ALERT_WINDOW allow\n\n3) Force stop PlayCaption and start it again."),
+            "3) Potom TitulkyCZ_Fuki vynútene ukonči a spusti znova.\n\nPomoc: Facebook skupina TitulkyCZ_Fuki – testovanie.",
+            "Without this permission TitulkyCZ_Fuki can't show subtitles over the PS5 picture.\n\n1) TV: Settings → Apps → Special app access → Display over other apps → TitulkyCZ_Fuki → Allow.\n\n2) If the option is hidden: enable developer options + USB/network debugging, then on a PC:\n     adb connect %IP%:5555\n     adb shell appops set cz.titulky.tv SYSTEM_ALERT_WINDOW allow\n\n3) Force stop TitulkyCZ_Fuki and start it again.",
+            "Without this permission TitulkyCZ_Fuki can't show subtitles over the PS5 picture.\n\n1) TV: Settings → Apps → Special app access → Display over other apps → TitulkyCZ_Fuki → Allow.\n\n2) If the option is hidden: enable developer options + USB/network debugging, then on a PC:\n     adb connect %IP%:5555\n     adb shell appops set cz.titulky.tv SYSTEM_ALERT_WINDOW allow\n\n3) Force stop TitulkyCZ_Fuki and start it again.",
+            "Without this permission TitulkyCZ_Fuki can't show subtitles over the PS5 picture.\n\n1) TV: Settings → Apps → Special app access → Display over other apps → TitulkyCZ_Fuki → Allow.\n\n2) If the option is hidden: enable developer options + USB/network debugging, then on a PC:\n     adb connect %IP%:5555\n     adb shell appops set cz.titulky.tv SYSTEM_ALERT_WINDOW allow\n\n3) Force stop TitulkyCZ_Fuki and start it again.",
+            "Without this permission TitulkyCZ_Fuki can't show subtitles over the PS5 picture.\n\n1) TV: Settings → Apps → Special app access → Display over other apps → TitulkyCZ_Fuki → Allow.\n\n2) If the option is hidden: enable developer options + USB/network debugging, then on a PC:\n     adb connect %IP%:5555\n     adb shell appops set cz.titulky.tv SYSTEM_ALERT_WINDOW allow\n\n3) Force stop TitulkyCZ_Fuki and start it again.",
+            "Without this permission TitulkyCZ_Fuki can't show subtitles over the PS5 picture.\n\n1) TV: Settings → Apps → Special app access → Display over other apps → TitulkyCZ_Fuki → Allow.\n\n2) If the option is hidden: enable developer options + USB/network debugging, then on a PC:\n     adb connect %IP%:5555\n     adb shell appops set cz.titulky.tv SYSTEM_ALERT_WINDOW allow\n\n3) Force stop TitulkyCZ_Fuki and start it again."),
         "povoleniPopis" to listOf(
-            "Bez tohoto povolení nemůže PlayCaption ukázat překlad přes hru.", "Bez tohto povolenia nemôže PlayCaption ukázať preklad cez hru.",
-            "Ohne diese Erlaubnis kann PlayCaption die Übersetzung nicht über dem Spiel zeigen.", "Bez tego PlayCaption nie pokaże tłumaczenia nad grą.",
-            "Sans cette autorisation, PlayCaption ne peut pas afficher la traduction.", "Sin este permiso PlayCaption no puede mostrar la traducción.",
-            "Senza questo permesso PlayCaption non può mostrare la traduzione."),
+            "Bez tohoto povolení nemůže TitulkyCZ_Fuki ukázat překlad přes hru.", "Bez tohto povolenia nemôže TitulkyCZ_Fuki ukázať preklad cez hru.",
+            "Ohne diese Erlaubnis kann TitulkyCZ_Fuki die Übersetzung nicht über dem Spiel zeigen.", "Bez tego TitulkyCZ_Fuki nie pokaże tłumaczenia nad grą.",
+            "Sans cette autorisation, TitulkyCZ_Fuki ne peut pas afficher la traduction.", "Sin este permiso TitulkyCZ_Fuki no puede mostrar la traducción.",
+            "Senza questo permesso TitulkyCZ_Fuki non può mostrare la traduzione."),
         "predemNadpis" to listOf("Než začneš", "Skôr než začneš", "Bevor du beginnst", "Zanim zaczniesz", "Avant de commencer", "Antes de empezar", "Prima di iniziare"),
         "predem" to listOf(
             "Potřebuješ na PS5 druhý účet – přes něj se televize připojí. Hrát budeš dál na hlavním.\nNemáš ho? Na PS5: tlačítko PS → profil → Přepnout uživatele → Přidat uživatele.",
@@ -321,13 +340,13 @@ object Texty {
             "PS5 non trovata – è accesa e nella stessa rete?"),
         "hledatZnovu" to listOf("Hledat znovu", "Hľadať znova", "Erneut suchen", "Szukaj ponownie", "Rechercher à nouveau", "Buscar de nuevo", "Cerca di nuovo"),
         "krok3" to listOf(
-            "3. Na PS5 nejdřív zapni Nastavení → Systém → Aplikace Remote Play → Povolit aplikaci Remote Play – a to na OBOU účtech (hlavním i druhém).\n   Pak se přepni na DRUHÝ účet (ne hlavní, na kterém hraješ) a dej Aplikace Remote Play → Spárovat zařízení. Kód si opiš nebo vyfoť.\n   Obrazovku s kódem na PS5 NEZAVÍREJ – jen na ovladači televize zmáčkni Domů (domeček) a vrať se sem do PlayCaption.\n   Kód zadej dřív, než na PS5 vyprší čas. Když vyprší, vygeneruj na PS5 nový.",
-            "3. Na PS5 najprv zapni Nastavenia → Systém → Aplikácia Remote Play → Povoliť aplikáciu Remote Play – a to na OBOCH účtoch (hlavnom aj druhom).\n   Potom sa prepni na DRUHÝ účet (nie hlavný, na ktorom hráš) a daj Aplikácia Remote Play → Spárovať zariadenie. Kód si opíš alebo odfoť.\n   Obrazovku s kódom na PS5 NEZATVÁRAJ – len na ovládači televízora stlač Domov (domček) a vráť sa sem do PlayCaption.\n   Kód zadaj skôr, než na PS5 vyprší čas. Keď vyprší, vygeneruj na PS5 nový.",
-            "3. Aktiviere auf der PS5 zuerst die Remote Play-App auf BEIDEN Konten (Haupt- und Zweitkonto).\n   Wechsle dann zum ZWEITEN Konto (nicht dem Hauptkonto, mit dem du spielst): Einstellungen → System → Remote Play-App → Gerät verbinden. Code notieren oder fotografieren.\n   Den Code-Bildschirm auf der PS5 NICHT schließen – nur auf der TV-Fernbedienung Home drücken und zurück zu PlayCaption.\n   Code eingeben, bevor die Zeit auf der PS5 abläuft – sonst einen neuen erzeugen.",
-            "3. Najpierw włącz na PS5 aplikację Remote Play na OBU kontach (głównym i drugim).\n   Potem przełącz się na DRUGIE konto (nie główne, na którym grasz): Ustawienia → System → Aplikacja Remote Play → Połącz urządzenie. Przepisz lub sfotografuj kod.\n   NIE zamykaj ekranu z kodem na PS5 – na pilocie TV naciśnij Home i wróć do PlayCaption.\n   Wpisz kod, zanim na PS5 skończy się czas – inaczej wygeneruj nowy.",
-            "3. Sur la PS5, active d'abord l'application Lecture à distance sur les DEUX comptes (principal et deuxième).\n   Puis passe sur le DEUXIÈME compte (pas le principal sur lequel tu joues) : Paramètres → Système → Application Lecture à distance → Associer un appareil. Note ou photographie le code.\n   Ne FERME PAS l'écran du code sur la PS5 – appuie seulement sur Accueil sur la télécommande de la TV et reviens à PlayCaption.\n   Saisis le code avant la fin du délai sur la PS5, sinon génère-en un nouveau.",
-            "3. En la PS5 activa primero la app Juego remoto en AMBAS cuentas (principal y segunda).\n   Luego cambia a la SEGUNDA cuenta (no la principal con la que juegas): Ajustes → Sistema → App Juego remoto → Vincular dispositivo. Apunta o fotografía el código.\n   NO cierres la pantalla del código en la PS5: solo pulsa Inicio en el mando de la TV y vuelve a PlayCaption.\n   Escribe el código antes de que se acabe el tiempo en la PS5; si no, genera uno nuevo.",
-            "3. Sulla PS5 attiva prima l'app Riproduzione remota su ENTRAMBI gli account (principale e secondo).\n   Poi passa al SECONDO account (non quello principale con cui giochi): Impostazioni → Sistema → App Riproduzione remota → Collega dispositivo. Annota o fotografa il codice.\n   NON chiudere la schermata del codice sulla PS5: premi solo Home sul telecomando della TV e torna a PlayCaption.\n   Inserisci il codice prima che scada il tempo sulla PS5, altrimenti generane uno nuovo."),
+            "3. Na PS5 nejdřív zapni Nastavení → Systém → Aplikace Remote Play → Povolit aplikaci Remote Play – a to na OBOU účtech (hlavním i druhém).\n   Pak se přepni na DRUHÝ účet (ne hlavní, na kterém hraješ) a dej Aplikace Remote Play → Spárovat zařízení. Kód si opiš nebo vyfoť.\n   Obrazovku s kódem na PS5 NEZAVÍREJ – jen na ovladači televize zmáčkni Domů (domeček) a vrať se sem do TitulkyCZ_Fuki.\n   Kód zadej dřív, než na PS5 vyprší čas. Když vyprší, vygeneruj na PS5 nový.",
+            "3. Na PS5 najprv zapni Nastavenia → Systém → Aplikácia Remote Play → Povoliť aplikáciu Remote Play – a to na OBOCH účtoch (hlavnom aj druhom).\n   Potom sa prepni na DRUHÝ účet (nie hlavný, na ktorom hráš) a daj Aplikácia Remote Play → Spárovať zariadenie. Kód si opíš alebo odfoť.\n   Obrazovku s kódom na PS5 NEZATVÁRAJ – len na ovládači televízora stlač Domov (domček) a vráť sa sem do TitulkyCZ_Fuki.\n   Kód zadaj skôr, než na PS5 vyprší čas. Keď vyprší, vygeneruj na PS5 nový.",
+            "3. Aktiviere auf der PS5 zuerst die Remote Play-App auf BEIDEN Konten (Haupt- und Zweitkonto).\n   Wechsle dann zum ZWEITEN Konto (nicht dem Hauptkonto, mit dem du spielst): Einstellungen → System → Remote Play-App → Gerät verbinden. Code notieren oder fotografieren.\n   Den Code-Bildschirm auf der PS5 NICHT schließen – nur auf der TV-Fernbedienung Home drücken und zurück zu TitulkyCZ_Fuki.\n   Code eingeben, bevor die Zeit auf der PS5 abläuft – sonst einen neuen erzeugen.",
+            "3. Najpierw włącz na PS5 aplikację Remote Play na OBU kontach (głównym i drugim).\n   Potem przełącz się na DRUGIE konto (nie główne, na którym grasz): Ustawienia → System → Aplikacja Remote Play → Połącz urządzenie. Przepisz lub sfotografuj kod.\n   NIE zamykaj ekranu z kodem na PS5 – na pilocie TV naciśnij Home i wróć do TitulkyCZ_Fuki.\n   Wpisz kod, zanim na PS5 skończy się czas – inaczej wygeneruj nowy.",
+            "3. Sur la PS5, active d'abord l'application Lecture à distance sur les DEUX comptes (principal et deuxième).\n   Puis passe sur le DEUXIÈME compte (pas le principal sur lequel tu joues) : Paramètres → Système → Application Lecture à distance → Associer un appareil. Note ou photographie le code.\n   Ne FERME PAS l'écran du code sur la PS5 – appuie seulement sur Accueil sur la télécommande de la TV et reviens à TitulkyCZ_Fuki.\n   Saisis le code avant la fin du délai sur la PS5, sinon génère-en un nouveau.",
+            "3. En la PS5 activa primero la app Juego remoto en AMBAS cuentas (principal y segunda).\n   Luego cambia a la SEGUNDA cuenta (no la principal con la que juegas): Ajustes → Sistema → App Juego remoto → Vincular dispositivo. Apunta o fotografía el código.\n   NO cierres la pantalla del código en la PS5: solo pulsa Inicio en el mando de la TV y vuelve a TitulkyCZ_Fuki.\n   Escribe el código antes de que se acabe el tiempo en la PS5; si no, genera uno nuevo.",
+            "3. Sulla PS5 attiva prima l'app Riproduzione remota su ENTRAMBI gli account (principale e secondo).\n   Poi passa al SECONDO account (non quello principale con cui giochi): Impostazioni → Sistema → App Riproduzione remota → Collega dispositivo. Annota o fotografa il codice.\n   NON chiudere la schermata del codice sulla PS5: premi solo Home sul telecomando della TV e torna a TitulkyCZ_Fuki.\n   Inserisci il codice prima che scada il tempo sulla PS5, altrimenti generane uno nuovo."),
         "sparovat" to listOf("Spárovat", "Spárovať", "Koppeln", "Sparuj", "Associer", "Vincular", "Associa"),
         "paruji" to listOf("Páruji…", "Párujem…", "Kopple…", "Paruję…", "Association…", "Vinculando…", "Associazione…"),
         "pinChyba" to listOf("PIN musí mít 8 číslic.", "PIN musí mať 8 číslic.", "Der PIN hat 8 Ziffern.", "PIN musi mieć 8 cyfr.", "Le PIN comporte 8 chiffres.", "El PIN tiene 8 cifras.", "Il PIN ha 8 cifre."),
@@ -341,8 +360,8 @@ object Texty {
             "Touche le texte pour changer la taille", "Toca el texto para cambiar el tamaño",
             "Tocca il testo per cambiare la dimensione"),
         "prevzato" to listOf("PS5 teď používá televize", "PS5 teraz používa televízor", "Die PS5 wird jetzt vom Fernseher genutzt", "PS5 używa teraz telewizor", "La PS5 est maintenant utilisée par la TV", "La PS5 la está usando ahora la TV", "La PS5 ora è usata dalla TV"),
-        "infoStart" to listOf("PlayCaption: překlad se spouští…", "PlayCaption: preklad sa spúšťa…", "PlayCaption: Übersetzung startet…", "PlayCaption: uruchamiam tłumaczenie…", "PlayCaption : démarrage de la traduction…", "PlayCaption: iniciando traducción…", "PlayCaption: avvio traduzione…"),
-        "infoAktivni" to listOf("✔ PlayCaption: překlad aktivní", "✔ PlayCaption: preklad aktívny", "✔ PlayCaption: Übersetzung aktiv", "✔ PlayCaption: tłumaczenie aktywne", "✔ PlayCaption : traduction active", "✔ PlayCaption: traducción activa", "✔ PlayCaption: traduzione attiva")
+        "infoStart" to listOf("TitulkyCZ_Fuki: překlad se spouští…", "TitulkyCZ_Fuki: preklad sa spúšťa…", "TitulkyCZ_Fuki: Übersetzung startet…", "TitulkyCZ_Fuki: uruchamiam tłumaczenie…", "TitulkyCZ_Fuki : démarrage de la traduction…", "TitulkyCZ_Fuki: iniciando traducción…", "TitulkyCZ_Fuki: avvio traduzione…"),
+        "infoAktivni" to listOf("✔ TitulkyCZ_Fuki: překlad aktivní", "✔ TitulkyCZ_Fuki: preklad aktívny", "✔ TitulkyCZ_Fuki: Übersetzung aktiv", "✔ TitulkyCZ_Fuki: tłumaczenie aktywne", "✔ TitulkyCZ_Fuki : traduction active", "✔ TitulkyCZ_Fuki: traducción activa", "✔ TitulkyCZ_Fuki: traduzione attiva")
     )
 
     fun t(kod: String, klic: String): String {

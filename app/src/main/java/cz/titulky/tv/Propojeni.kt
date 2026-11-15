@@ -228,6 +228,10 @@ object Propojeni {
                         val barvy = casti.drop(5).firstOrNull { it.startsWith("B:") }?.let { b ->
                             runCatching { b.removePrefix("B:").trim().split(",").map { it.trim().toInt() }.toIntArray() }.getOrNull()
                         }
+                        // [Fuki] pozadí titulků z telefonu ("P:0.6")
+                        casti.drop(5).firstOrNull { it.startsWith("P:") }?.let { p ->
+                            p.removePrefix("P:").trim().toFloatOrNull()?.let { OverlayService.pozadiZTelefonu = it.coerceIn(0f, 1f) }
+                        }
                         priTitulku(odEscapuj(casti[3]), doba, odEscapuj(casti[4]), rozvrh, barvy)
                     }
                 }
@@ -389,6 +393,14 @@ object Propojeni {
         /** Do kdy právě upravujeme polohu (televize do té doby ukazuje zelený rámeček). */
         @Volatile private var upravaDo = 0L
 
+        /** [Fuki] Pozadí titulků na televizi: 0 = průhledné, 1 = plně černé. */
+        @Volatile var pozadi = 1f
+
+        fun nastavPozadi(p: Float) {
+            synchronized(zamek) { pozadi = p.coerceIn(0f, 1f); cislo++ }
+            posliTed()
+        }
+
         fun nastavRozvrh(r: FloatArray?) {
             synchronized(zamek) { rozvrh = r; cislo++ }
             posliTed()
@@ -424,7 +436,9 @@ object Propojeni {
             // barvy jmen až úplně na konec se značkou "B:" – starší televize je přeskočí
             val b = barvy
             val sBarvami = if (b != null && b.any { it != 0 }) "\tB:" + b.joinToString(",") else ""
-            "$TITULEK\t$cislo\t$doba\t${escapuj(text)}\t${escapuj(napoveda)}$konec$sBarvami".toByteArray(Charsets.UTF_8)
+            // [Fuki] pozadí titulků se značkou "P:" – starší televize ho přeskočí
+            val sPozadim = "\tP:$pozadi"
+            "$TITULEK\t$cislo\t$doba\t${escapuj(text)}\t${escapuj(napoveda)}$konec$sBarvami$sPozadim".toByteArray(Charsets.UTF_8)
         }
 
         private fun posliTed() = posliData(zprava())

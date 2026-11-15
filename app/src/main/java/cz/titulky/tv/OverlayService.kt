@@ -149,13 +149,38 @@ class OverlayService : Service() {
         pod.maxLines = tv.maxLines
         pod.minHeight = tv.minHeight
         pod.text = tv.text.toString()
-        pod.visibility = tv.visibility
+        // [Fuki] průhlednější pozadí → podklad schovat (dvě vrstvy by pozadí zase ztmavily)
+        pod.visibility = if (aktualniPozadi >= 0.99f) tv.visibility else android.view.View.INVISIBLE
         runCatching { wm.updateViewLayout(pod, WindowManager.LayoutParams().apply { copyFrom(lp) }) }
     }
 
     private var layout: WindowManager.LayoutParams? = null
     /** Konec úprav polohy → zase obyčejné černé pozadí bez rámečku. */
-    private val konecUpravy = Runnable { textView?.setBackgroundColor(POZADI) }
+    private val konecUpravy = Runnable { textView?.setBackgroundColor(barvaPozadi()) }
+
+    /** [Fuki] Aktuálně použité pozadí titulků (0..1). */
+    private var aktualniPozadi = 1f
+    private fun barvaPozadi(): Int =
+        if (aktualniPozadi >= 0.99f) POZADI else ((aktualniPozadi.coerceIn(0f, 1f) * 255).toInt() shl 24)
+
+    /**
+     * [Fuki] Pozadí titulků podle nastavení v telefonu. Plně černé = jako dřív (neprůhledné okno
+     * + podkladová vrstva). Méně = průhledné okno, podklad schovaný (jinak by se pozadí zdvojilo)
+     * a výraznější stín písma, ať jde číst i bez pozadí.
+     */
+    private fun pouzijPozadi() {
+        val p = (if (pozadiZTelefonu >= 0f) pozadiZTelefonu else 1f).coerceIn(0f, 1f)
+        if (kotlin.math.abs(p - aktualniPozadi) < 0.005f) return
+        aktualniPozadi = p
+        val barva = barvaPozadi()
+        val format = if (p >= 0.99f) PixelFormat.OPAQUE else PixelFormat.TRANSLUCENT
+        val stin = if (p < 0.5f) 10f else 6f
+        textView?.apply { setBackgroundColor(barva); setShadowLayer(stin, 0f, 0f, Color.BLACK) }
+        napoveda?.setBackgroundColor(barva)
+        layout?.let { lp -> lp.format = format; textView?.let { tv -> runCatching { wm.updateViewLayout(tv, lp) } } }
+        layoutNapovedy?.let { lp -> lp.format = format; napoveda?.let { n -> runCatching { wm.updateViewLayout(n, lp) } } }
+        srovnejPodklad()
+    }
 
     /** Výchozí poloha: dole uprostřed (pro hlášky a když nevíme, kde titulek je). */
     private fun nastavVychoziPolohu() {
@@ -182,7 +207,7 @@ class OverlayService : Service() {
         if (r.size >= 5 && r[4] == 1f) {
             val d = resources.displayMetrics.density
             textView?.background = android.graphics.drawable.GradientDrawable().apply {
-                setColor(POZADI)
+                setColor(barvaPozadi())
                 setStroke((3 * d).toInt(), ZELENA, 14 * d, 8 * d)
             }
             ui.removeCallbacks(konecUpravy)
@@ -381,6 +406,7 @@ class OverlayService : Service() {
             ukazNapovedu(intent.getStringExtra(EXTRA_TEXT).orEmpty(), intent.getFloatArrayExtra(EXTRA_BOX))
         }
         if (intent?.action == ACTION_SET_TEXT) {
+            pouzijPozadi()
             val text = intent.getStringExtra(EXTRA_TEXT).orEmpty()
             val box = intent.getFloatArrayExtra(EXTRA_BOX)
             val vlastni = intent.getFloatArrayExtra(EXTRA_VLASTNI)
@@ -484,6 +510,9 @@ class OverlayService : Service() {
         const val SIRKA_BOXU = 0.62f
         /** Jak vysoko nad spodním okrajem box je (podíl výšky obrazovky). */
         const val ODSAZENI_ZDOLA = 0.07f
+        /** [Fuki] Pozadí titulků poslané z telefonu (0..1), -1 = zatím nic → plně černé. */
+        @Volatile var pozadiZTelefonu = -1f
+
         /** Barva pozadí titulku – úplně neprůhledná. */
         val POZADI = 0xFF000000.toInt()
     }

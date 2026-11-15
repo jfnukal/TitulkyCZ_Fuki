@@ -309,7 +309,44 @@ class Ctecka {
      * trochu zkomolí ("Doktar Poradox"), doplní ji podle už známých jmen → jméno se nepřekládá
      * a replika se správně oddělí od předchozí.
      */
+    /** Nedávno přečtené řádky (bez jména) – kvůli poznání jména napsaného bez dvojtečky. */
+    private val nedavne = java.util.ArrayDeque<Pair<String, Long>>()
+
     private fun doplnJmeno(text: String): String {
+        val vysledek = jmenoBezDvojtecky(text) ?: doplnJmenoZname(text)
+        zapamatujNedavne(vysledek)
+        return vysledek
+    }
+
+    /**
+     * [Fuki] Hra píše jméno postavy bez dvojtečky a jméno se objeví až chvilku po replice
+     * ("Finally, some respite." → "Enki Finally, some respite.") → "Enki" je jméno.
+     */
+    private fun jmenoBezDvojtecky(text: String): String? {
+        val m = Regex("^([A-Z][a-z]{1,14}) (.+)$").find(text) ?: return null
+        val jm = m.groupValues[1]
+        val zbytek = m.groupValues[2]
+        if (jm.lowercase() in ANGLICKA) return null
+        val ted = System.currentTimeMillis()
+        val videno = synchronized(nedavne) {
+            nedavne.any { (t, kdy) -> ted - kdy < 3000 && podobnaJmena(zbytek, t) }
+        }
+        if (!videno) return null
+        znamaJmena.add(jm)
+        return "$jm: $zbytek"
+    }
+
+    private fun zapamatujNedavne(text: String) {
+        val bezJmena = JMENO_CELE.find(text)?.groupValues?.get(1) ?: text
+        val ted = System.currentTimeMillis()
+        synchronized(nedavne) {
+            nedavne.addLast(bezJmena to ted)
+            while (nedavne.size > 12 || (nedavne.isNotEmpty() && ted - nedavne.first().second > 3000))
+                nedavne.removeFirst()
+        }
+    }
+
+    private fun doplnJmenoZname(text: String): String {
         JMENO_CELE.find(text)?.let {
             val jm = text.substringBefore(':').trim()
             if (jm.length >= 2 && jm.split(' ').size <= 3) znamaJmena.add(jm)

@@ -73,6 +73,8 @@ class MainActivity : Activity() {
         Pady.hlidej(this)
         prevezmiAccountId(intent)
         ukazUvod()
+        // podpisová značka Fuki – úvodní animace (jednou za spuštění)
+        FukiIntro.ukaz(this)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -496,6 +498,8 @@ class MainActivity : Activity() {
             alpha = 0.85f
             setPadding(dp(24), dp(4), dp(24), dp(8))
         }, odsazeni(top = 10))
+        // podpisová značka Fuki – patička
+        vpravo.addView(FukiZnacka.podpis(this), odsazeni(top = 4, bottom = 8))
 
         val obsah = if (telefon) svisle().apply {
             addView(vlevo, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
@@ -1521,6 +1525,8 @@ class MainActivity : Activity() {
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        // během úvodní animace Fuki: OK / Zpět / Enter ji přeskočí
+        if (FukiIntro.zachytKlavesu(event)) return true
         // tlačítko Menu na ovladači → vývojářská obrazovka
         if (event.action == KeyEvent.ACTION_UP && event.keyCode == KeyEvent.KEYCODE_MENU) {
             startActivity(Intent(this, VyvojActivity::class.java)); return true

@@ -26,6 +26,9 @@ class TelefonActivity : Activity() {
     private val ui = Handler(Looper.getMainLooper())
     private val nast by lazy { Nastaveni(this) }
     private fun t(klic: String) = Texty.t(nast.jazykNeboCs, klic)
+    private val KOD_TABULKA = 4711
+    /** [Fuki] klíč nastavení: pozadí titulků v % (0–100) */
+    private val PREF_POZADI = "pozadiTitulku"
     private val prefs by lazy { getSharedPreferences("gamelingo", MODE_PRIVATE) }
 
     private lateinit var titulek: TextView
@@ -59,6 +62,9 @@ class TelefonActivity : Activity() {
         // Titulky jen v telefonu → jde otočit na šířku (černá obrazovka jen s titulky).
         // Otočení obrazovku nestaví znovu (configChanges v manifestu) → spojení se nepřeruší.
         nastavOtaceni(Propojeni.Vysilac.cilIp != null)
+        Propojeni.Vysilac.pozadi = prefs.getInt(PREF_POZADI, 100) / 100f
+        // [Fuki] tabulky překladů načíst hned (ať je v Úpravách vidět jejich stav)
+        Tabulka.nacti(getExternalFilesDir("tabulky"), hotovo = { ui.post { if (::upravy.isInitialized) obnovUpravy() } })
         Pady.hlidej(this)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         Volby.nacti(this)
@@ -515,6 +521,11 @@ class TelefonActivity : Activity() {
         if (!zelenaZamcena) {
             posuvnik(t("tvSirka"), 20, 100, { (rozvrh[2] * 100).toInt() }, { rozvrh[2] = it / 100f })
             posuvnik(t("tvPismo"), 50, 250, { (rozvrh[3] * 100).toInt() }, { rozvrh[3] = it / 100f })
+            // [Fuki] jak moc černé pozadí za titulky (0 % = jen písmo se stínem, 100 % = plně černé)
+            posuvnik(t("tvPozadi"), 0, 100, { prefs.getInt(PREF_POZADI, 100) }, {
+                prefs.edit().putInt(PREF_POZADI, it).apply()
+                Propojeni.Vysilac.nastavPozadi(it / 100f)
+            })
         }
 
         // ---- čtení titulků: automaticky / ručně (modrý rámeček) + zámeček vedle
@@ -612,29 +623,33 @@ class TelefonActivity : Activity() {
                 background = GradientDrawable().apply { cornerRadius = 999f; setColor(Color.parseColor("#333338")) }
                 setPadding(dp(2), dp(2), dp(2), dp(2))
             }
-            fun rezim(popis: String, text: Boolean) = TextView(this).apply {
+            // [Fuki] 0 = volby, 1 = text, 2 = menu
+            fun aktualniRezim() = if (Volby.rezimText) 1 else if (Volby.rezimMenu) 2 else 0
+            fun rezim(popis: String, kod: Int) = TextView(this).apply {
                 this.text = popis
                 textSize = 14f
                 typeface = Typeface.DEFAULT_BOLD
                 gravity = Gravity.CENTER
-                val zvoleno = Volby.rezimText == text
+                val zvoleno = aktualniRezim() == kod
                 setTextColor(if (zvoleno) Color.BLACK else Color.WHITE)
                 alpha = if (zvoleno) 1f else 0.6f
                 background = GradientDrawable().apply { cornerRadius = 999f; setColor(if (zvoleno) Volby.ZLUTA else Color.TRANSPARENT) }
                 setPadding(dp(10), dp(8), dp(10), dp(8))
                 setOnClickListener {
-                    if (Volby.rezimText != text) {
-                        Volby.rezimText = text
+                    if (aktualniRezim() != kod) {
+                        Volby.rezimText = kod == 1
+                        Volby.rezimMenu = kod == 2
                         Volby.uloz(this@TelefonActivity)
                         Propojeni.Vysilac.nastavVolby(emptyList(), -1)
                         obnovUpravy()
                     }
                 }
             }
-            radekRezim.addView(rezim(t("rezimVolby"), false), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-            radekRezim.addView(rezim(t("rezimText"), true), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            radekRezim.addView(rezim(t("rezimVolby"), 0), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            radekRezim.addView(rezim(t("rezimText"), 1), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            radekRezim.addView(rezim(t("rezimMenu"), 2), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
             obal.addView(radekRezim, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(8) })
-            sedaNapoveda(if (Volby.rezimText) t("rezimTextNap") else t("rezimVolbyNap"))
+            sedaNapoveda(when (aktualniRezim()) { 1 -> t("rezimTextNap"); 2 -> t("rezimMenuNap"); else -> t("rezimVolbyNap") })
         }
         if (Volby.zapnuto && !Volby.zamceno) {
             // ukazovat rámeček na televizi pořád (jen když chci vidět, kde je), jinak jen při posouvání
@@ -674,6 +689,36 @@ class TelefonActivity : Activity() {
                 { zmenRamecek(null, it / 100f) }, { ulozAPosliVolby() })
         }
 
+        // ---- [Fuki] AI překlad (Gemini): klíč a vypínač + stav tabulek
+        obal.addView(TextView(this).apply {
+            val klic = AiPrekladac.klic(this@TelefonActivity)
+            val zap = klic.isNotEmpty() && AiPrekladac.povoleno(this@TelefonActivity)
+            text = when { klic.isEmpty() -> t("aiBezKlice"); zap -> t("aiZap"); else -> t("aiVyp") }
+            textSize = 15f
+            typeface = Typeface.DEFAULT_BOLD
+            gravity = Gravity.CENTER
+            val barva = Color.parseColor("#7FD3FF")
+            setTextColor(if (zap) Color.BLACK else barva)
+            background = GradientDrawable().apply {
+                cornerRadius = 999f
+                if (zap) setColor(barva) else { setColor(Color.TRANSPARENT); setStroke(dp(2), barva) }
+            }
+            setPadding(dp(16), dp(10), dp(16), dp(10))
+            setOnClickListener { nastaveniAi() }
+        }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(18) })
+        sedaNapoveda(t("aiNap"))
+        sedaNapoveda(if (Tabulka.pocet > 0) t("tabulkyStav").replace("{n}", Tabulka.pocet.toString()) else t("tabulkyZadne"))
+        // [Fuki] nahrát tabulku ze Stažených souborů (bez adb)
+        obal.addView(TextView(this).apply {
+            text = t("tabulkaNahrat")
+            textSize = 14f
+            gravity = Gravity.CENTER
+            setTextColor(Color.WHITE)
+            background = GradientDrawable().apply { cornerRadius = 999f; setColor(Color.TRANSPARENT); setStroke(dp(1), Color.parseColor("#888888")) }
+            setPadding(dp(14), dp(8), dp(14), dp(8))
+            setOnClickListener { vyberTabulku() }
+        }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(8) })
+
         obal.addView(TextView(this).apply {
             text = t("tvVychozi")
             textSize = 13f
@@ -684,7 +729,83 @@ class TelefonActivity : Activity() {
                 ulozAPosliRozvrh(); obnovUpravy()
             }
         })
+        // podpisová značka Fuki – patička
+        obal.addView(FukiZnacka.podpis(this), LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(16) })
         return obal
+    }
+
+    /** [Fuki] Výběr tabulky překladů (systémový výběr souboru – Stažené soubory, Disk…). */
+    private fun vyberTabulku() {
+        val i = android.content.Intent(android.content.Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(android.content.Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+        }
+        runCatching { startActivityForResult(i, KOD_TABULKA) }
+            .onFailure { android.widget.Toast.makeText(this, t("tabulkaChyba").replace("{e}", it.message ?: ""), android.widget.Toast.LENGTH_LONG).show() }
+    }
+
+    @Deprecated("Activity API")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != KOD_TABULKA || resultCode != RESULT_OK) return
+        val uri = data?.data ?: return
+        // název souboru (kvůli koncovce .tsv / .tsv.gz)
+        val jmeno = runCatching {
+            contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
+                if (c.moveToFirst()) c.getString(0) else null
+            }
+        }.getOrNull() ?: "tabulka.tsv"
+        if (!jmeno.endsWith(".tsv") && !jmeno.endsWith(".tsv.gz")) {
+            android.widget.Toast.makeText(this, t("tabulkaSpatna"), android.widget.Toast.LENGTH_LONG).show()
+            return
+        }
+        android.widget.Toast.makeText(this, t("tabulkaNahravam"), android.widget.Toast.LENGTH_SHORT).show()
+        val slozka = getExternalFilesDir("tabulky") ?: java.io.File(filesDir, "tabulky")
+        Thread {
+            val chyba = runCatching {
+                slozka.mkdirs()
+                val cil = java.io.File(slozka, jmeno.replace(Regex("[^A-Za-z0-9._-]"), "_"))
+                contentResolver.openInputStream(uri)!!.use { vstup -> cil.outputStream().use { vstup.copyTo(it) } }
+            }.exceptionOrNull()
+            ui.post {
+                if (chyba != null) {
+                    android.widget.Toast.makeText(this, t("tabulkaChyba").replace("{e}", chyba.message ?: ""), android.widget.Toast.LENGTH_LONG).show()
+                    return@post
+                }
+                Tabulka.znovuNacti(slozka, hotovo = {
+                    ui.post {
+                        android.widget.Toast.makeText(this, t("tabulkaHotovo").replace("{n}", Tabulka.pocet.toString()), android.widget.Toast.LENGTH_LONG).show()
+                        if (::upravy.isInitialized) obnovUpravy()
+                    }
+                })
+            }
+        }.start()
+    }
+
+    /** [Fuki] Okno: zadat / změnit klíč ke Gemini, zapnout / vypnout AI překlad. */
+    private fun nastaveniAi() {
+        val pole = android.widget.EditText(this).apply {
+            hint = t("aiKlic")
+            setText(prefs.getString(AiPrekladac.PREF_KLIC, "") ?: "")
+            setSingleLine(true)
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+        }
+        val ramec = FrameLayout(this).apply { setPadding(dp(20), dp(8), dp(20), 0); addView(pole) }
+        android.app.AlertDialog.Builder(this)
+            .setTitle(t("aiNadpis"))
+            .setMessage(t("aiNap"))
+            .setView(ramec)
+            .setPositiveButton(t("aiUlozit")) { _, _ ->
+                prefs.edit().putString(AiPrekladac.PREF_KLIC, pole.text.toString().trim())
+                    .putBoolean(AiPrekladac.PREF_ZAP, true).apply()
+                obnovUpravy()
+            }
+            .setNeutralButton(t("aiVypnout")) { _, _ ->
+                prefs.edit().putBoolean(AiPrekladac.PREF_ZAP, false).apply()
+                obnovUpravy()
+            }
+            .setNegativeButton(t("aiZrusit"), null)
+            .show()
     }
 
     /** Prst puštěn → zelený i žlutý rámeček na televizi schovat (pokud žlutý nemá svítit pořád). */

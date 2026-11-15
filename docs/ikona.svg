@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#18223A"/><stop offset="1" stop-color="#0B111F"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <!-- televize -->
+  <rect x="52" y="78" width="372" height="262" rx="34" fill="#22314F" stroke="#F4F6FA" stroke-width="18"/>
+  <rect x="196" y="352" width="84" height="22" rx="8" fill="#F4F6FA"/>
+  <rect x="150" y="372" width="176" height="18" rx="9" fill="#F4F6FA"/>
+  <!-- ovladač -->
+  <path d="M168 132 h140 c38 0 58 26 64 62 l10 52 c5 26 -22 40 -40 20 l-26 -28 h-116 l-26 28 c-18 20 -45 6 -40 -20 l10 -52 c6 -36 26 -62 64 -62 z" fill="#8FA3C4" opacity="0.55"/>
+  <rect x="186" y="166" width="12" height="40" rx="3" fill="#22314F"/>
+  <rect x="172" y="180" width="40" height="12" rx="3" fill="#22314F"/>
+  <circle cx="290" cy="174" r="9" fill="#22314F"/><circle cx="310" cy="194" r="9" fill="#22314F"/>
+  <!-- titulky -->
+  <rect x="104" y="250" width="232" height="24" rx="12" fill="#FFFFFF"/>
+  <rect x="140" y="288" width="160" height="22" rx="11" fill="#FFD54A"/>
+  <!-- bublina CZ -->
+  <path d="M330 262 h120 a40 40 0 0 1 40 40 v66 a40 40 0 0 1 -40 40 h-54 l-38 36 l6 -36 h-34 a40 40 0 0 1 -40 -40 v-66 a40 40 0 0 1 40 -40 z" fill="#D7141A" stroke="#11457E" stroke-width="12"/>
+  <text x="390" y="362" text-anchor="middle" font-family="Inter" font-weight="900" font-size="78" fill="#FFFFFF" letter-spacing="-2">CZ</text>
+</svg>

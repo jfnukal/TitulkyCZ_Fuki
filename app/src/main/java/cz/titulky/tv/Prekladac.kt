@@ -46,16 +46,56 @@ class Prekladac(context: android.content.Context? = null, cilovy: String = "cs")
         cil = kod
         translator = novyTranslator(kod)
         cache.evictAll()
+        nactiPamet()
         runCatching { stary.close() }
         translator.downloadModelIfNeeded(DownloadConditions.Builder().build())
     }
 
     private val ui = Handler(Looper.getMainLooper())
-    private val sit = Executors.newSingleThreadExecutor()
+    // [Fuki] 3 vlákna: víc replik naráz se překládá souběžně, ne jedna po druhé
+    private val sit = Executors.newFixedThreadPool(3)
+    private val disk = Executors.newSingleThreadExecutor()
 
 
     /** Paměť na už přeložené věty – ve hrách se věty často opakují. */
-    private val cache = LruCache<String, String>(500)
+    private val cache = LruCache<String, String>(5000)
+
+    /** [Fuki] Paměť překladů se ukládá i na disk – po restartu aplikace platí dál. */
+    private val appContext = context?.applicationContext
+
+    private fun souborPameti(kod: String): java.io.File? =
+        appContext?.let { java.io.File(it.filesDir, "preklady_$kod.tsv") }
+
+    private fun nactiPamet() {
+        val kod = cil
+        runCatching { disk.execute {
+            runCatching {
+                val f = souborPameti(kod) ?: return@runCatching
+                if (!f.exists()) return@runCatching
+                val radky = f.readLines(Charsets.UTF_8)
+                for (r in radky.takeLast(5000)) {
+                    val i = r.indexOf('\t')
+                    if (i > 0 && kod == cil) cache.put(r.substring(0, i), r.substring(i + 1))
+                }
+                // soubor moc narostl → nechat jen posledních 5000 vět
+                if (radky.size > 20000) f.writeText(radky.takeLast(5000).joinToString("\n", postfix = "\n"), Charsets.UTF_8)
+            }
+        } }
+    }
+
+    private fun ulozDoPameti(anglicky: String, cesky: String) {
+        val kod = cil
+        runCatching { disk.execute {
+            runCatching {
+                val f = souborPameti(kod) ?: return@runCatching
+                val a = anglicky.replace('\t', ' ').replace('\n', ' ')
+                val c = cesky.replace('\t', ' ').replace('\n', ' ')
+                f.appendText("$a\t$c\n", Charsets.UTF_8)
+            }
+        } }
+    }
+
+    init { nactiPamet() }
 
     var pripraven = false
         private set
@@ -85,6 +125,8 @@ class Prekladac(context: android.content.Context? = null, cilovy: String = "cs")
     fun preloz(text: String, hotovo: (String) -> Unit, chyba: (String) -> Unit) {
         val vstup = upravSlang(text.trim())
         if (vstup.isEmpty()) { hotovo(""); return }
+        // [Fuki] hotový lidský překlad z tabulky (komunitní čeština) má přednost
+        Tabulka.preloz(text.trim())?.let { zdroj = "tabulka"; hotovo(it); return }
         cache.get(vstup)?.let { zdroj = "paměť"; hotovo(it); return }
         // služba mezitím skončila (překladač zavřený) → nic nedělat, hlavně nespadnout
         if (zavreno) { chyba("překladač zavřený"); return }
@@ -113,6 +155,7 @@ class Prekladac(context: android.content.Context? = null, cilovy: String = "cs")
                 if (!hotovyText.isNullOrBlank()) {
                     zdroj = odkud
                     cache.put(vstup, hotovyText)
+                    ulozDoPameti(vstup, hotovyText)
                     hotovo(hotovyText)
                 } else {
                     // nic online nejde → překlad v televizi
@@ -126,6 +169,7 @@ class Prekladac(context: android.content.Context? = null, cilovy: String = "cs")
     fun prelozRychle(text: String, hotovo: (String) -> Unit, chyba: (String) -> Unit) {
         val vstup = upravSlang(text.trim())
         if (vstup.isEmpty()) { hotovo(""); return }
+        Tabulka.preloz(text.trim())?.let { hotovo(it); return }
         // když už Google tuhle větu znal, vrátit rovnou dobrý překlad
         cache.get(vstup)?.let { hotovo(it); return }
         if (zavreno) { chyba("překladač zavřený"); return }
@@ -235,6 +279,7 @@ class Prekladac(context: android.content.Context? = null, cilovy: String = "cs")
         zavreno = true
         runCatching { translator.close() }
         sit.shutdown()
+        disk.shutdown()
     }
 
     companion object {

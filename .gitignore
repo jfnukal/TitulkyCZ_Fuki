@@ -20,3 +20,13 @@ ZALOHA/
 PROJEKT_POZNAMKY.md
 psn-account-id.ps1
 *.bat
+
+# [Fuki] tabulky překladů jsou jen pro vlastní potřebu – nenahrávat na GitHub
+tabulky_pro_telefon/
+*.tsv
+*.tsv.gz
+
+# [Fuki] podpisový klíč nikdy na GitHub
+*.jks
+*.keystore
+klic_base64.txt

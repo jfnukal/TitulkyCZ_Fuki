@@ -52,11 +52,26 @@ class RemotePlayService : Service() {
     @Volatile private var stSkipStejne = 0
     @Volatile private var stSkipVynoreni = 0
     private var stOd = 0L
+    /** [Fuki] statistika překladů za 30 s: zdroj → (počet, součet ms) */
+    private val stPreklady = HashMap<String, LongArray>()
+    private fun stPreklad(zdroj: String, ms: Long) {
+        val z = zdroj.ifEmpty { "?" }
+        val a = stPreklady.getOrPut(z) { LongArray(2) }
+        a[0]++; a[1] += ms
+    }
     private fun statistika(ted: Long) {
         if (stOd == 0L) { stOd = ted; return }
         if (ted - stOd < 30_000) return
         val zprava = "[za 30 s: čteno $stCteni×, beze změny $stSkipStejne×, čekání na titulek $stSkipVynoreni×, druhý pokus $stKontrast×, nad nápovědou $stNad×, poškozený obraz $stPoskozeno×, snímků $snimkuCelkem]"
-        ui.post { zapis(zprava) }
+        ui.post {
+            zapis(zprava)
+            // [Fuki] odkud byly překlady a jak rychlé
+            if (stPreklady.isNotEmpty()) {
+                zapis("[překlady za 30 s: " + stPreklady.entries.sortedByDescending { it.value[0] }
+                    .joinToString(", ") { "${it.key} ${it.value[0]}× ⌀${it.value[1] / it.value[0]} ms" } + "]")
+                stPreklady.clear()
+            }
+        }
         stCteni = 0; stSkipStejne = 0; stSkipVynoreni = 0; stKontrast = 0; stNad = 0; stPoskozeno = 0; stOd = ted
     }
     private var otiskMinulehoSnimku: IntArray? = null
@@ -66,10 +81,18 @@ class RemotePlayService : Service() {
     /** Pořadí posledního zpracovaného / ukázaného snímku – starší výsledky se zahodí. */
     private var posledniVysledek = 0L
     private var posledniUkazany = 0L
+    /** [Fuki] Číslo nejnovější repliky, jejíž překlad už začal – starší překlad se pak neukáže. */
+    private var posledniPrekladany = 0L
     private val popredi by lazy { Popredi(this) }
     @Volatile private var posledniPopredi: String? = null
     private val nast by lazy { Nastaveni(this) }
-    private val prekladac by lazy { Prekladac(this, nast.jazykNeboCs) }
+    private val prekladac by lazy {
+        // [Fuki] tabulky hotových překladů (Android/data/<balíček>/files/tabulky/*.tsv)
+        Tabulka.nacti(getExternalFilesDir("tabulky"), zapis = { t -> ui.post { zapis(t) } })
+        Prekladac(this, nast.jazykNeboCs)
+    }
+    /** [Fuki] AI překlad s kontextem hry (Gemini) – jen když je v local.properties klíč. */
+    private val ai by lazy { AiPrekladac(this) { zapis(it) } }
 
     private var prectenoPosledne = ""
     private var prazdnychZaSebou = 0
@@ -972,6 +995,7 @@ class RemotePlayService : Service() {
 
     private fun prelozAUkaz(surove: List<String>, box: FloatArray?, radku: Int, barvyJmen: IntArray, cislo: Long, oprava: Boolean = false) {
         if (!nast.dialogy) return
+        if (cislo > posledniPrekladany) posledniPrekladany = cislo
         // číslice nalepená před slovem ("3Miss Grimshaw..") je smetí ze čtení
         val puvodni = surove.map { Regex("^[0-9](?=[A-Z][a-z])").replace(it, "") }
         // Hra (např. RDR2) dělí dlouhou větu na dva titulky: "we need to" → "get that fire lit quick."
@@ -1016,12 +1040,28 @@ class RemotePlayService : Service() {
         prekladac.nastavJazyk(cil)
         ctecky.forEach { it.cilovyJazyk = cil }
         var dobryHotov = false
-        fun ukazJestli(cesky: String, dobry: Boolean) {
+        var aiHotov = false
+        fun ukazJestli(cesky: String, dobry: Boolean, zAi: Boolean = false) {
             if (cislo < posledniUkazany) return // mezitím se ukázala novější replika
+            // [Fuki] mezitím se začala překládat novější replika → starý (pomalý) překlad už neukazovat
+            if (cislo < posledniPrekladany) return
             if (!dobry && dobryHotov) return     // rychlý překlad přišel až po dobrém → nic
+            if (!zAi && aiHotov) return          // [Fuki] AI (lepší) už je venku → Google ani náhled nepřepíše
             if (dobry) dobryHotov = true
+            if (zAi) aiHotov = true
             posledniUkazany = cislo
             ukazCesky(cesky, box, radku, barvyJmen)
+            if (dobry) ai.zapamatuj(cislo, repliky, cesky)
+        }
+        // [Fuki] AI překlad s kontextem hry běží souběžně – až dorazí, nahradí překlad z Googlu
+        // (když jsou všechny repliky v tabulce hotových překladů, AI není potřeba – lidský překlad je lepší)
+        val vseZTabulky = repliky.all { r ->
+            Tabulka.preloz(Regex("^[A-Z][A-Za-z0-9 .'-]{1,24}:\\s*(.+)$").find(r)?.groupValues?.get(1) ?: r) != null
+        }
+        val zacatekAi = System.currentTimeMillis()
+        if (ai.zapnuto && !vseZTabulky) ai.preloz(cislo, repliky, cil) { lepsi ->
+            stPreklad("ai", System.currentTimeMillis() - zacatekAi)
+            ukazJestli(lepsi, dobry = true, zAi = true)
         }
         // 1) hned rychlý překlad z televize (~0,2 s), 2) pak ho nahradí lepší z Googlu
         // rychlý překlad ukázat, jen když Google do 0,15 s neodpoví – jinak by titulek "problikl"
@@ -1034,6 +1074,7 @@ class RemotePlayService : Service() {
         }
         prelozVse(repliky, rychle = false) { cesky ->
             zapis("  → ČESKY (čtení ${casCteni} ms, překlad ${System.currentTimeMillis() - zacatekPrekladu} ms ${prekladac.zdroj}, chyb Googlu ${prekladac.chybGooglu}): " + cesky.replace("\n", " / "))
+            stPreklad(prekladac.zdroj, System.currentTimeMillis() - zacatekPrekladu)
             ukazJestli(cesky, dobry = true)
         }
     }
@@ -1520,7 +1561,13 @@ class RemotePlayService : Service() {
             volbyCtu = false
             val boxy = radky.map { val r = it.second; android.graphics.Rect(r.left / 2, r.top / 2, r.right / 2, r.bottom / 2) }
             val vybrana = runCatching { zvyraznena(boxy, barvy, w, h) }.getOrDefault(-1)
-            ui.post { if (Volby.rezimText) zpracujText(radky.map { it.first }) else zpracujVolby(radky.map { it.first }, vybrana) }
+            ui.post {
+                when {
+                    Volby.rezimText -> zpracujText(radky.map { it.first })
+                    Volby.rezimMenu -> zpracujMenu(radky.map { it.first })
+                    else -> zpracujVolby(radky.map { it.first }, vybrana)
+                }
+            }
         }, { volbyCtu = false })
     }
 
@@ -1598,6 +1645,57 @@ class RemotePlayService : Service() {
                 if (textPosledni == text) Propojeni.Vysilac.nastavVolby(listOf(cesky), Volby.VYBRANA_TEXT)
             }
         }, { e -> zapis("[text: chyba překladu $e]") })
+    }
+
+    /**
+     * [Fuki] Režim Menu: každý řádek v rámečku (menu, úkoly, deník, inventář) se přeloží zvlášť
+     * – z tabulky hotových překladů, jinak Google – a pošle na televizi jako seznam vedle rámečku.
+     * Na rozdíl od voleb nevyžaduje zvýrazněný řádek. Na televizi vydrží, dokud je menu vidět.
+     */
+    private fun zpracujMenu(surove: List<String>) {
+        val radky = surove.map { it.trim().trimStart { ch -> !ch.isLetterOrDigit() && ch != '"' && ch != '„' }.trim() }
+            .filter { r -> r.count { it.isLetter() } >= 2 && !Ctecka.jeNesmysl(r) }
+            .distinct()
+            .take(14)
+        val ted = System.currentTimeMillis()
+        if (radky.isEmpty()) {
+            if (volbyPosledni.isNotEmpty()) {
+                if (volbyPrazdneOd == 0L) volbyPrazdneOd = ted
+                if (ted - volbyPrazdneOd > 1500) {
+                    volbyPosledni = emptyList()
+                    Propojeni.Vysilac.nastavVolby(emptyList(), -1)
+                    zapis("[menu zmizelo]")
+                }
+            }
+            return
+        }
+        volbyPrazdneOd = 0L
+        // drobné rozdíly ve čtení (jeden řádek přečtený trochu jinak) → nepřekládat znovu
+        if (volbyPosledni.size == radky.size && volbyPosledni.zip(radky).all { (a, b) -> podobne(a, b) }) return
+        val novy = radky != volbyPosledni
+        volbyPosledni = radky
+        if (prekladyVoleb.size > 300) prekladyVoleb.clear()
+        val chybi = radky.filter { it !in prekladyVoleb }
+        fun posli() {
+            if (volbyPosledni != radky) return
+            Propojeni.Vysilac.nastavVolby(radky.map { prekladyVoleb[it] ?: it }, Volby.VYBRANA_TEXT)
+        }
+        if (chybi.isEmpty()) { posli(); return }
+        if (novy) zapis("[menu: ${radky.joinToString(" | ").take(200)}]")
+        prekladac.nastavJazyk(nast.jazykNeboCs)
+        var zbyva = chybi.size
+        for (r in chybi) {
+            prekladac.preloz(r, { cesky ->
+                ui.post {
+                    var opraveno = opravJmena(r, cesky)
+                    if (r.firstOrNull()?.isUpperCase() == true) opraveno = opraveno.replaceFirstChar { it.uppercaseChar() }
+                    prekladyVoleb[r] = opraveno
+                    if (--zbyva == 0) posli()
+                }
+            }, {
+                ui.post { if (--zbyva == 0) posli() }
+            })
+        }
     }
 
     private fun zpracujVolby(surove: List<String>, vybrana: Int) {
@@ -2032,6 +2130,7 @@ class RemotePlayService : Service() {
             runCatching { snimac?.zavri() }
             ctecky.forEach { it.zavri() }
             prekladac.zavri()
+            ai.zavri()
             vlakno.quitSafely()
         }
         super.onDestroy()
