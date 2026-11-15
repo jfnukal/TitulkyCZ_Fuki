@@ -597,6 +597,18 @@ class TelefonActivity : Activity() {
         pridej(radekAi)
         hraText = Metro.text(c, "", 12f, Metro.OBRYS, 400).apply { setLineSpacing(0f, 1.2f) }
         pridej(hraText!!, 6)
+        pridej(volbaDl("Změnil jsem hru", false) {
+            RemotePlayService.zmenaHry(this)
+            android.widget.Toast.makeText(this, "Zjišťuji novou hru…", android.widget.Toast.LENGTH_SHORT).show()
+        }, 6)
+        if (aiZap) {
+            stitek("AI překládá")
+            val usp = AiPrekladac.usporne(this)
+            pridej(radekVoleb(listOf("Každý titulek" to !usp, "Jen delší věty (úsporně)" to usp)) { i ->
+                prefs.edit().putBoolean(AiPrekladac.PREF_USPORNE, i == 1).apply(); obnovUpravy()
+            })
+            napoveda("Úsporně: krátké repliky („Yeah.“, „Come on!“) přeloží Google zdarma, AI jen věty od 6 slov. Ušetří zhruba polovinu dotazů.")
+        }
 
         // ---- pokročilé
         pridej(infoDl(if (pokrocile) "Pokročilé ▴" else "Pokročilé ▾",

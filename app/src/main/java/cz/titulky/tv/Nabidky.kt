@@ -20,7 +20,16 @@ object Nabidky {
             setSingleLine(true)
             inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
         }
-        val ramec = FrameLayout(a).apply { setPadding((20 * d).toInt(), (8 * d).toInt(), (20 * d).toInt(), 0); addView(pole) }
+        val usporne = android.widget.CheckBox(a).apply {
+            text = "Úsporně: AI jen na delší věty (krátké přeloží Google)"
+            isChecked = AiPrekladac.usporne(a)
+            setOnCheckedChangeListener { _, ano -> prefs.edit().putBoolean(AiPrekladac.PREF_USPORNE, ano).apply() }
+        }
+        val ramec = android.widget.LinearLayout(a).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setPadding((20 * d).toInt(), (8 * d).toInt(), (20 * d).toInt(), 0)
+            addView(pole); addView(usporne)
+        }
         AlertDialog.Builder(a)
             .setTitle("AI překlad s kontextem hry")
             .setMessage("Gemini pozná hru a překládá s ohledem na postavy (rod), jména a předchozí věty. Klíč získáš na aistudio.google.com → Get API key. Text titulků se posílá Googlu.")

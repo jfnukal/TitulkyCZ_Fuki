@@ -800,6 +800,10 @@ class MainActivity : Activity() {
             .setTitle("O aplikaci")
             .setView(ScrollView(this).apply { addView(obsah) })
             .setPositiveButton("Zkontrolovat aktualizace") { _, _ -> Aktualizace.zkontroluj(this, rucne = true) }
+            .setNeutralButton("Změnil jsem hru") { _, _ ->
+                RemotePlayService.zmenaHry(this)
+                android.widget.Toast.makeText(this, if (RemotePlayService.aktivni) "Zjišťuji novou hru…" else "Překlad neběží", android.widget.Toast.LENGTH_SHORT).show()
+            }
             .setNegativeButton("Zavřít", null)
             .show()
     }

@@ -111,6 +111,7 @@ class RemotePlayService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         startAsForeground()
         when (intent?.action) {
+            ACTION_HRA -> zmenaHry()
             ACTION_PREPNOUT -> {
                 // tlačítko ⇄ v aplikaci: odpojit a připojit se k druhé konzoli
                 zapis("[přepínám na " + (if (preferXbox(this)) "Xbox" else "PS5") + "]")
@@ -1070,7 +1071,9 @@ class RemotePlayService : Service() {
             Tabulka.preloz(Regex("^[A-Z][A-Za-z0-9 .'-]{1,24}:\\s*(.+)$").find(r)?.groupValues?.get(1) ?: r) != null
         }
         val zacatekAi = System.currentTimeMillis()
-        if (ai.zapnuto && !vseZTabulky) ai.preloz(cislo, repliky, cil) { lepsi ->
+        // [Fuki] úsporný režim: krátké repliky („Yeah.“, „Come on!“) přeloží Google, AI jen delší věty
+        val delsi = repliky.sumOf { r -> r.substringAfter(": ", r).trim().split(Regex("\\s+")).size } >= 6
+        if (ai.zapnuto && !vseZTabulky && (delsi || !AiPrekladac.usporne(this))) ai.preloz(cislo, repliky, cil) { lepsi ->
             stPreklad("ai", System.currentTimeMillis() - zacatekAi)
             zapisRychlost("AI", System.currentTimeMillis() - zacatekAi)
             ukazJestli(lepsi, dobry = true, zAi = true)
@@ -1883,8 +1886,17 @@ class RemotePlayService : Service() {
                     if (ai.zapnuto) ai.znamaHra(nazev, nast.jazykNeboCs)
                 }
             }.apply { isDaemon = true; name = "hra-xbox" }.start()
-            ui.postDelayed(this, 60_000)
+            ui.postDelayed(this, 300_000)
         }
+    }
+
+    /** [Fuki] Tlačítko „Změnil jsem hru“: zapomenout starou hru a hned se zeptat Xboxu na novou. */
+    private fun zmenaHry() {
+        zapis("[změna hry – zjišťuji novou]")
+        hraNaXboxu = ""
+        Tabulka.vsechny()
+        ai.zapomenHru()
+        if (aktivni && naXboxu) { ui.removeCallbacks(sledovaniHry); ui.post(sledovaniHry) }
     }
 
     private fun spustXbox(id: String) {
@@ -2271,6 +2283,12 @@ class RemotePlayService : Service() {
         @Volatile var naXboxu = false
         /** [Fuki] Hra, kterou hlásí Xbox (prázdné = neznámá). */
         @Volatile var hraNaXboxu = ""
+        const val ACTION_HRA = "cz.titulky.tv.REMOTE_HRA"
+        /** [Fuki] Hráč změnil hru (tlačítko v aplikaci). */
+        fun zmenaHry(c: android.content.Context) {
+            if (!aktivni) return
+            runCatching { c.startService(android.content.Intent(c, RemotePlayService::class.java).setAction(ACTION_HRA)) }
+        }
         /** [Fuki] Ukazatel rychlosti: poslední překlad a průměry za 30 s. */
         @Volatile var rychlostPosledni = ""
         @Volatile var rychlostPrumer = ""

@@ -146,6 +146,16 @@ class AiPrekladac(context: Context, private val zapis: (String) -> Unit) {
         }.joinToString("\n")
     }
 
+    /** [Fuki] Hráč změnil hru → zapomenout profil, novou hru poznat znovu (z Xboxu nebo z titulků). */
+    fun zapomenHru() {
+        nazevHry = ""
+        profil = ""
+        pokusuOProfil = 0
+        synchronized(nasbirane) { nasbirane.clear() }
+        synchronized(historie) { historie.clear() }
+        log("[AI: změna hry – profil zapomenut]")
+    }
+
     /**
      * [Fuki] Hru poznal Xbox → profil (postavy, rod, pojmy) hned podle názvu, bez čekání na repliky.
      */
@@ -281,6 +291,9 @@ class AiPrekladac(context: Context, private val zapis: (String) -> Unit) {
         fun klic(c: Context): String =
             prefs(c).getString(PREF_KLIC, null)?.trim().takeUnless { it.isNullOrEmpty() } ?: BuildConfig.GEMINI_KEY.trim()
         fun povoleno(c: Context): Boolean = prefs(c).getBoolean(PREF_ZAP, true)
+        /** [Fuki] Úsporně: AI jen na delší věty (od 6 slov), krátké repliky přeloží Google. */
+        const val PREF_USPORNE = "aiUsporne"
+        fun usporne(c: Context): Boolean = prefs(c).getBoolean(PREF_USPORNE, false)
 
         private val JMENO = Regex("^([A-Z][A-Za-z0-9 .'-]{1,24}):\\s*")
         private val JAZYKY = mapOf(

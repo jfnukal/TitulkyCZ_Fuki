@@ -129,6 +129,9 @@ object Tabulka {
         return shoda.firstOrNull()?.soubor
     }
 
+    /** [Fuki] Změna hry: zase používat všechny tabulky, dokud se nepozná nová hra. */
+    fun vsechny() { aktivni = null }
+
     /** [Fuki] Názvy her načtených tabulek. */
     fun hry(): List<String> = indexy.map { it.hra }
 
