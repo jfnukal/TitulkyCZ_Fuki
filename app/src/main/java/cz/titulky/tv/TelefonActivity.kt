@@ -600,6 +600,13 @@ class TelefonActivity : Activity() {
             }
             napoveda("V náhledu teď jdou posouvat i rámečky: modrý = kde aplikace čte titulky, žlutý = kde hra ukazuje volby.")
             posuvnik(t("tvSirka"), 20, 100, { (rozvrh[2] * 100).toInt() }, { rozvrh[2] = it / 100f })
+            // [Fuki] pozadí za titulky ručně po 5 % (0 % = úplně průhledné, 100 % = plně černé)
+            posuvnik("Pozadí (krytí)", 0, 100, { prefs.getInt(PREF_POZADI, 100) }, {
+                val v = (it / 5) * 5
+                prefs.edit().putInt(PREF_POZADI, v).apply()
+                Propojeni.Vysilac.nastavPozadi(v / 100f)
+            })
+            napoveda("0 % = bez pozadí, jen písmo se stínem · 100 % = plně černý pruh. Na televizi se změna ukáže hned.")
 
             stitek("Kde aplikace čte titulky")
             pridej(radekVoleb(listOf("Automaticky" to !OblastTitulku.rucne, "Ručně (modrý rámeček)" to OblastTitulku.rucne)) { i ->

@@ -4,6 +4,9 @@
 Od verze 0.10 se vyvíjí jen jedna aplikace (dřívější NextGen, větev `master`) – umí „Jen televize“ i „S telefonem“.
 Při každé nové verzi se zvýší číslo v `app/build.gradle.kts` (versionCode + versionName) a sem se dopíše, co je nového.
 
+## 0.20.1-fuki16
+- Telefon – Úpravy → Pokročilé: posuvník „Pozadí (krytí)“ pro ruční nastavení průhlednosti pozadí za titulky (po 5 %).
+
 ## 0.20.1-fuki15
 - Pryč staré obrazovky: úvodní načítání a uvítání (betu) nahradila animace Fuki. Výběr jazyka, připojení Xboxu, přihlášení k Microsoft účtu (QR) a čekání na telefon (TV) jsou nově v dlaždicích. Na TV se vše vejde na jednu obrazovku.
 - Jazyk překladu: zatím jen čeština (slovenština a další jazyky v backlogu, ukazují se jako „Připravujeme“).
