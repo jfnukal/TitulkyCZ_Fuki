@@ -65,7 +65,7 @@ class MainActivity : Activity() {
         const val SKUPINA_URL = ""
         const val DOBA_BETA_MS = 9000L
         /** Jazyky, které jdou zatím vybrat (beta pro českou a slovenskou komunitu). */
-        val AKTIVNI_JAZYKY = setOf("cs", "sk")
+        val AKTIVNI_JAZYKY = setOf("cs")  // slovenština: backlog
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -126,180 +126,54 @@ class MainActivity : Activity() {
 
     // ------------------------------------------------------------------ úvod
 
+    /** [Fuki] Úvod je animace FukiIntro. Jazyk je zatím jen čeština (slovenština v backlogu). */
     private fun ukazUvod() {
-        obrazovka = "uvod"
-        val bar = View(this).apply { setBackgroundColor(CERVENA) }
-        val drazka = FrameLayout(this).apply {
-            background = zaobleni(Color.parseColor("#26262E"), 999f)
-            addView(bar, FrameLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT))
-        }
-        val koren = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            setBackgroundColor(Color.BLACK)
-            addView(ImageView(this@MainActivity).apply {
-                setImageResource(R.drawable.logo)
-                adjustViewBounds = true
-            }, LinearLayout.LayoutParams(if (telefon) dp(380) else dp(520), ViewGroup.LayoutParams.WRAP_CONTENT))
-            addView(drazka, LinearLayout.LayoutParams(dp(340), dp(10)).apply { topMargin = dp(36) })
-        }
-        setContentView(koren)
-        // animace načítání ~1,6 s
-        val start = System.currentTimeMillis()
-        val krok = object : Runnable {
-            override fun run() {
-                if (obrazovka != "uvod") return
-                val podil = ((System.currentTimeMillis() - start) / 1600f).coerceAtMost(1f)
-                bar.layoutParams = bar.layoutParams.apply { width = (drazka.width * podil).toInt() }
-                bar.requestLayout()
-                if (podil < 1f) ui.postDelayed(this, 30)
-                // poprvé: nejdřív výběr jazyka, uvítání až potom (ve zvoleném jazyce)
-                else if (nast.jazyk == null) ukazJazyk()
-                else if (maUkazatBetu()) ukazBetu() else pokracuj()
-            }
-        }
-        ui.post(krok)
+        if (nast.jazyk !in AKTIVNI_JAZYKY) nast.jazyk = "cs"
+        ukazHlavni()
     }
-
-    private fun pokracuj() { if (nast.jazyk == null) ukazJazyk() else ukazHlavni() }
-
-    // ------------------------------------------------------------------ beta: uvítání
 
     private val verze by lazy { runCatching { packageManager.getPackageInfo(packageName, 0).versionName }.getOrNull() ?: "" }
     private val prefsBeta by lazy { getSharedPreferences("beta", MODE_PRIVATE) }
 
-    /** Uvítání ukázat při prvních 3 spuštěních každé verze. */
-    private fun maUkazatBetu(): Boolean {
-        val klic = "uvitani_$verze"
-        val kolikrat = prefsBeta.getInt(klic, 0)
-        if (kolikrat >= 3) return false
-        prefsBeta.edit().putInt(klic, kolikrat + 1).apply()
-        return true
-    }
-
-    /** Malá značka "BETA 0.9" do pravého horního rohu. */
+    /** Malá značka s verzí do pravého horního rohu. */
     private fun betaZnacka() = TextView(this).apply {
         text = verze
         textSize = 12f * SKALA
         typeface = Metro.pismo(this@MainActivity, 600)
-        letterSpacing = 0.06f
         setTextColor(Metro.OBRYS)
-        setBackgroundColor(Color.parseColor("#151B2A"))
-        setPadding(dp(10), dp(4), dp(10), dp(4))
     }
 
-    private fun ukazBetu() {
-        obrazovka = "beta"
-        okBtn = null
-        val zelena = Color.parseColor("#3CFF6E")
-        val box = svisle().apply {
-            gravity = Gravity.CENTER_HORIZONTAL
-            background = zaobleni(Color.parseColor("#111116"), 26f, zelena)
-            setPadding(dp(54), dp(30), dp(54), dp(30))
-        }
-        box.addView(text(t("betaNadpis"), 34f, zelena, tucne = true).apply { gravity = Gravity.CENTER })
-        val radek = vodorovne().apply { gravity = Gravity.CENTER_VERTICAL }
-        radek.addView(text(t("betaText"), 21f, Color.parseColor("#E8E8EE")).apply {
-            gravity = Gravity.CENTER
-            setLineSpacing(0f, 1.3f)
-        }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-        // QR na Facebook skupinu (jen na televizi – telefon by skenoval sám sebe)
-        if (!telefon && SKUPINA_URL.isNotEmpty()) {
-            val q = svisle().apply { gravity = Gravity.CENTER_HORIZONTAL }
-            q.addView(ImageView(this).apply {
-                setImageBitmap(PrihlaseniTelefonem.qr(SKUPINA_URL, 400))
-                background = zaobleni(Color.WHITE, 14f)
-                setPadding(dp(8), dp(8), dp(8), dp(8))
-            }, LinearLayout.LayoutParams(dp(190), dp(190)))
-            q.addView(text(t("betaSkupina"), 15f, TEXT2).apply { gravity = Gravity.CENTER }, odsazeni(top = 8))
-            radek.addView(q, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { leftMargin = dp(36) })
-        }
-        box.addView(radek, odsazeni(top = 14))
-
-        val stred = svisle().apply {
-            gravity = Gravity.CENTER
-            addView(ImageView(this@MainActivity).apply {
-                setImageResource(R.drawable.logo); adjustViewBounds = true
-            }, LinearLayout.LayoutParams(if (telefon) dp(300) else dp(340), ViewGroup.LayoutParams.WRAP_CONTENT))
-            addView(box, LinearLayout.LayoutParams(if (telefon) ViewGroup.LayoutParams.MATCH_PARENT else dp(1250), ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(30) })
-            // nemizí samo – člověk potvrdí, že si to přečetl
-            addView(tlacitkoZelene(t("betaOk")) { if (obrazovka == "beta") pokracuj() }.also { okBtn = it },
-                LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(26) })
-        }
-        val koren = FrameLayout(this).apply {
-            setBackgroundColor(Color.BLACK)
-            setPadding(dp(24), dp(24), dp(24), dp(24))
-            addView(stred, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
-            addView(betaZnacka(), FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP or Gravity.END))
-        }
-        setContentView(koren)
-        okBtn?.requestFocus()
-    }
-
-    /** Tlačítko OK na uvítání (výběr ovladačem rovnou na něm). */
-    private var okBtn: View? = null
-
-    // ------------------------------------------------------------------ výběr jazyka
+    // ------------------------------------------------------------------ [Fuki] výběr jazyka (dlaždice)
 
     private fun ukazJazyk() {
         obrazovka = "jazyk"
-        var vybrany = nast.jazyk?.takeIf { it in AKTIVNI_JAZYKY } ?: "cs"
-        val sloupec = svisle().apply { gravity = Gravity.CENTER_HORIZONTAL }
-        sloupec.addView(nadpisLogo())
-        sloupec.addView(text(Texty.t(vybrany, "vyberJazyk"), 30f, Color.WHITE, tucne = true).apply { gravity = Gravity.CENTER })
-        val popis = text(Texty.t(vybrany, "vyberJazykPopis"), 18f, TEXT2).apply { gravity = Gravity.CENTER }
-        sloupec.addView(popis, odsazeni(top = 6, bottom = 20))
-
-        val mrizka = svisle()
-        val polozky = mutableListOf<TextView>()
-        lateinit var pokracovat: TextView
-        fun obnov() {
-            polozky.forEachIndexed { i, v ->
-                val j = Texty.JAZYKY[i]
+        val obsah = svisle()
+        obsah.addView(mt("Do jakého jazyka se titulky překládají. Zatím umíme češtinu, další jazyky připravujeme.", 0.026f, 14f, TEXT2),
+            LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { bottomMargin = mez * 4 })
+        val sloupcu = if (telefon) 2 else 4
+        val vyskaDl = if (telefon) Metro.dp(this, 104f) else (vyskaObr * 0.2f).toInt()
+        var vybrana: View? = null
+        Texty.JAZYKY.chunked(sloupcu).forEachIndexed { ri, cast ->
+            val r = vodorovne()
+            cast.forEachIndexed { i, j ->
                 val aktivni = j.kod in AKTIVNI_JAZYKY
-                v.text = "${j.vlajka}   ${j.nazev}" + when {
-                    !aktivni -> "   · " + Texty.t(vybrany, "brzy")
-                    j.kod == vybrany -> "      ✔"
-                    else -> ""
+                val zvoleny = j.kod == jazyk
+                val dl = mdl(null, j.kod.uppercase(), j.nazev,
+                    if (zvoleny) "Vybráno" else if (aktivni) "Vybrat" else "Připravujeme",
+                    zaklad = if (aktivni) Metro.MODRA else Metro.SEDA_DLAZDICE,
+                    vyber = if (aktivni) Metro.MODRA_VYBER else Metro.SEDA_VYBER,
+                    lista = zvoleny, barvaPopisu = if (zvoleny) Metro.ZLUTA else Metro.OBRYS) {
+                    if (aktivni) { nast.jazyk = j.kod; ukazHlavni() }
                 }
-                v.background = vyber(KARTA, if (j.kod == vybrany) CERVENA else null)
-                // zatím jen čeština a slovenština – ostatní šedé, nejdou vybrat
-                v.alpha = if (aktivni) 1f else 0.35f
-                v.isFocusable = aktivni
-                v.isClickable = aktivni
+                if (!aktivni) dl.d.alpha = 0.5f
+                if (zvoleny) vybrana = dl.d
+                r.addView(dl.d, LinearLayout.LayoutParams(0, vyskaDl, 1f).apply { if (i > 0) leftMargin = mez })
             }
-            pokracovat.text = Texty.t(vybrany, "pokracovat")
+            repeat(sloupcu - cast.size) { r.addView(View(this), LinearLayout.LayoutParams(0, vyskaDl, 1f).apply { leftMargin = mez }) }
+            obsah.addView(r, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { if (ri > 0) topMargin = mez })
         }
-        // dva sloupce jazyků
-        Texty.JAZYKY.chunked(if (telefon) Texty.JAZYKY.size else 4).let { sloupce ->
-            val radek = vodorovne()
-            sloupce.forEach { cast ->
-                val s = svisle()
-                cast.forEach { j ->
-                    val v = tlacitko("", 22f) {
-                        if (j.kod !in AKTIVNI_JAZYKY) return@tlacitko
-                        vybrany = j.kod
-                        obnov()
-                        sloupec.getChildAt(1).let { (it as TextView).text = Texty.t(vybrany, "vyberJazyk") }
-                        popis.text = Texty.t(vybrany, "vyberJazykPopis")
-                    }.apply { gravity = Gravity.CENTER_VERTICAL; setPadding(dp(24), dp(14), dp(24), dp(14)) }
-                    polozky += v
-                    s.addView(v, LinearLayout.LayoutParams(if (telefon) ViewGroup.LayoutParams.MATCH_PARENT else dp(330), ViewGroup.LayoutParams.WRAP_CONTENT).apply { setMargins(dp(8), dp(6), dp(8), dp(6)) })
-                }
-                radek.addView(s)
-            }
-            mrizka.addView(radek)
-        }
-        sloupec.addView(mrizka)
-        pokracovat = tlacitkoCervene("") {
-            nast.jazyk = vybrany
-            // první spuštění: po výběru jazyka uvítání v tom jazyce
-            if (obrazovka == "jazyk" && maUkazatBetu()) ukazBetu() else ukazHlavni()
-        }
-        sloupec.addView(pokracovat, LinearLayout.LayoutParams(if (telefon) ViewGroup.LayoutParams.MATCH_PARENT else dp(680), ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(20) })
-        obnov()
-        nastavObsah(sloupec, sirka = if (telefon) ViewGroup.LayoutParams.MATCH_PARENT else ViewGroup.LayoutParams.WRAP_CONTENT)
-        polozky[Texty.JAZYKY.indexOfFirst { it.kod == vybrany }.coerceAtLeast(0)].requestFocus()
+        metroRam("Jazyk překladu", obsah)
+        vybrana?.requestFocus()
     }
 
     // ------------------------------------------------------------------ hlavní obrazovka
@@ -312,222 +186,7 @@ class MainActivity : Activity() {
         if (!telefon && PrijemService.bezi) { ukazPrijem(); return }
         // [Fuki] telefon i televize: nová obrazovka v dlaždicích
         if (telefon) { ukazHlavniTelefon(); return }
-        ukazHlavniTv(); return
-        obrazovka = "hlavni"
-        val vlevo = svisle()
-        val vpravo = svisle()
-
-        // logo (podržením OK se otevře stará vývojářská obrazovka)
-        vlevo.addView(nadpisLogo().apply {
-            isFocusable = true
-            setOnLongClickListener { Zaznam.ukaz(this@MainActivity, sVyvojem = true); true }
-            // televize: menší logo, ať se celá stránka (i s QR podpory) vejde na jednu obrazovku
-            if (!telefon) layoutParams = LinearLayout.LayoutParams(dp(150), ViewGroup.LayoutParams.WRAP_CONTENT).apply { bottomMargin = dp(2) }
-        })
-
-        // povolení přes jiné aplikace (jen když chybí)
-        if (!telefon && !Settings.canDrawOverlays(this)) {
-            val k = karta()
-            k.addView(text(t("povoleniPopis"), 17f, Color.parseColor("#FFC24B")))
-            k.addView(tlacitkoCervene(t("povoleni")) { pozadejOPovoleni() }, obal(top = 10))
-            k.addView(tlacitko(t("povoleniNavodBtn"), 17f) { ukazNavodPovoleni() }
-                .apply { setPadding(dp(20), dp(10), dp(20), dp(10)) }, obal(top = 8))
-            vlevo.addView(k, odsazeni(bottom = 14))
-        }
-
-        // jazyk
-        vlevo.addView(sekce(t("jazykPrekladu")))
-        val j = Texty.JAZYKY.firstOrNull { it.kod == jazyk } ?: Texty.JAZYKY[0]
-        val popisZdroje = t("zdroj")
-        val jazykBtn = tlacitko("${j.vlajka}   ${j.nazev}   ›\n$popisZdroje", 22f) { ukazJazyk() }.apply {
-            setPadding(dp(24), dp(14), dp(24), dp(14))
-        }
-        vlevo.addView(jazykBtn, odsazeni(bottom = if (telefon) 18 else 10))
-
-        // konzole
-        vlevo.addView(sekce(t("pripojitKonzoli")))
-        val konzole = karta()
-        // Xbox – nad PS5, úplně stejný řádek a tlačítko jako PS5
-        val xbox = XboxUcet.konzole(this)
-        val rx = vodorovne().apply { gravity = Gravity.CENTER_VERTICAL }
-        xboxRadekText = "🎮  Xbox" + if (xbox != null) "   ✔ ${t("sparovano")}" else ""
-        rx.addView(text(xboxRadekText, 21f, Color.WHITE).also { xboxRadek = it },
-            LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-        rx.addView(tlacitkoZelene(if (xbox != null) t("znovuSparovat") else t("pripojit")) {
-            if (telefon) ukazPripojeniXbox() else upozorneniPredPrihlasenim(xbox = true)
-        })
-        konzole.addView(rx)
-        konzole.addView(text(t("xboxPopis"), 14f, TEXT2), odsazeni(top = 6))
-        konzole.addView(View(this).apply { setBackgroundColor(Color.parseColor("#424750")) },
-            LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1)).apply { topMargin = dp(10); bottomMargin = dp(8) })
-        val r = vodorovne().apply { gravity = Gravity.CENTER_VERTICAL }
-        ps5RadekText = "🎮  PlayStation 5" + if (udaje.sparovano) "   ✔ ${t("sparovano")}" else ""
-        r.addView(text(ps5RadekText, 21f, Color.WHITE).also { ps5Radek = it },
-            LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-        r.addView(tlacitkoZelene(if (udaje.sparovano) t("znovuSparovat") else t("pripojit")) {
-            if (telefon) ukazPripojeni() else upozorneniPredPrihlasenim()
-        }.also { pripojitBtn = it })
-        konzole.addView(r)
-        konzole.addView(text(t("pripojitPopis"), 14f, TEXT2), odsazeni(top = 6))
-        // telefon: najít televizi a převzít od ní spárování s PS5 (bez přihlašování účtu a PINu z PS5)
-        if (telefon) {
-            konzole.addView(tlacitkoZelene(t("prevzitZTv")) { prevzitSparovaniZTv() }, odsazeni(top = 12))
-            // nespárovaný telefon a v síti je televize s PlayCaption → přihlašování schovat, ať nikdo neklikne špatně
-            if (!udaje.sparovano) Propojeni.hledej(this, 2500) { nalez ->
-                ui.post {
-                    // jen spárovaná televize umí telefonu předat spárování; nespárovaná jen ukazuje titulky
-                    if (nalez.any { it.sparovano == true } && obrazovka == "hlavni" && !isFinishing) {
-                        pripojitBtn?.visibility = View.GONE
-                        konzole.addView(text(t("pridatNalezenaTv"), 15f, Color.parseColor("#3CFF6E")), odsazeni(top = 8))
-                    }
-                }
-            }
-        }
-        // televize (spárovaná): přidat Android telefon / tablet – kód v okně, telefon ho jen opíše
-        if (!telefon && udaje.sparovano) {
-            konzole.addView(View(this).apply { setBackgroundColor(Color.parseColor("#424750")) },
-                LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1)).apply { topMargin = dp(10); bottomMargin = dp(8) })
-            val rz = vodorovne().apply { gravity = Gravity.CENTER_VERTICAL }
-            val pridane = prefsBeta.getString("pridaneZarizeni", "") ?: ""
-            rz.addView(text("📱  " + t("pridatZarizeni") + "   " + (if (pridane.isNotEmpty()) "✔ $pridane" else t("pridatZadne")), 19f, Color.WHITE),
-                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-            rz.addView(tlacitkoZelene(t("pridatBtn")) { pridatZarizeni() })
-            konzole.addView(rz)
-        }
-        vlevo.addView(konzole)
-
-        // podpora – QR Platba (jen televize: telefon by musel skenovat sám sebe)
-        if (!telefon && PODPORA_QR.isNotEmpty()) {
-            vlevo.addView(sekce(t("podpora")), odsazeni(top = 6))
-            val k = vodorovne().apply {
-                gravity = Gravity.CENTER_VERTICAL
-                background = zaobleni(KARTA, 16f, Color.parseColor("#5A4F22"))
-                setPadding(dp(22), dp(8), dp(10), dp(8))
-            }
-            val txt = svisle()
-            txt.addView(text(t("podporaNadpis"), 20f, Color.parseColor("#FFD54A"), tucne = true))
-            txt.addView(text(t("podporaText"), 14f, Color.parseColor("#D8D8E0")).apply { setLineSpacing(0f, 1.2f) }, odsazeni(top = 4))
-            // QR je česká QR Platba – slovenské banky ji nenačtou → IBAN k ručnímu zadání
-            txt.addView(text(t("podporaIban"), 13f, Color.parseColor("#FFD54A")), odsazeni(top = 4))
-            k.addView(txt, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-            k.addView(ImageView(this).apply {
-                setImageBitmap(PrihlaseniTelefonem.qr(PODPORA_QR, 400))
-                background = zaobleni(Color.WHITE, 14f)
-                setPadding(dp(8), dp(8), dp(8), dp(8))
-            }, LinearLayout.LayoutParams(dp(120), dp(120)).apply { leftMargin = dp(16) })
-            vlevo.addView(k)
-        }
-
-        // stav
-        stavKarta = vodorovne().apply {
-            gravity = Gravity.CENTER
-            setPadding(dp(20), dp(18), dp(20), dp(18))
-            isFocusable = true
-            setOnClickListener { prepniPreklad() }
-        }
-        stavTecka = View(this).apply { background = zaobleni(Color.GRAY, 999f) }
-        stavText = text("", 24f, Color.WHITE, tucne = true)
-        stavKarta.addView(stavTecka, LinearLayout.LayoutParams(dp(18), dp(18)).apply { rightMargin = dp(16) })
-        stavKarta.addView(stavText)
-        val stavRadek = vodorovne().apply { gravity = Gravity.CENTER_VERTICAL }
-        stavRadek.addView(stavKarta, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-        // obě konzole spárované → malé červené tlačítko na přepnutí (po najetí bílý rámeček)
-        prepnoutBtn = tlacitko("", 20f) { prepniKonzoli() }.apply {
-            typeface = Typeface.DEFAULT_BOLD
-            gravity = Gravity.CENTER
-            background = vyber(CERVENA, radius = 999f)
-            setPadding(dp(24), dp(14), dp(24), dp(14))
-            visibility = if (RemotePlayService.obeZapnute && udaje.sparovano && XboxUcet.konzole(this@MainActivity) != null) View.VISIBLE else View.GONE
-        }
-        stavRadek.addView(prepnoutBtn, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { leftMargin = dp(12) })
-        vpravo.addView(stavRadek, odsazeni(top = if (telefon) 24 else 70, bottom = 22))
-
-        // zobrazení
-        if (!telefon) {
-            vpravo.addView(sekce(t("zobrazeni")))
-            val zobr = karta()
-            zobr.addView(prepinac(t("prekryvat"), { nast.prekryvat }, { nast.prekryvat = it }, t("zapnuto"), t("vypnuto")))
-            vpravo.addView(zobr, odsazeni(bottom = 18))
-        }
-
-        // co překládat
-        vpravo.addView(sekce(t("coPrekladat")))
-        val co = karta()
-        co.addView(prepinac(t("dialogy"), { nast.dialogy }, { nast.dialogy = it }, t("ano"), t("ne"), t("dialogyPopis")))
-        co.addView(View(this).apply { setBackgroundColor(SEDA) }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 1).apply { setMargins(0, dp(8), 0, dp(8)) })
-        // menu a nápovědy se nepřekládají samy – v mobilní aplikaci si je každý přeloží žlutým rámečkem (Text)
-        nast.napovedy = false
-        run {
-            val r = svisle()
-            r.addView(text(t("napovedy"), 20f, Color.WHITE))
-            r.addView(text(t("napovedyJenMobil"), 15f, TEXT2), odsazeni(top = 2))
-            co.addView(r)
-        }
-        vpravo.addView(co, odsazeni(bottom = 22))
-
-        var dlazdiceTv: View? = null
-        var dlazdiceTel: View? = null
-        if (telefon) {
-            vpravo.addView(tlacitkoCervene(t("hotovo")) {
-                if (nejakaKonzole) startActivity(Intent(this, TelefonActivity::class.java)) else ukazPripojeni()
-            })
-        } else {
-            // "Jak chceš hrát?" – dvě velké volby místo nenápadného tlačítka
-            vpravo.addView(sekce(t("hratJak")))
-            // okraj kolem dlaždic, ať se zvětšená vybraná dlaždice neořízne
-            val volby = vodorovne().apply { clipChildren = false; clipToPadding = false; setPadding(dp(12), dp(10), dp(12), dp(10)) }
-            // slabá televize (dřív nestíhala číst nebo jí padalo spojení) → doporučit telefon
-            val slaba = jeSlabaTv()
-            dlazdiceTv = dlazdice("📺", t("hratTv"), if (slaba) t("hratTvSlaba") else t("hratTvPopis"), CERVENA) {
-                if (slaba) varovaniSlabaTv() else hratTelevizi()
-            }
-            dlazdiceTel = dlazdice("📱➜📺", t("hratTel"), if (slaba) t("hratTelDoporuceno") else t("hratTelPopis"), Color.parseColor("#2A2C3E")) { hratSTelefonem() }
-            volby.addView(dlazdiceTv, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { rightMargin = dp(18) })
-            volby.addView(dlazdiceTel, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-            vpravo.addView(volby)
-            vpravo.addView(text(t("hratVyber"), 16f, TEXT2).apply { gravity = Gravity.CENTER }, odsazeni(top = 10))
-        }
-
-        // tip: na čem nejvíc záleží rychlost titulků
-        vpravo.addView(text(t("tipPripojeni"), 16f, TEXT2).apply {
-            setLineSpacing(0f, 1.3f)
-            background = zaobleni(KARTA, 16f)
-            setPadding(dp(24), dp(16), dp(24), dp(16))
-        }, odsazeni(top = 18))
-        // poděkování open-source projektu Chiaki / chiaki-ng (licence AGPLv3)
-        vpravo.addView(text(t("zasluhy"), 13f, TEXT2).apply {
-            setLineSpacing(0f, 1.25f)
-            alpha = 0.85f
-            setPadding(dp(24), dp(4), dp(24), dp(8))
-        }, odsazeni(top = 10))
-        // podpisová značka Fuki – patička
-        vpravo.addView(FukiZnacka.podpis(this), odsazeni(top = 4, bottom = 8))
-
-        val obsah = if (telefon) svisle().apply {
-            addView(vlevo, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
-            addView(vpravo, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
-        } else vodorovne().apply {
-            addView(vlevo, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { rightMargin = dp(40) })
-            addView(vpravo, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-        }
-        nastavObsah(obsah, sirka = ViewGroup.LayoutParams.MATCH_PARENT)
-
-        // automaticky spustit, když je vše připravené a uživatel překlad nevypnul
-        if (!telefon && !PrijemService.bezi && nejakaKonzole && Settings.canDrawOverlays(this) && AutoStart.jeZapnuto(this) && !RemotePlayService.aktivni) {
-            val up = getSharedPreferences("uspora", MODE_PRIVATE)
-            if (up.getBoolean("padlo", false) && prefsBeta.getString("rezimHry", "tv") == "tv") {
-                // minule v režimu „Jen televize“ spadla → nepřipojovat se samo dokola, zeptat se
-                up.edit().putBoolean("padlo", false).putBoolean("slaba", true).putBoolean("varovat", true).putBoolean("rychla", false).apply()
-                varovaniSlabaTv(t("padloNadpis"), t("padloText"))
-            } else {
-                up.edit().putBoolean("padlo", false).apply()
-                RemotePlayService.spustVse(this)
-            }
-        }
-        obnovStav()
-        ui.removeCallbacks(obnova)
-        ui.postDelayed(obnova, 1000)
-        if (!telefon) (if (jeSlabaTv() || prefsBeta.getString("rezimHry", "tv") == "tel") dlazdiceTel else dlazdiceTv)?.requestFocus()
+        ukazHlavniTv()
     }
 
     // ------------------------------------------------------------------ titulky z telefonu (televize)
@@ -625,7 +284,7 @@ class MainActivity : Activity() {
             AutoStart.nastavZapnuto(this, true)
             run { AutoStart.uspech(this); RemotePlayService.spustVse(this, prevzit = true) }
             Oznameni.ukaz(this, t("hratInfo"))
-        } else if (!nejakaKonzole) { ukazPripojeni(); return }
+        } else if (!nejakaKonzole) { ukazPripojeniXbox(); return }
         moveTaskToBack(true)
     }
 
@@ -644,71 +303,41 @@ class MainActivity : Activity() {
 
     // ------------------------------------------------------------------ titulky z telefonu (televize)
 
+    /** [Fuki] Televize čeká na titulky z telefonu – dlaždice na jednu obrazovku. */
     private fun ukazPrijem() {
         obrazovka = "prijem"
-        val sloupec = svisle().apply { gravity = Gravity.CENTER_HORIZONTAL }
-        sloupec.addView(nadpisLogo())
-        sloupec.addView(text(t("prijemNadpis"), 32f, Color.WHITE, tucne = true).apply { gravity = Gravity.CENTER }, odsazeni(top = 14))
-
-        // tři kroky s obrázky
-        val kroky = vodorovne().apply { gravity = Gravity.CENTER_VERTICAL }
-        listOf("📱" to "ngKrok1", "🔗" to "ngKrok2", "🎮" to "ngKrok3").forEachIndexed { i, (ikona, klic) ->
-            if (i > 0) kroky.addView(text("➜", 40f, Color.parseColor("#555555")), LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { setMargins(dp(18), 0, dp(18), 0) })
-            val k = svisle().apply {
-                gravity = Gravity.CENTER_HORIZONTAL
-                background = zaobleni(Color.parseColor("#1C1D28"), 26f).apply {
-                    // krok 2 (spárování) je jen poprvé → žlutý rámeček, ať je vidět, že se týká rámečku pod ním
-                    if (i == 1) setStroke(dp(2), Color.parseColor("#FFC24B"))
-                }
-                setPadding(dp(26), dp(18), dp(26), dp(18))
-            }
-            val nadpisKroku = "${t("ngKrokN")} ${i + 1}" + if (i == 1) " – ${t("ngKrok2N")}" else ""
-            k.addView(text(nadpisKroku, 15f, CERVENA, tucne = true).apply { gravity = Gravity.CENTER })
-            k.addView(text(ikona, 52f, Color.WHITE).apply { gravity = Gravity.CENTER }, odsazeni(top = 4))
-            k.addView(text(t(klic), 20f, Color.WHITE, tucne = true).apply { gravity = Gravity.CENTER }, odsazeni(top = 4))
-            kroky.addView(k, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        val obsah = svisle()
+        val kroky = vodorovne()
+        listOf(
+            Triple(R.drawable.ik_smartphone, "Krok 1", "V telefonu otevři TitulkyCZ_Fuki"),
+            Triple(R.drawable.ik_check_circle, "Krok 2 · jen poprvé", "Spáruj telefon s televizí"),
+            Triple(R.drawable.ik_sports_esports, "Krok 3", "V telefonu dej Hrát a polož ho")
+        ).forEachIndexed { i, (ik, n, h) ->
+            val dl = mdl(ik, n, h, null, lista = i == 1)
+            kroky.addView(dl.d, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply { if (i > 0) leftMargin = mez })
         }
-        sloupec.addView(kroky, odsazeni(top = 20))
-
-        // jak spárovat telefon – obě cesty (přihlášená televize / přihlášení v telefonu)
-        val par = svisle().apply {
-            background = zaobleni(Color.parseColor("#161722"), 22f)
-            setPadding(dp(24), dp(14), dp(24), dp(14))
-        }
-        par.addView(text(t("ngParNadpis"), 18f, Color.parseColor("#FFC24B"), tucne = true))
-        par.addView(text(t("ngPar1"), 17f, Color.WHITE), odsazeni(top = 4))
-        par.addView(text(t("ngPar2"), 17f, Color.WHITE), odsazeni(top = 4))
-        sloupec.addView(par, odsazeni(top = 16))
-
-        val stav = text("", 24f, Color.WHITE, tucne = true).apply {
-            gravity = Gravity.CENTER
-            setPadding(dp(40), dp(14), dp(40), dp(14))
-        }
-        sloupec.addView(stav, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-            topMargin = dp(16); gravity = Gravity.CENTER_HORIZONTAL
-        })
-
-        val zpet = tlacitko(t("prijemZpetKratce"), 20f) { zpetNaVyber() }.apply {
-            gravity = Gravity.CENTER
-            background = vyber(Color.parseColor("#3A3C50"), radius = 999f)
-            setPadding(dp(34), dp(14), dp(34), dp(14))
-        }
-        sloupec.addView(zpet, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
-            topMargin = dp(20); gravity = Gravity.CENTER_HORIZONTAL
-        })
-        sloupec.addView(text(t("prijemSam"), 16f, TEXT2).apply { gravity = Gravity.CENTER }, odsazeni(top = 16))
-
-        nastavObsah(sloupec, sirka = ViewGroup.LayoutParams.MATCH_PARENT)
-        zpet.requestFocus()
+        obsah.addView(kroky, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+        val par = mdl(R.drawable.ik_info, "Jak spárovat telefon (stačí jednou)", null, t("ngPar1") + "\n" + t("ngPar2"),
+            zaklad = Metro.SEDA_DLAZDICE, vyber = Metro.SEDA_VYBER, barvaPopisu = Metro.TEXT)
+        obsah.addView(par.d, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = mez })
+        val spodek = vodorovne()
+        val stav = mdl(null, "Stav", "Čekám na telefon…", "Až se telefon připojí, televize sama přepne na hru.",
+            zaklad = Metro.SEDA_DLAZDICE, vyber = Metro.SEDA_VYBER, barvaPopisu = Metro.OBRYS)
+        val zpet = mdl(R.drawable.ik_tv, "Zpět", "Titulky čte televize", null) { zpetNaVyber() }
+        spodek.addView(stav.d, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 2f))
+        spodek.addView(zpet.d, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply { leftMargin = mez })
+        obsah.addView(spodek, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, (vyskaObr * 0.19f).toInt()).apply { topMargin = mez })
+        metroRam("Titulky čte telefon", obsah, posouvat = false)
+        zpet.d.requestFocus()
 
         var bylPripojen = PrijemService.telefonPripojen()
         val obnovPrijem = object : Runnable {
             override fun run() {
                 if (obrazovka != "prijem") return
                 val ok = PrijemService.telefonPripojen()
-                stav.text = t(if (ok) "prijemPripojen" else "prijemCekam")
-                stav.background = zaobleni(if (ok) ZELENA else Color.parseColor("#B07A10"), 999f)
+                stav.hlavni?.text = if (ok) "Telefon připojen – titulky chodí" else "Čekám na telefon…"
+                stav.hlavni?.setTextColor(if (ok) Metro.ZLUTA else Metro.TEXT)
+                stav.d.listaZapnuta = ok
                 // telefon se právě připojil → sama přepnout na hru
                 if (ok && !bylPripojen) moveTaskToBack(true)
                 bylPripojen = ok
@@ -774,7 +403,7 @@ class MainActivity : Activity() {
     }
 
     private fun prepniPreklad() {
-        if (!nejakaKonzole) { ukazPripojeni(); return }
+        if (!nejakaKonzole) { ukazPripojeniXbox(); return }
         if (telefon) { startActivity(Intent(this, TelefonActivity::class.java)); return }
         // vypnutí = jen pozastavit (spojení s PS5 zůstává, jinak by PS5 1–2 min hlásila "již se používá")
         if (RemotePlayService.aktivni && !RemotePlayService.pozastaveno) {
@@ -1314,7 +943,7 @@ class MainActivity : Activity() {
                 when {
                     odp == null -> zprava(t("prevzitNeodpovida"))
                     odp[0] == "CHYBA" -> android.app.AlertDialog.Builder(this).setMessage(t("prevzitNesparovano"))
-                        .setPositiveButton(t("pridatSparovatTel")) { _, _ -> ukazPripojeni() }
+                        .setPositiveButton(t("pridatSparovatTel")) { _, _ -> ukazPripojeniXbox() }
                         .setNegativeButton(android.R.string.cancel, null).show()
                     else -> zadejKodZTv(tv)
                 }
@@ -1384,7 +1013,7 @@ class MainActivity : Activity() {
                     .setPositiveButton(android.R.string.ok, null)
                     .show()
             }
-            .setPositiveButton(t("upozorneniOk")) { _, _ -> if (xbox) ukazPripojeniXbox() else ukazPripojeni() }
+            .setPositiveButton(t("upozorneniOk")) { _, _ -> ukazPripojeniXbox() }
             .show()
             .getButton(android.app.AlertDialog.BUTTON_NEGATIVE)?.requestFocus()
     }
@@ -1603,92 +1232,79 @@ class MainActivity : Activity() {
     private fun ukazPripojeniXbox() {
         zastavServer()
         obrazovka = "xbox"
-        val sloupec = svisle()
-        sloupec.addView(nadpisLogo())
-        sloupec.addView(text(t("xboxNadpis"), 28f, Color.WHITE, tucne = true), odsazeni(bottom = 16))
+        val obsah = svisle()
+        // telefon: převzít přihlášení z televize (nemusí se přihlašovat znovu)
         if (telefon) {
-            val kTv = karta()
-            kTv.addView(text(t("maTvNadpis"), 18f, Color.parseColor("#FFC24B"), tucne = true))
-            kTv.addView(text(t("maTv"), 16f, Color.WHITE), odsazeni(top = 6))
-            kTv.addView(tlacitkoZelene(t("prevzitZTv")) { prevzitSparovaniZTv() }, odsazeni(top = 10))
-            // bez televize → sjet rovnou k přihlášení pod tímhle rámečkem
-            kTv.addView(tlacitko(t("nemamTv"), 15f) {
-                var v: View = kTv; var y = kTv.bottom
-                while (v.parent is View && v.parent !is ScrollView) { v = v.parent as View; y += v.top }
-                (v.parent as? ScrollView)?.smoothScrollTo(0, y)
-            }, odsazeni(top = 8))
-            sloupec.addView(kTv, odsazeni(bottom = 12))
+            val tv = mdl(R.drawable.ik_tv, "Máš aplikaci už v televizi?", "Vyhledat televizi",
+                "Nepřihlašuj se znovu. V televizi dej „Telefon → Přidat“ a tady klepni. Přihlášení si telefon vezme z televize.",
+                barvaPopisu = Metro.TEXT) { prevzitSparovaniZTv() }
+            obsah.addView(tv.d, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { bottomMargin = mez * 4 })
         }
-
-        // 0) než začneš – nastavení na Xboxu
-        val k0 = karta()
-        k0.addView(text(t("predemNadpis"), 20f, Color.parseColor("#FFC24B"), tucne = true))
-        k0.addView(text(t("xboxPredem"), 17f, Color.WHITE), odsazeni(top = 6))
-        sloupec.addView(k0, odsazeni(bottom = 12))
+        val kroky = if (telefon) svisle() else vodorovne()
+        fun pridej(v: View, i: Int) = kroky.addView(v,
+            if (telefon) LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { if (i > 0) topMargin = mez }
+            else LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply { if (i > 0) leftMargin = mez })
 
         // 1) Microsoft účet
         val prihlasen = XboxUcet.prihlasen(this)
-        val k1 = karta()
-        k1.addView(text(t("xboxKrok1"), 18f, Color.WHITE))
         val jmeno = XboxUcet.jmeno(this)
-        k1.addView(text(if (prihlasen) t("xboxUcetOk") + (if (jmeno.isNotEmpty()) " ($jmeno)" else "") else "", 17f, Color.parseColor("#7DFF9A")), odsazeni(top = 6))
-        k1.addView(tlacitkoCervene(if (prihlasen) t("zmenitUcet") else t("prihlasit")) {
+        val k1 = mdl(R.drawable.ik_check_circle, "1 · Účet Microsoft", if (prihlasen) "Přihlášeno" else "Přihlásit se",
+            if (prihlasen) (jmeno.ifEmpty { "Účet z Xboxu" }) + " · OK změní účet" else "Účet, který máš na Xboxu",
+            lista = prihlasen, barvaPopisu = if (prihlasen) Metro.ZLUTA else Metro.TEXT_NA_MODRE) {
             XboxUcet.odhlas(this); ukazXboxKod()
-        }, obal(top = 8))
-        sloupec.addView(k1, odsazeni(bottom = 12))
+        }
+        pridej(k1.d, 0)
 
-        // 2) hledání Xboxu (na účtu)
-        val k2 = karta()
-        k2.addView(text(t("xboxKrok2"), 18f, Color.WHITE))
-        val hledaniStav = text("", 17f, TEXT2)
-        k2.addView(hledaniStav, odsazeni(top = 6))
+        // 2) hledání Xboxu na účtu
+        val k2 = mdl(R.drawable.ik_sports_esports, "2 · Najít Xbox", "…", "OK hledá znovu")
         fun hledej() {
             xboxNalezena = null
-            if (!XboxUcet.prihlasen(this)) { hledaniStav.text = t("nejdrivUcet"); return }
-            hledaniStav.text = t("xboxHledam"); hledaniStav.setTextColor(TEXT2)
+            k2.d.listaZapnuta = false
+            if (!XboxUcet.prihlasen(this)) { k2.hlavni?.text = "Nejdřív účet"; return }
+            k2.hlavni?.text = "Hledám…"
             Thread {
                 val seznam = runCatching { XboxSpojeni.konzole(this) }
                 runOnUiThread {
                     if (obrazovka != "xbox") return@runOnUiThread
                     val x = seznam.getOrNull()?.firstOrNull()
                     xboxNalezena = x
-                    hledaniStav.text = when {
-                        x != null -> "✔ ${t("xboxNalezen")}: ${x.jmeno}"
-                        seznam.isFailure -> "✘ " + (seznam.exceptionOrNull()?.message ?: "")
-                        else -> "✘ ${t("xboxNenalezen")}"
+                    k2.hlavni?.text = x?.jmeno ?: "Nenalezen"
+                    k2.popis?.text = when {
+                        x != null -> "Nalezen na tvém účtu"
+                        seznam.isFailure -> (seznam.exceptionOrNull()?.message ?: "Chyba") + " · OK znovu"
+                        else -> "Je Xbox zapnutý a na stejné Wi-Fi? OK hledá znovu"
                     }
-                    hledaniStav.setTextColor(if (x != null) Color.parseColor("#7DFF9A") else Color.parseColor("#FF8A8A"))
+                    k2.d.listaZapnuta = x != null
                 }
             }.start()
         }
-        k2.addView(tlacitko(t("hledatZnovu"), 18f) { hledej() }.apply { setPadding(dp(20), dp(10), dp(20), dp(10)) }, obal(top = 8))
-        sloupec.addView(k2, odsazeni(bottom = 12))
+        k2.d.setOnClickListener { hledej() }
+        pridej(k2.d, 1)
 
         // 3) připojení – zkusí spojení a počká na obraz
-        val k3 = karta()
-        k3.addView(text(t("xboxKrok3"), 18f, Color.WHITE))
-        val pripojStav = text("", 17f, TEXT2)
-        k3.addView(tlacitkoZelene(t("xboxPripojitBtn")) {
+        val k3 = mdl(R.drawable.ik_play_arrow, "3 · Připojit", "Připojit", "Zkontroluje, že chodí obraz",
+            zaklad = Metro.CERVENA, vyber = Metro.CERVENA_VYBER, lista = true, barvaPopisu = Metro.TEXT_NA_CERVENE)
+        k3.d.setOnClickListener {
             val x = xboxNalezena
             when {
-                !XboxUcet.prihlasen(this) -> pripojStav.text = t("nejdrivUcet")
-                x == null -> pripojStav.text = t("xboxNenalezen")
+                !XboxUcet.prihlasen(this) -> k3.popis?.text = "Nejdřív se přihlas (krok 1)"
+                x == null -> k3.popis?.text = "Nejdřív najdi Xbox (krok 2)"
                 xboxRelace != null -> {}
                 else -> {
-                    pripojStav.setTextColor(TEXT2)
                     var hotovo = false
+                    k3.hlavni?.text = "Připojuji…"
                     val r = XboxSpojeni.Relace(this, x.id, priStavu = { st ->
                         runOnUiThread {
                             if (obrazovka != "xbox" || hotovo) return@runOnUiThread
-                            pripojStav.text = st
+                            k3.popis?.text = st.removePrefix("✔ ").removePrefix("✘ ")
                             if (st.startsWith("✔")) {
                                 hotovo = true
-                                pripojStav.setTextColor(Color.parseColor("#7DFF9A"))
+                                k3.hlavni?.text = "Připojeno"
                                 XboxUcet.ulozKonzoli(this, x.id, x.jmeno)
                                 xboxRelace?.zastav(); xboxRelace = null
                                 ui.postDelayed({ if (obrazovka == "xbox") ukazHlavni() }, 1500)
                             } else if (st.startsWith("✘")) {
-                                pripojStav.setTextColor(Color.parseColor("#FF8A8A"))
+                                k3.hlavni?.text = "Zkusit znovu"
                                 xboxRelace = null
                             }
                         }
@@ -1697,65 +1313,86 @@ class MainActivity : Activity() {
                     r.spust()
                 }
             }
-        }, obal(top = 10))
-        k3.addView(pripojStav, odsazeni(top = 6))
-        sloupec.addView(k3, odsazeni(bottom = 12))
+        }
+        pridej(k3.d, 2)
+        if (telefon) listOf(k1, k2, k3).forEach { it.d.minimumHeight = Metro.dp(this, 120f) }
+        obsah.addView(kroky, if (telefon) LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            else LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
 
-        sloupec.addView(tlacitko(t("zpet"), 18f) { xboxRelace?.zastav(); xboxRelace = null; ukazHlavni() }
-            .apply { setPadding(dp(20), dp(10), dp(20), dp(10)) }, obal())
-        nastavObsah(sloupec, sirka = sirkaObsahu)
+        // než začneš (nastavení na Xboxu) + zpět
+        val spodek = if (telefon) svisle() else vodorovne()
+        val predem = mdl(R.drawable.ik_info, "Než začneš (na Xboxu stačí jednou)", null,
+            t("xboxPredem").substringAfter("\n"), zaklad = Metro.SEDA_DLAZDICE, vyber = Metro.SEDA_VYBER, barvaPopisu = Metro.TEXT)
+        val zpet = mdl(null, null, "Zpět", null, zaklad = Metro.SEDA_DLAZDICE, vyber = Metro.SEDA_VYBER) {
+            xboxRelace?.zastav(); xboxRelace = null; ukazHlavni()
+        }
+        if (telefon) {
+            spodek.addView(predem.d, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            spodek.addView(zpet.d, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Metro.dp(this, 56f)).apply { topMargin = mez })
+        } else {
+            spodek.addView(predem.d, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 3f))
+            spodek.addView(zpet.d, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply { leftMargin = mez })
+        }
+        obsah.addView(spodek, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = mez })
+        metroRam("Připojit Xbox", obsah)
+        (if (prihlasen) k2.d else k1.d).requestFocus()
         hledej()
     }
 
     /** Přihlášení Microsoft účtem: kód na microsoft.com/link (QR na televizi, odkaz v telefonu). */
     private fun ukazXboxKod() {
         obrazovka = "xboxkod"
-        val sloupec = svisle()
-        sloupec.addView(nadpisLogo())
-        sloupec.addView(text(t("xboxKodNadpis"), 28f, Color.WHITE, tucne = true), odsazeni(bottom = 12))
-        val k = karta()
-        val stav = text(t("xboxKodNacitam"), 17f, TEXT2)
-        k.addView(stav)
-        sloupec.addView(k, odsazeni(bottom = 12))
-        sloupec.addView(tlacitko(t("zpet"), 17f) { ukazPripojeniXbox() }
-            .apply { setPadding(dp(20), dp(10), dp(20), dp(10)) }, obal(top = 10))
-        nastavObsah(sloupec, sirka = sirkaObsahu)
+        val obsah = if (telefon) svisle() else vodorovne()
+        val qrStrana = (vyskaObr * 0.5f).toInt()
+        // TV: vlevo bílá dlaždice s QR kódem
+        val qr = ImageView(this).apply { setBackgroundColor(Color.WHITE); val p = (qrStrana * 0.05f).toInt(); setPadding(p, p, p, p) }
+        if (!telefon) obsah.addView(qr, LinearLayout.LayoutParams(qrStrana, qrStrana).apply { gravity = Gravity.TOP; rightMargin = mez * 4 })
+        val info = mdl(R.drawable.ik_check_circle, "Microsoft účet", "Připravuji kód…", null,
+            zaklad = Metro.SEDA_DLAZDICE, vyber = Metro.SEDA_VYBER, barvaPopisu = Metro.TEXT)
+        val prava = svisle()
+        prava.addView(info.d, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        val kodT = mt("", 0.075f, 34f, Metro.ZLUTA, 700).apply { letterSpacing = 0.15f; visibility = View.GONE }
+        prava.addView(kodT, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = mez * 3 })
+        val tip = mt(t("xboxKodTip").removePrefix("💡 "), 0.022f, 13f, TEXT2).apply { visibility = View.GONE }
+        prava.addView(tip, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = mez * 3 })
+        val tlacitka = vodorovne()
+        val otevrit = mdl(null, null, "Otevřít přihlášení", null, zaklad = Metro.CERVENA, vyber = Metro.CERVENA_VYBER, lista = true)
+        if (telefon) tlacitka.addView(otevrit.d, LinearLayout.LayoutParams(0, Metro.dp(this, 56f), 2f).apply { rightMargin = mez })
+        otevrit.d.visibility = View.GONE
+        val zpet = mdl(null, null, "Zpět", null, zaklad = Metro.SEDA_DLAZDICE, vyber = Metro.SEDA_VYBER) { ukazPripojeniXbox() }
+        tlacitka.addView(zpet.d, LinearLayout.LayoutParams(if (telefon) 0 else (vyskaObr * 0.3f).toInt(),
+            if (telefon) Metro.dp(this, 56f) else (vyskaObr * 0.1f).toInt(), if (telefon) 1f else 0f))
+        prava.addView(tlacitka, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = mez * 4 })
+        obsah.addView(prava, if (telefon) LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            else LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        metroRam("Přihlášení k Microsoft účtu", obsah)
+        zpet.d.requestFocus()
 
         Thread {
             val kod = runCatching { XboxUcet.novyKod() }
             runOnUiThread {
                 if (obrazovka != "xboxkod") return@runOnUiThread
                 val kd = kod.getOrNull()
-                if (kd == null) { stav.text = "✘ " + (kod.exceptionOrNull()?.message ?: ""); return@runOnUiThread }
-                k.removeAllViews()
-                val velkyKod = text(kd.uzivatelskyKod, 44f, Color.parseColor("#7DFF9A"), tucne = true).apply {
-                    letterSpacing = 0.15f
-                }
+                if (kd == null) { info.hlavni?.text = "Kód se nepodařilo získat"; info.popis?.text = kod.exceptionOrNull()?.message ?: ""; return@runOnUiThread }
+                val adresa = kd.adresa.removePrefix("https://").removePrefix("www.")
                 if (telefon) {
-                    k.addView(text(t("xboxKodTelefon"), 18f, Color.WHITE))
-                    k.addView(velkyKod, odsazeni(top = 12))
-                    k.addView(tlacitkoCervene(t("xboxOtevritOdkaz")) {
+                    info.hlavni?.text = "Přihlas se a zadej kód"
+                    info.popis?.text = "Klepni na „Otevřít přihlášení“, přihlas se a vlož kód (už je zkopírovaný)."
+                    otevrit.d.visibility = View.VISIBLE
+                    otevrit.d.setOnClickListener {
                         runCatching {
                             val cb = getSystemService(android.content.ClipboardManager::class.java)
                             cb.setPrimaryClip(android.content.ClipData.newPlainText("kod", kd.uzivatelskyKod))
                         }
                         runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(kd.adresa))) }
-                    }, obal(top = 12))
+                    }
                 } else {
-                    val radek = vodorovne().apply { gravity = Gravity.CENTER_VERTICAL }
-                    radek.addView(ImageView(this).apply {
-                        runCatching { setImageBitmap(PrihlaseniTelefonem.qr(kd.adresa, 512)) }
-                    }, LinearLayout.LayoutParams(dp(330), dp(330)).apply { rightMargin = dp(30) })
-                    val popis = svisle()
-                    popis.addView(text(t("xboxKodTv"), 19f, Color.WHITE))
-                    popis.addView(text(kd.adresa.removePrefix("https://").removePrefix("www."), 22f, Color.WHITE, tucne = true), odsazeni(top = 12))
-                    popis.addView(velkyKod, odsazeni(top = 10))
-                    radek.addView(popis, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-                    k.addView(radek)
+                    runCatching { qr.setImageBitmap(PrihlaseniTelefonem.qr(kd.adresa, 512)) }
+                    info.hlavni?.text = adresa
+                    info.popis?.text = "Naskenuj QR kód telefonem (nebo otevři adresu na počítači), přihlas se a zadej tento kód:"
                 }
-                // přihlášení „klíčem“ (passkey) v prohlížeči telefonu často nejde → poradit jinou cestu
-                k.addView(text(t("xboxKodTip"), 16f, Color.parseColor("#FFC24B")).apply { setLineSpacing(0f, 1.2f) }, odsazeni(top = 12))
-                k.addView(text(t("qrCekam"), 17f, TEXT2), odsazeni(top = 10))
+                kodT.text = kd.uzivatelskyKod; kodT.visibility = View.VISIBLE
+                tip.text = tip.text.toString() + "\n\n" + t("qrCekam"); tip.visibility = View.VISIBLE
                 Thread {
                     val ok = XboxUcet.cekejNaPrihlaseni(this, kd) { obrazovka != "xboxkod" || isFinishing }
                     runOnUiThread {
@@ -1800,6 +1437,85 @@ class MainActivity : Activity() {
                 .setPositiveButton("OK", null)
                 .show()
         }
+    }
+
+    // ------------------------------------------------------------------ [Fuki] Metro: společný rám a dlaždice
+
+    private val vyskaObr get() = resources.displayMetrics.heightPixels
+    /** Mezera mezi dlaždicemi. */
+    private val mez get() = if (telefon) Metro.dp(this, 4f) else (vyskaObr * 0.008f).toInt().coerceAtLeast(4)
+
+    /** Text: na televizi velikost jako podíl výšky obrazovky (vejde se na jednu obrazovku), na telefonu v sp. */
+    private fun mt(s: CharSequence, tv: Float, tel: Float, barva: Int = Metro.TEXT, vaha: Int = 400) =
+        Metro.text(this, s, 1f, barva, vaha).apply {
+            if (telefon) textSize = tel else setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, vyskaObr * tv)
+            setLineSpacing(0f, 1.15f)
+        }
+
+    /** Dlaždice a její texty (hlavní a popisek jdou měnit). */
+    private class Dl(val d: Metro.Dlazdice, val hlavni: TextView?, val popis: TextView?)
+
+    /** Dlaždice: ikona, malý nadpis, hlavní text, popisek. Bez akce = jen informace (ovladač ji přeskočí). */
+    private fun mdl(
+        ikona: Int?, nadpis: String?, hlavni: String?, popis: String?,
+        zaklad: Int = Metro.MODRA, vyber: Int = Metro.MODRA_VYBER, lista: Boolean = false,
+        barvaPopisu: Int = Metro.TEXT_NA_MODRE, akce: (() -> Unit)? = null
+    ): Dl {
+        val d = Metro.Dlazdice(this, zaklad, vyber, lista)
+        val p = if (telefon) Metro.dp(this, 14f) else (vyskaObr * 0.024f).toInt()
+        d.obsah.setPadding(p, p, p, p)
+        if (ikona != null) {
+            val s = if (telefon) Metro.dp(this, 26f) else (vyskaObr * 0.05f).toInt()
+            d.obsah.addView(ImageView(this).apply {
+                setImageResource(ikona); setColorFilter(if (zaklad == Metro.CERVENA) Color.WHITE else Metro.PRIMARNI)
+            }, LinearLayout.LayoutParams(s, s).apply { bottomMargin = p / 2 })
+        }
+        d.mezera()
+        nadpis?.let { d.obsah.addView(mt(it, 0.02f, 11f, if (zaklad == Metro.CERVENA) Metro.TEXT_NA_CERVENE else Metro.OBRYS, 600)) }
+        val h = hlavni?.let { mt(it, 0.036f, 19f, Color.WHITE, 300).also { t -> d.obsah.addView(t) } }
+        val po = popis?.let { mt(it, 0.022f, 13f, barvaPopisu).also { t ->
+            d.obsah.addView(t, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = p / 3 })
+        } }
+        if (akce != null) d.setOnClickListener { akce() } else { d.isFocusable = false; d.isClickable = false }
+        return Dl(d, h, po)
+    }
+
+    /**
+     * Rám obrazovky: hlavička (logo | nadpis … verze), obsah, patička s podpisem.
+     * Televize: bez posouvání (obsah dostane zbytek výšky). Telefon: posouvá se.
+     */
+    private fun metroRam(nadpis: String, obsah: View, posouvat: Boolean = telefon) {
+        val W = resources.displayMetrics.widthPixels; val H = vyskaObr
+        val koren = svisle().apply {
+            setBackgroundColor(Metro.POZADI)
+            if (telefon) setPadding(Metro.dp(this@MainActivity, 16f), Metro.dp(this@MainActivity, 20f), Metro.dp(this@MainActivity, 16f), Metro.dp(this@MainActivity, 12f))
+            else setPadding((W * 0.045f).toInt(), (H * 0.06f).toInt(), (W * 0.045f).toInt(), (H * 0.035f).toInt())
+        }
+        val vyskaLoga = if (telefon) Metro.dp(this, 32f) else (H * 0.06f).toInt()
+        val hlava = vodorovne().apply { gravity = Gravity.CENTER_VERTICAL }
+        hlava.addView(ImageView(this).apply {
+            setImageResource(R.drawable.hlavicka); adjustViewBounds = true; scaleType = ImageView.ScaleType.FIT_START
+            setOnLongClickListener { Zaznam.ukaz(this@MainActivity, sVyvojem = true); true }
+        }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, vyskaLoga))
+        if (!telefon) {
+            hlava.addView(View(this).apply { setBackgroundColor(Color.parseColor("#424750")) },
+                LinearLayout.LayoutParams(2, vyskaLoga).apply { leftMargin = mez * 4; rightMargin = mez * 4 })
+            hlava.addView(mt(nadpis, 0.045f, 22f, Metro.TEXT, 300).apply { maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END },
+                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        } else hlava.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
+        hlava.addView(mt(verze, 0.022f, 11f, Metro.OBRYS, 600))
+        koren.addView(hlava)
+        if (telefon) koren.addView(mt(nadpis, 0f, 28f, Metro.TEXT, 300),
+            LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = Metro.dp(this@MainActivity, 18f) })
+        val nahore = if (telefon) Metro.dp(this, 14f) else (H * 0.035f).toInt()
+        if (posouvat) koren.addView(ScrollView(this).apply {
+            isFillViewport = true
+            addView(obsah, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f).apply { topMargin = nahore })
+        else koren.addView(obsah, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f).apply { topMargin = nahore })
+        koren.addView(FukiZnacka.podpis(this), LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = nahore / 2 })
+        setContentView(koren)
+        window.statusBarColor = Metro.POZADI
     }
 
     // ------------------------------------------------------------------ pomocníci pro vzhled

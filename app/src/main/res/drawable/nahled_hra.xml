@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="320dp" android:height="180dp" android:viewportWidth="320" android:viewportHeight="180">
+    <!-- obloha -->
+    <path android:pathData="M0,0h320v180h-320z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="0" android:startY="0" android:endX="0" android:endY="130">
+                <item android:offset="0" android:color="#FF1B2440"/>
+                <item android:offset="0.55" android:color="#FF8A3B4A"/>
+                <item android:offset="1" android:color="#FFF2A65A"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- slunce -->
+    <path android:fillColor="#FFFFD58A" android:pathData="M212,104m-22,0a22,22 0,1 1,44 0a22,22 0,1 1,-44 0"/>
+    <!-- hvězdy -->
+    <path android:fillColor="#99FFFFFF" android:pathData="M30,18h1.5v1.5h-1.5zM78,30h1.5v1.5h-1.5zM120,12h1.5v1.5h-1.5zM262,22h1.5v1.5h-1.5zM300,40h1.5v1.5h-1.5zM170,26h1.5v1.5h-1.5z"/>
+    <!-- vzdálené hory -->
+    <path android:fillColor="#FF5B3550" android:pathData="M0,112L28,86L52,100L84,70L118,98L150,80L186,104L220,84L254,100L290,76L320,96L320,180L0,180Z"/>
+    <!-- bližší hory -->
+    <path android:fillColor="#FF33233D" android:pathData="M0,128L40,106L70,120L104,96L146,124L176,110L214,128L248,108L284,126L320,112L320,180L0,180Z"/>
+    <!-- zem -->
+    <path android:fillColor="#FF1A1424" android:pathData="M0,142Q80,132 160,140T320,138L320,180L0,180Z"/>
+    <!-- stromy -->
+    <path android:fillColor="#FF0E0B16" android:pathData="M26,146L34,116L42,146ZM40,148L50,108L60,148ZM268,146L276,118L284,146ZM282,148L292,104L302,148ZM302,150L310,124L318,150Z"/>
+    <!-- cesta -->
+    <path android:fillColor="#FF3A2C3E" android:pathData="M150,180L166,140L172,140L196,180Z"/>
+    <!-- postava -->
+    <path android:fillColor="#FF0E0B16" android:pathData="M166,128m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0M163,131h6v9h-6zM163,140h2.5v7h-2.5zM166.5,140h2.5v7h-2.5zM159,124h14v2.5h-14z"/>
+    <!-- HUD: život a výdrž -->
+    <path android:fillColor="#66000000" android:pathData="M10,10h62v5h-62zM10,18h46v3h-46z"/>
+    <path android:fillColor="#FFE24B4A" android:pathData="M11,11h48v3h-48z"/>
+    <path android:fillColor="#FF97C459" android:pathData="M11,18.8h30v1.4h-30z"/>
+    <!-- HUD: minimapa -->
+    <path android:fillColor="#88000000" android:strokeColor="#AAFFFFFF" android:strokeWidth="1" android:pathData="M30,152m-18,0a18,18 0,1 1,36 0a18,18 0,1 1,-36 0"/>
+    <path android:fillColor="#FFEBC238" android:pathData="M30,146L33,156L30,154L27,156Z"/>
+    <path android:strokeColor="#55FFFFFF" android:strokeWidth="1" android:pathData="M16,150Q26,144 44,156"/>
+</vector>

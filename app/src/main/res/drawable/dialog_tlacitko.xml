@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true">
+        <layer-list>
+            <item><shape><solid android:color="@color/fuki_modra_vyber"/></shape></item>
+            <item android:gravity="bottom" android:height="3dp"><shape><solid android:color="@color/fuki_zluta"/></shape></item>
+        </layer-list>
+    </item>
+    <item android:state_pressed="true"><shape><solid android:color="@color/fuki_modra"/></shape></item>
+    <item><shape><solid android:color="#00000000"/></shape></item>
+</selector>

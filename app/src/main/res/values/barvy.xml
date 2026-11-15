@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="fuki_pozadi">#0D1321</color>
+    <color name="fuki_karta">#151B2A</color>
+    <color name="fuki_modra">#11457E</color>
+    <color name="fuki_modra_vyber">#1C5BA6</color>
+    <color name="fuki_zluta">#EBC238</color>
+    <color name="fuki_text">#DDE2F6</color>
+    <color name="fuki_text2">#9AA3B5</color>
+</resources>
