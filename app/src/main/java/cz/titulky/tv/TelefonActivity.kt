@@ -139,7 +139,7 @@ class TelefonActivity : Activity() {
 
     private fun pripojTv(tv: Propojeni.Televize) {
         Propojeni.Vysilac.nastavCil(tv.ip, tv.jmeno)
-        prefs.edit().putString("tvId", tv.id).apply()
+        prefs.edit().putString("tvId", tv.id).putString("tvJmeno", tv.jmeno).apply()
         android.widget.Toast.makeText(this, t("tvPosilam").replace("{tv}", tv.jmeno), android.widget.Toast.LENGTH_LONG).show()
         obnovTvTlacitko()
     }

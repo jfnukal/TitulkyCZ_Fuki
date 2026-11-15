@@ -4,6 +4,12 @@
 Od verze 0.10 se vyvíjí jen jedna aplikace (dřívější NextGen, větev `master`) – umí „Jen televize“ i „S telefonem“.
 Při každé nové verzi se zvýší číslo v `app/build.gradle.kts` (versionCode + versionName) a sem se dopíše, co je nového.
 
+## 0.20.1-fuki10
+- Telefon: nová hlavní obrazovka v dlaždicích (návrh „TitulkyCZ Metro HUD“): Hrát, Konzole, Televize, Čeština, AI překlad, Dialogy, Menu, Tabulky překladů, Vzhled titulků, Verze; písmo Plus Jakarta Sans, ikony Material Symbols. PlayStation v telefonu skrytý.
+- Automatická aktualizace: při spuštění kontrola GitHub Releases, nabídka „Aktualizovat“ → stažení a instalace. V „O aplikaci“ tlačítko Zkontrolovat aktualizace.
+- AI klíč a nahrání tabulky jdou i z hlavní obrazovky.
+- GitHub Actions „Kontrola“: po každém nahrání ověří, že se aplikace sestaví.
+
 ## 0.20.1-fuki9
 - Podpisová značka Fuki: úvodní animace „Fuki“ při spuštění (jednou za spuštění, ~3,2 s, přeskočit klepnutím nebo OK/Zpět/Enter, při vypnutých animacích v systému se neukáže) a podpis „created by Fuki. | jarek.fuki@gmail.com“ v patičce (TV hlavní obrazovka, telefon – Úpravy).
 

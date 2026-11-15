@@ -75,6 +75,8 @@ class MainActivity : Activity() {
         ukazUvod()
         // podpisová značka Fuki – úvodní animace (jednou za spuštění)
         FukiIntro.ukaz(this)
+        // [Fuki] nová verze na GitHubu? (jednou za spuštění)
+        Aktualizace.zkontroluj(this)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -311,6 +313,8 @@ class MainActivity : Activity() {
 
     private fun ukazHlavni() {
         if (!telefon && PrijemService.bezi) { ukazPrijem(); return }
+        // [Fuki] telefon: nová obrazovka v dlaždicích
+        if (telefon) { ukazHlavniTelefon(); return }
         obrazovka = "hlavni"
         val vlevo = svisle()
         val vpravo = svisle()
@@ -784,6 +788,196 @@ class MainActivity : Activity() {
             if (!RemotePlayService.aktivni) run { AutoStart.uspech(this); RemotePlayService.spustVse(this, prevzit = true) }
         }
         ui.postDelayed({ obnovStav() }, 600)
+    }
+
+
+    // ------------------------------------------------------------------ [Fuki] telefon: hlavní obrazovka v dlaždicích
+
+    /** Telefon: hlavní obrazovka „hrát“ v dlaždicích (návrh TitulkyCZ Metro HUD ze Stitche). */
+    private fun ukazHlavniTelefon() {
+        obrazovka = "hlavni"
+        Volby.nacti(this)
+        Tabulka.nacti(getExternalFilesDir("tabulky"), hotovo = { ui.post { if (obrazovka == "hlavni" && !isFinishing) ukazHlavniTelefon() } })
+        val c = this
+        val okraj = dp(16)
+        val gap = dp(4)
+        val sirka = resources.displayMetrics.widthPixels - 2 * okraj
+        val u = (sirka - 3 * gap) / 4
+        val gp = getSharedPreferences("gamelingo", MODE_PRIVATE)
+        val xbox = XboxUcet.konzole(this)
+        val tvJmeno = Propojeni.Vysilac.cilJmeno.ifBlank { gp.getString("tvJmeno", "") ?: "" }
+
+        val sloupec = svisle().apply { setPadding(okraj, dp(18), okraj, dp(12)) }
+
+        // hlavička: ikona + název, verze vpravo
+        val hlava = vodorovne().apply { gravity = Gravity.CENTER_VERTICAL }
+        hlava.addView(ImageView(this).apply {
+            setImageResource(R.drawable.gamelingo_ikona)
+            isFocusable = true
+            setOnLongClickListener { Zaznam.ukaz(this@MainActivity, sVyvojem = true); true }
+        }, LinearLayout.LayoutParams(dp(32), dp(32)).apply { rightMargin = dp(10) })
+        hlava.addView(Metro.text(c, "TitulkyCZ_Fuki", 13f, Metro.TEXT, 700, 0.12f), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        hlava.addView(Metro.text(c, verze, 11f, Metro.OBRYS, 600, 0.06f))
+        sloupec.addView(hlava)
+
+        // pivot: hrát / úpravy / o aplikaci
+        val pivot = vodorovne().apply { gravity = Gravity.BOTTOM }
+        fun polozka(s: String, aktivni: Boolean, akce: () -> Unit) = svisle().apply {
+            addView(Metro.text(c, s, 32f, if (aktivni) Metro.TEXT else Metro.OBRYS, 300, -0.01f))
+            addView(View(c).apply { setBackgroundColor(if (aktivni) Metro.ZLUTA else 0) }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(2)).apply { topMargin = dp(4) })
+            isFocusable = true; isClickable = true
+            setOnClickListener { akce() }
+        }
+        pivot.addView(polozka("hrát", true) {})
+        pivot.addView(polozka("úpravy", false) { otevriHrani() }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { leftMargin = dp(22) })
+        pivot.addView(polozka("o aplikaci", false) { oAplikaci() }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { leftMargin = dp(22) })
+        sloupec.addView(android.widget.HorizontalScrollView(this).apply {
+            isHorizontalScrollBarEnabled = false
+            addView(pivot)
+        }, odsazeni(top = 10, bottom = 14))
+
+        // 1) Hrát – široká červená dlaždice
+        val hrat = Metro.Dlazdice(c, Metro.CERVENA, Metro.CERVENA_VYBER, lista = true)
+        val hr1 = vodorovne().apply { gravity = Gravity.CENTER_VERTICAL }
+        hr1.addView(Metro.ikona(c, R.drawable.ik_play_arrow, 34f, Color.WHITE))
+        hr1.addView(Metro.text(c, "Hrát", 34f, Color.WHITE, 300, -0.02f), LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { leftMargin = dp(8) })
+        hrat.obsah.addView(hr1)
+        hrat.mezera()
+        stavText = Metro.text(c, "", 16f, Color.WHITE, 600)
+        hrat.obsah.addView(stavText)
+        val podHrat = buildString {
+            append(if (xbox != null) "Xbox připojen" else "Nejdřív připoj Xbox")
+            if (tvJmeno.isNotBlank()) append(", TV $tvJmeno")
+        }
+        hrat.obsah.addView(Metro.text(c, podHrat, 13f, Metro.TEXT_NA_CERVENE, 400), odsazeni(top = 3))
+        hrat.setOnClickListener { if (nejakaKonzole) otevriHrani() else ukazPripojeniXbox() }
+        sloupec.addView(hrat, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, (u * 1.35f).toInt()))
+        // stav (tečka a karta jen kvůli obnovStav – v dlaždicích se neukazují)
+        stavTecka = View(this)
+        stavKarta = svisle()
+        prepnoutBtn = null; ps5Radek = null; pripojitBtn = null
+
+        // 2) Konzole + Televize
+        val r2 = Metro.radek(c)
+        val konzole = Metro.Dlazdice(c, Metro.MODRA, Metro.MODRA_VYBER, lista = false)
+        konzole.obsah.addView(Metro.ikona(c, R.drawable.ik_sports_esports, 30f, Metro.PRIMARNI))
+        konzole.mezera()
+        konzole.obsah.addView(Metro.text(c, "Konzole", 12f, Metro.OBRYS, 600, 0.04f))
+        konzole.obsah.addView(Metro.text(c, "Xbox", 26f, Metro.TEXT, 300), odsazeni(top = 2))
+        xboxRadekText = if (xbox != null) t("sparovano") else "Nepřipojeno – klepni"
+        konzole.obsah.addView(Metro.text(c, xboxRadekText, 12f, if (xbox != null) Metro.ZLUTA else Metro.TEXT_NA_MODRE, 600).also { xboxRadek = it }, odsazeni(top = 4))
+        konzole.setOnClickListener { ukazPripojeniXbox() }
+        r2.addView(konzole, Metro.lp(2 * u + gap, (u * 1.55f).toInt()))
+        val tv = Metro.Dlazdice(c, Metro.MODRA, Metro.MODRA_VYBER, lista = false)
+        tv.obsah.addView(Metro.ikona(c, R.drawable.ik_tv, 30f, Metro.PRIMARNI))
+        tv.mezera()
+        tv.obsah.addView(Metro.text(c, "Televize", 12f, Metro.OBRYS, 600, 0.04f))
+        tv.obsah.addView(Metro.text(c, tvJmeno.ifBlank { "Vyhledat" }, 26f, Metro.TEXT, 300).apply { maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END }, odsazeni(top = 2))
+        tv.obsah.addView(Metro.text(c, if (tvJmeno.isBlank()) "Klepni a najdi televizi" else "Titulky se ukážou tady", 12f, Metro.TEXT_NA_MODRE, 600), odsazeni(top = 4))
+        tv.setOnClickListener { prevzitSparovaniZTv() }
+        r2.addView(tv, Metro.lp(2 * u + gap, (u * 1.55f).toInt(), gap))
+        sloupec.addView(r2, odsazeni(top = 4))
+
+        // 3) malé dlaždice: Čeština, AI, Dialogy, Menu
+        val r3 = Metro.radek(c)
+        fun mala(ikona: Int, nazev: String, odznak: String?, odznakBarva: Int, lista: Boolean, akce: () -> Unit) =
+            Metro.Dlazdice(c, Metro.MODRA, Metro.MODRA_VYBER, lista).apply {
+                obsah.setPadding(dp(9), dp(9), dp(9), dp(9))
+                val nahore = vodorovne().apply { gravity = Gravity.CENTER_VERTICAL }
+                nahore.addView(Metro.ikona(c, ikona, 20f, Metro.PRIMARNI))
+                nahore.addView(View(c), LinearLayout.LayoutParams(0, 0, 1f))
+                if (odznak != null) nahore.addView(Metro.text(c, odznak, 11f, odznakBarva, 700))
+                obsah.addView(nahore)
+                mezera()
+                obsah.addView(Metro.text(c, nazev, 12.5f, Metro.TEXT, 600))
+                setOnClickListener { akce() }
+            }
+        val j = Texty.JAZYKY.firstOrNull { it.kod == jazyk } ?: Texty.JAZYKY[0]
+        r3.addView(mala(R.drawable.ik_translate, j.nazev, null, 0, false) { ukazJazyk() }, Metro.lp(u, (u * 0.95f).toInt()))
+        val aiZap = AiPrekladac.klic(c).isNotEmpty() && AiPrekladac.povoleno(c)
+        r3.addView(mala(R.drawable.ik_auto_awesome, "AI překlad", if (aiZap) "ZAP" else "VYP", if (aiZap) Metro.ZLUTA else Metro.OBRYS, aiZap) {
+            Nabidky.aiNastaveni(this) { ukazHlavniTelefon() }
+        }, Metro.lp(u, (u * 0.95f).toInt(), gap))
+        r3.addView(mala(R.drawable.ik_chat, "Dialogy", if (nast.dialogy) "ZAP" else "VYP", if (nast.dialogy) Metro.ZLUTA else Metro.OBRYS, nast.dialogy) {
+            nast.dialogy = !nast.dialogy; ukazHlavniTelefon()
+        }, Metro.lp(u, (u * 0.95f).toInt(), gap))
+        r3.addView(mala(R.drawable.ik_widgets, "Menu", if (Volby.zapnuto) "ZAP" else "VYP", if (Volby.zapnuto) Metro.ZLUTA else Metro.OBRYS, Volby.zapnuto) {
+            Volby.zapnuto = !Volby.zapnuto; Volby.uloz(this); ukazHlavniTelefon()
+        }, Metro.lp(u, (u * 0.95f).toInt(), gap))
+        sloupec.addView(r3, odsazeni(top = 4))
+
+        // 4) Tabulky překladů – široká šedá
+        val tab = Metro.Dlazdice(c, Metro.SEDA_DLAZDICE, Metro.SEDA_VYBER, lista = false)
+        val t1 = vodorovne().apply { gravity = Gravity.CENTER_VERTICAL }
+        t1.addView(Metro.ikona(c, R.drawable.ik_table_chart, 22f, Metro.ZLUTA))
+        t1.addView(Metro.text(c, "Tabulky překladů", 16f, Metro.TEXT, 600), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { leftMargin = dp(8) })
+        val pocet = Tabulka.pocet
+        t1.addView(Metro.text(c, if (pocet > 0) "%,d vět".format(pocet).replace(',', ' ') else "žádné", 11f, Metro.PRIMARNI, 700).apply {
+            setBackgroundColor(Metro.POZADI); setPadding(dp(8), dp(3), dp(8), dp(3))
+        })
+        tab.obsah.addView(t1)
+        tab.mezera()
+        val hry = Tabulka.hry()
+        tab.obsah.addView(Metro.text(c, if (hry.isNotEmpty()) hry.joinToString(", ") else "Klepni a nahraj komunitní češtinu hry (.tsv.gz)", 13f, Metro.TEXT_NA_MODRE, 400).apply {
+            maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END
+        })
+        tab.setOnClickListener { Nabidky.vyberTabulku(this) }
+        sloupec.addView(tab, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, (u * 1.05f).toInt()).apply { topMargin = dp(4) })
+
+        // 5) Vzhled titulků + O aplikaci
+        val r5 = Metro.radek(c)
+        fun stredni(ikona: Int, nadpis: String, nazev: String, akce: () -> Unit) = Metro.Dlazdice(c, Metro.MODRA, Metro.MODRA_VYBER, false).apply {
+            val r = vodorovne().apply { gravity = Gravity.CENTER_VERTICAL }
+            val txt = svisle()
+            txt.addView(Metro.text(c, nadpis, 11f, Metro.OBRYS, 600, 0.04f))
+            txt.addView(Metro.text(c, nazev, 15f, Metro.TEXT, 600), odsazeni(top = 2))
+            r.addView(txt, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            r.addView(Metro.ikona(c, ikona, 26f, Metro.PRIMARNI))
+            obsah.gravity = Gravity.CENTER_VERTICAL
+            obsah.addView(r)
+            setOnClickListener { akce() }
+        }
+        r5.addView(stredni(R.drawable.ik_text_fields, "Nastavení", "Vzhled titulků") { otevriHrani() }, Metro.lp(2 * u + gap, (u * 0.95f).toInt()))
+        r5.addView(stredni(R.drawable.ik_info, "Verze", verze.substringAfter("0.20.1-").ifBlank { verze }) { oAplikaci() }, Metro.lp(2 * u + gap, (u * 0.95f).toInt(), gap))
+        sloupec.addView(r5, odsazeni(top = 4))
+
+        // podpis Fuki
+        sloupec.addView(FukiZnacka.podpis(this), odsazeni(top = 18))
+
+        setContentView(ScrollView(this).apply {
+            setBackgroundColor(Metro.POZADI)
+            isFillViewport = true
+            addView(sloupec)
+        })
+        window.statusBarColor = Metro.POZADI
+        window.navigationBarColor = Metro.POZADI
+        obnovStav()
+    }
+
+    private fun otevriHrani() {
+        if (nejakaKonzole) startActivity(Intent(this, TelefonActivity::class.java)) else ukazPripojeniXbox()
+    }
+
+    /** O aplikaci: verze, poděkování, podpis, kontrola aktualizace. */
+    private fun oAplikaci() {
+        val d = resources.displayMetrics.density
+        val obsah = svisle().apply { setPadding((22 * d).toInt(), (10 * d).toInt(), (22 * d).toInt(), 0) }
+        obsah.addView(Metro.text(this, "Verze $verze", 15f, Color.WHITE, 600))
+        obsah.addView(Metro.text(this, t("zasluhy"), 13f, Metro.TEXT_NA_MODRE, 400).apply { setLineSpacing(0f, 1.25f) }, odsazeni(top = 10))
+        obsah.addView(FukiZnacka.podpis(this), odsazeni(top = 12))
+        android.app.AlertDialog.Builder(this)
+            .setTitle("O aplikaci")
+            .setView(ScrollView(this).apply { addView(obsah) })
+            .setPositiveButton("Zkontrolovat aktualizace") { _, _ -> Aktualizace.zkontroluj(this, rucne = true) }
+            .setNegativeButton("Zavřít", null)
+            .show()
+    }
+
+    @Deprecated("Activity API")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == Nabidky.KOD_TABULKA && resultCode == RESULT_OK)
+            Nabidky.zpracujTabulku(this, data) { if (obrazovka == "hlavni") ukazHlavni() }
     }
 
     // ------------------------------------------------------------------ připojení ke konzoli

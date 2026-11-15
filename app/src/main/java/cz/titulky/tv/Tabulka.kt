@@ -129,6 +129,9 @@ object Tabulka {
         return shoda.firstOrNull()?.soubor
     }
 
+    /** [Fuki] Názvy her načtených tabulek. */
+    fun hry(): List<String> = indexy.map { it.hra }
+
     /** Překlad z tabulky: celá věta, nebo část rozdělené repliky. Jinak null. */
     fun preloz(anglicky: String): String? = najdi(anglicky) ?: najdiCast(anglicky)
 
