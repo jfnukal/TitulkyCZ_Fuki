@@ -208,6 +208,24 @@ class TelefonActivity : Activity() {
         super.onDestroy()
     }
 
+    // [Fuki] ztlumení displeje: jen když titulky jdou do TV a na telefon 30 s nikdo nesáhne
+    private var tlumitDisplej = false
+    private val TLUMIT_PO = 30_000L
+    private val ztlum = Runnable { if (tlumitDisplej) nastavJas(true) }
+    private fun nastavJas(tlumeny: Boolean) {
+        window.attributes = window.attributes.apply {
+            screenBrightness = if (tlumeny) 0.05f else WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+        }
+    }
+    override fun dispatchTouchEvent(ev: android.view.MotionEvent): Boolean {
+        if (tlumitDisplej) {
+            if (ev.actionMasked == android.view.MotionEvent.ACTION_DOWN) nastavJas(false)
+            ui.removeCallbacks(ztlum)
+            ui.postDelayed(ztlum, TLUMIT_PO)
+        }
+        return super.dispatchTouchEvent(ev)
+    }
+
     private fun zastav() {
         // televizi říct, ať titulek schová, a přestat jí posílat
         Propojeni.Vysilac.zmena("", 0, "")
@@ -1106,9 +1124,11 @@ class TelefonActivity : Activity() {
                 }
                 posunUprav.visibility = if (doTv) View.VISIBLE else View.GONE
                 if (doTv) Propojeni.Vysilac.nastavRozvrh(rozvrh.copyOf())
-                window.attributes = window.attributes.apply {
-                    screenBrightness = if (doTv) 0.05f else WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
-                }
+                // [Fuki] ztlumit až po 30 s bez dotyku (při nastavování zůstane jas normální)
+                tlumitDisplej = doTv
+                nastavJas(false)
+                ui.removeCallbacks(ztlum)
+                if (doTv) ui.postDelayed(ztlum, TLUMIT_PO)
                 posledni = null
             }
             if (doTv) {

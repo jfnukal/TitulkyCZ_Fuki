@@ -4,6 +4,9 @@
 Od verze 0.10 se vyvíjí jen jedna aplikace (dřívější NextGen, větev `master`) – umí „Jen televize“ i „S telefonem“.
 Při každé nové verzi se zvýší číslo v `app/build.gradle.kts` (versionCode + versionName) a sem se dopíše, co je nového.
 
+## 0.20.1-fuki14
+- Telefon: displej se při hraní do TV už neztmaví hned. Ztlumí se až po 30 s bez dotyku a dotykem se hned zase rozsvítí, takže jde v klidu nastavovat.
+
 ## 0.20.1-fuki13
 - Televize: vpravo nahoře tlačítka **Restart** a **Vypnout**. Zastaví překlad, spojení i služby na pozadí, takže aplikace nezůstane v paměti (TCL ji jinak drží). Restart ji spustí znovu načisto.
 
