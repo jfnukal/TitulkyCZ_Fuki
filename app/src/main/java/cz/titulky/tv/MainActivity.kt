@@ -310,8 +310,9 @@ class MainActivity : Activity() {
 
     private fun ukazHlavni() {
         if (!telefon && PrijemService.bezi) { ukazPrijem(); return }
-        // [Fuki] telefon: nová obrazovka v dlaždicích
+        // [Fuki] telefon i televize: nová obrazovka v dlaždicích
         if (telefon) { ukazHlavniTelefon(); return }
+        ukazHlavniTv(); return
         obrazovka = "hlavni"
         val vlevo = svisle()
         val vpravo = svisle()
@@ -787,6 +788,187 @@ class MainActivity : Activity() {
         ui.postDelayed({ obnovStav() }, 600)
     }
 
+
+
+    // ------------------------------------------------------------------ [Fuki] televize: hlavní obrazovka v dlaždicích
+
+    /**
+     * Televize: celá hlavní obrazovka v dlaždicích na jednu obrazovku (bez posouvání).
+     * Rozměry se počítají z velikosti obrazovky; HRÁT je vybrané hned po spuštění.
+     */
+    private fun ukazHlavniTv() {
+        obrazovka = "hlavni"
+        Tabulka.nacti(getExternalFilesDir("tabulky"))
+        val c = this
+        val W = resources.displayMetrics.widthPixels
+        val H = resources.displayMetrics.heightPixels
+        val okrajX = (W * 0.045f).toInt()
+        val okrajY = (H * 0.06f).toInt()
+        val gap = (H * 0.008f).toInt().coerceAtLeast(4)
+        val hlavaH = (H * 0.10f).toInt()
+        val patickaH = (H * 0.10f).toInt()
+        val mrizkaW = W - 2 * okrajX
+        val mrizkaH = H - 2 * okrajY - hlavaH - patickaH
+        val bw = (mrizkaW - 5 * gap) / 6f
+        val bh = (mrizkaH - 2 * gap) / 3f
+        fun px(v: Float) = android.util.TypedValue.COMPLEX_UNIT_PX to v
+        fun txt(s: CharSequence, vyska: Float, barva: Int, vaha: Int) = Metro.text(c, s, 1f, barva, vaha).apply {
+            setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, vyska)
+            maxLines = 2; ellipsize = android.text.TextUtils.TruncateAt.END
+        }
+        val koren = FrameLayout(this).apply { setBackgroundColor(Metro.POZADI); clipChildren = false }
+
+        // hlavička
+        koren.addView(ImageView(this).apply {
+            setImageResource(R.drawable.hlavicka); adjustViewBounds = true; scaleType = ImageView.ScaleType.FIT_START
+            isFocusable = false
+            setOnLongClickListener { Zaznam.ukaz(this@MainActivity, sVyvojem = true); true }
+        }, FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, (hlavaH * 0.62f).toInt()).apply { leftMargin = okrajX; topMargin = okrajY })
+        koren.addView(txt(verze, hlavaH * 0.2f, Metro.OBRYS, 600), FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP or Gravity.END).apply { rightMargin = okrajX; topMargin = okrajY + (hlavaH * 0.18f).toInt() })
+
+        val y0 = okrajY + hlavaH
+        fun umisti(v: View, sl: Int, ra: Int, sirkaB: Int, vyskaB: Int) {
+            val w = (bw * sirkaB + gap * (sirkaB - 1)).toInt()
+            val h = (bh * vyskaB + gap * (vyskaB - 1)).toInt()
+            koren.addView(v, FrameLayout.LayoutParams(w, h).apply {
+                leftMargin = okrajX + (sl * (bw + gap)).toInt(); topMargin = y0 + (ra * (bh + gap)).toInt()
+            })
+        }
+        /** Obsah dlaždice: ikona nahoře, dole malý nadpis, velký text, popisek. */
+        fun naplnit(d: Metro.Dlazdice, ikona: Int, nadpis: String?, hlavni: String, pod: String?, vel: Float = 1f, barvaPod: Int = Metro.TEXT_NA_MODRE): TextView? {
+            val p = (bh * 0.11f).toInt()
+            d.obsah.setPadding(p, p, p, p)
+            d.obsah.addView(ImageView(c).apply { setImageResource(ikona); setColorFilter(Metro.PRIMARNI) },
+                LinearLayout.LayoutParams((bh * 0.24f * vel).toInt(), (bh * 0.24f * vel).toInt()))
+            d.mezera()
+            if (nadpis != null) d.obsah.addView(txt(nadpis, bh * 0.085f, Metro.OBRYS, 600))
+            d.obsah.addView(txt(hlavni, bh * 0.17f * vel, Metro.TEXT, 300).apply { maxLines = 1 })
+            var podT: TextView? = null
+            if (pod != null) { podT = txt(pod, bh * 0.09f, barvaPod, 600); d.obsah.addView(podT) }
+            return podT
+        }
+
+        val muzePrekryvat = Settings.canDrawOverlays(this)
+        val xbox = XboxUcet.konzole(this)
+        val rezimTel = prefsBeta.getString("rezimHry", "tv") == "tel" || jeSlabaTv()
+
+        // HRÁT (2×2, červená)
+        val hrat = Metro.Dlazdice(c, Metro.CERVENA, Metro.CERVENA_VYBER, lista = true)
+        run {
+            val p = (bh * 0.13f).toInt()
+            hrat.obsah.setPadding(p, p, p, p)
+            hrat.obsah.addView(ImageView(c).apply { setImageResource(R.drawable.ik_play_arrow); setColorFilter(Color.WHITE) },
+                LinearLayout.LayoutParams((bh * 0.42f).toInt(), (bh * 0.42f).toInt()))
+            hrat.mezera()
+            hrat.obsah.addView(txt("Hrát", bh * 0.42f, Color.WHITE, 300).apply { maxLines = 1 })
+            stavText = txt("", bh * 0.11f, Color.WHITE, 600)
+            hrat.obsah.addView(stavText)
+            hrat.obsah.addView(txt(when {
+                !muzePrekryvat -> "Nejdřív povol zobrazení přes jiné aplikace"
+                xbox == null -> "Nejdřív připoj Xbox"
+                rezimTel -> "Titulky čte telefon"
+                else -> "Titulky čte televize"
+            }, bh * 0.1f, Metro.TEXT_NA_CERVENE, 400))
+        }
+        hrat.setOnClickListener {
+            when {
+                !muzePrekryvat -> pozadejOPovoleni()
+                !nejakaKonzole -> upozorneniPredPrihlasenim(xbox = true)
+                rezimTel -> hratSTelefonem()
+                jeSlabaTv() -> varovaniSlabaTv()
+                else -> hratTelevizi()
+            }
+        }
+        umisti(hrat, 0, 0, 2, 2)
+
+        // Konzole (2×1)
+        val konzole = Metro.Dlazdice(c, Metro.MODRA, Metro.MODRA_VYBER, false)
+        xboxRadekText = if (xbox != null) t("sparovano") else "Klepni a přihlas se"
+        xboxRadek = naplnit(konzole, R.drawable.ik_sports_esports, "Konzole", "Xbox", xboxRadekText, barvaPod = if (xbox != null) Metro.ZLUTA else Metro.TEXT_NA_MODRE)
+        konzole.setOnClickListener { upozorneniPredPrihlasenim(xbox = true) }
+        umisti(konzole, 2, 0, 2, 1)
+
+        // Telefon (2×1)
+        val pridane = prefsBeta.getString("pridaneZarizeni", "") ?: ""
+        val telD = Metro.Dlazdice(c, Metro.MODRA, Metro.MODRA_VYBER, false)
+        naplnit(telD, R.drawable.ik_smartphone, "Telefon", pridane.ifBlank { "Přidat" }, if (pridane.isBlank()) "Telefon čte titulky rychleji" else "Spárováno")
+        telD.setOnClickListener { if (nejakaKonzole) pridatZarizeni() else upozorneniPredPrihlasenim(xbox = true) }
+        umisti(telD, 4, 0, 2, 1)
+
+        // Kdo čte titulky (2×1) – přepínač
+        val rezim = Metro.Dlazdice(c, Metro.MODRA, Metro.MODRA_VYBER, false)
+        naplnit(rezim, R.drawable.ik_tv, "Titulky čte", if (rezimTel) "Telefon" else "Televize", if (rezimTel) "Rychlejší, doporučeno" else "OK přepne na telefon", barvaPod = Metro.ZLUTA)
+        rezim.setOnClickListener {
+            prefsBeta.edit().putString("rezimHry", if (rezimTel) "tv" else "tel").apply()
+            if (rezimTel) getSharedPreferences("uspora", MODE_PRIVATE).edit().putBoolean("varovat", false).apply()
+            ukazHlavni()
+        }
+        umisti(rezim, 2, 1, 2, 1)
+
+        // Tabulky (2×1, šedá)
+        val tab = Metro.Dlazdice(c, Metro.SEDA_DLAZDICE, Metro.SEDA_VYBER, false)
+        val hry = Tabulka.hry()
+        naplnit(tab, R.drawable.ik_table_chart, "Tabulky překladů", if (Tabulka.pocet > 0) "%,d vět".format(Tabulka.pocet).replace(',', ' ') else "Žádné",
+            if (hry.isNotEmpty()) hry.joinToString(", ") else "Nahraj v telefonu (Úpravy)")
+        tab.setOnClickListener { Nabidky.vyberTabulku(this) }
+        umisti(tab, 4, 1, 2, 1)
+
+        // spodní řada malých dlaždic
+        fun mala(sl: Int, ikona: Int, nazev: String, stav: String?, zap: Boolean, akce: () -> Unit) {
+            val d = Metro.Dlazdice(c, Metro.MODRA, Metro.MODRA_VYBER, zap)
+            naplnit(d, ikona, null, nazev, stav, vel = 0.8f, barvaPod = if (zap) Metro.ZLUTA else Metro.TEXT_NA_MODRE)
+            d.setOnClickListener { akce() }
+            umisti(d, sl, 2, 1, 1)
+        }
+        val j = Texty.JAZYKY.firstOrNull { it.kod == jazyk } ?: Texty.JAZYKY[0]
+        mala(0, R.drawable.ik_translate, j.nazev, "Jazyk", false) { ukazJazyk() }
+        mala(1, R.drawable.ik_chat, "Dialogy", if (nast.dialogy) "ZAP" else "VYP", nast.dialogy) { nast.dialogy = !nast.dialogy; ukazHlavni() }
+        mala(2, R.drawable.ik_widgets, "Přes hru", if (nast.prekryvat) "ZAP" else "VYP", nast.prekryvat) { nast.prekryvat = !nast.prekryvat; ukazHlavni() }
+        val aiZap = AiPrekladac.klic(c).isNotEmpty() && AiPrekladac.povoleno(c)
+        mala(3, R.drawable.ik_auto_awesome, "AI překlad", if (aiZap) "ZAP" else "VYP", aiZap) { Nabidky.aiNastaveni(this) { ukazHlavni() } }
+        mala(4, R.drawable.ik_system_update, "Podpořit", "autora PlayCaption", false) { podporaDialog() }
+        mala(5, R.drawable.ik_info, "O aplikaci", "Aktualizace", false) { oAplikaci() }
+
+        // patička: stav připojení, nápověda ovladače, podpis
+        stavTecka = View(this)
+        stavKarta = svisle()
+        prepnoutBtn = null; ps5Radek = null; pripojitBtn = null
+        val pat = vodorovne().apply { gravity = Gravity.CENTER_VERTICAL }
+        pat.addView(txt("◀ ▶ ▲ ▼ vybrat     OK potvrdit", patickaH * 0.24f, Metro.OBRYS, 400), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        pat.addView(FukiZnacka.podpis(this).apply { setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, patickaH * 0.24f); setPadding(0, 0, 0, 0) })
+        koren.addView(pat, FrameLayout.LayoutParams(mrizkaW, patickaH, Gravity.BOTTOM).apply { leftMargin = okrajX; bottomMargin = okrajY / 2 })
+
+        setContentView(koren)
+        window.statusBarColor = Metro.POZADI
+
+        // automaticky spustit, když je vše připravené a uživatel překlad nevypnul
+        if (!PrijemService.bezi && nejakaKonzole && muzePrekryvat && AutoStart.jeZapnuto(this) && !RemotePlayService.aktivni) {
+            val up = getSharedPreferences("uspora", MODE_PRIVATE)
+            if (up.getBoolean("padlo", false) && prefsBeta.getString("rezimHry", "tv") == "tv") {
+                up.edit().putBoolean("padlo", false).putBoolean("slaba", true).putBoolean("varovat", true).putBoolean("rychla", false).apply()
+                varovaniSlabaTv(t("padloNadpis"), t("padloText"))
+            } else {
+                up.edit().putBoolean("padlo", false).apply()
+                RemotePlayService.spustVse(this)
+            }
+        }
+        obnovStav()
+        ui.removeCallbacks(obnova)
+        ui.postDelayed(obnova, 1000)
+        hrat.requestFocus()
+    }
+
+    /** Podpora autora PlayCaption – QR Platba v okně (na TV). */
+    private fun podporaDialog() {
+        if (PODPORA_QR.isEmpty()) return
+        val obsah = svisle().apply { setPadding(dp(24), dp(16), dp(24), dp(8)); gravity = Gravity.CENTER_HORIZONTAL }
+        obsah.addView(text(t("podporaText"), 16f, Color.WHITE).apply { setLineSpacing(0f, 1.2f) })
+        obsah.addView(text(t("podporaIban"), 14f, Metro.ZLUTA), odsazeni(top = 6))
+        obsah.addView(ImageView(this).apply {
+            setImageBitmap(PrihlaseniTelefonem.qr(PODPORA_QR, 400)); setBackgroundColor(Color.WHITE); setPadding(dp(8), dp(8), dp(8), dp(8))
+        }, LinearLayout.LayoutParams(dp(180), dp(180)).apply { topMargin = dp(12) })
+        android.app.AlertDialog.Builder(this).setTitle(t("podporaNadpis")).setView(obsah).setPositiveButton("Zavřít", null).show()
+    }
 
     // ------------------------------------------------------------------ [Fuki] telefon: hlavní obrazovka v dlaždicích
 

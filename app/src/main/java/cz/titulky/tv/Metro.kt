@@ -69,7 +69,9 @@ object Metro {
     /** Pozadí dlaždice: při stisku / výběru ovladačem světlejší. */
     fun pozadi(zaklad: Int, vyber: Int) = StateListDrawable().apply {
         addState(intArrayOf(android.R.attr.state_pressed), ColorDrawable(vyber))
-        addState(intArrayOf(android.R.attr.state_focused), ColorDrawable(vyber))
+        addState(intArrayOf(android.R.attr.state_focused), android.graphics.drawable.GradientDrawable().apply {
+            setColor(vyber); setStroke(3, Color.WHITE)
+        })
         addState(intArrayOf(), ColorDrawable(zaklad))
     }
 

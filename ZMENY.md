@@ -4,6 +4,9 @@
 Od verze 0.10 se vyvíjí jen jedna aplikace (dřívější NextGen, větev `master`) – umí „Jen televize“ i „S telefonem“.
 Při každé nové verzi se zvýší číslo v `app/build.gradle.kts` (versionCode + versionName) a sem se dopíše, co je nového.
 
+## 0.20.1-fuki12
+- Televize: nová hlavní obrazovka v dlaždicích přesně na jednu obrazovku (bez posouvání): HRÁT (vybrané hned po spuštění), Konzole (Xbox), Telefon, Titulky čte (telefon/televize), Tabulky, a řada Jazyk, Dialogy, Přes hru, AI, Podpořit, O aplikaci. PlayStation skrytý i na TV. Vybraná dlaždice: světlejší, bílý rámeček, žlutá lišta.
+
 ## 0.20.1-fuki11 (fuki10 + styl všude)
 
 ## 0.20.1-fuki10
