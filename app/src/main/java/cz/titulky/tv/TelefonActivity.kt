@@ -142,7 +142,7 @@ class TelefonActivity : Activity() {
 
     private fun pripojTv(tv: Propojeni.Televize) {
         Propojeni.Vysilac.nastavCil(tv.ip, tv.jmeno)
-        prefs.edit().putString("tvId", tv.id).putString("tvJmeno", tv.jmeno).apply()
+        prefs.edit().putString("tvId", tv.id).putString("tvJmeno", tv.jmeno).putString("tvIp", tv.ip).apply()
         android.widget.Toast.makeText(this, t("tvPosilam").replace("{tv}", tv.jmeno), android.widget.Toast.LENGTH_LONG).show()
         obnovTvTlacitko()
     }
@@ -267,11 +267,39 @@ class TelefonActivity : Activity() {
                 when {
                     tv != null -> pripojTv(tv)
                     seznam.size > 1 -> vyberTelevizi()
-                    else -> android.widget.Toast.makeText(this, t("tvNenalezenaToast"), android.widget.Toast.LENGTH_LONG).show()
+                    else -> tvNenalezena()
                 }
                 obnovTvTlacitko()
             }
         }
+    }
+
+    /**
+     * [Fuki] Televize se v síti neozvala (třeba router neposílá hledání mezi zařízeními) →
+     * zkusit poslední známou adresu, nebo ji nechat zadat ručně (televize ji ukazuje na obrazovce).
+     */
+    private fun tvNenalezena() {
+        val ip = prefs.getString("tvIp", null)
+        val jmeno = prefs.getString("tvJmeno", null) ?: "Televize"
+        val pole = android.widget.EditText(this).apply {
+            inputType = android.text.InputType.TYPE_CLASS_PHONE
+            hint = "192.168.1.20"
+            setText(ip ?: "")
+            gravity = Gravity.CENTER
+            textSize = 22f
+        }
+        val obal = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(20), dp(8), dp(20), 0); addView(pole) }
+        android.app.AlertDialog.Builder(this)
+            .setTitle("Televize se neozvala")
+            .setMessage("Na TV otevři aplikaci, dlaždici „Titulky čte“ přepni na Telefon a dej Hrát. TV pak ukáže svou adresu – zadej ji sem.")
+            .setView(obal)
+            .setPositiveButton("Připojit") { _, _ ->
+                val zadana = pole.text.toString().trim().replace(",", ".")
+                if (zadana.isNotEmpty()) pripojTv(Propojeni.Televize(prefs.getString("tvId", null) ?: "rucne", jmeno, zadana))
+            }
+            .setNeutralButton("Hledat znovu") { _, _ -> prepniNaTv() }
+            .setNegativeButton("Zrušit", null)
+            .show()
     }
 
     /** Přepínač: titulky jen v telefonu (televizi titulek schovat a přestat jí posílat). */

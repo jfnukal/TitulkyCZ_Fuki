@@ -322,7 +322,8 @@ class MainActivity : Activity() {
             zaklad = Metro.SEDA_DLAZDICE, vyber = Metro.SEDA_VYBER, barvaPopisu = Metro.TEXT)
         obsah.addView(par.d, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = mez })
         val spodek = vodorovne()
-        val stav = mdl(null, "Stav", "Čekám na telefon…", "Až se telefon připojí, televize sama přepne na hru.",
+        val stav = mdl(null, "Stav", "Čekám na telefon…",
+            "Až se telefon připojí, televize sama přepne na hru." + (mojeIp()?.let { "\nKdyž ji telefon nenajde, zadej v něm adresu: $it" } ?: ""),
             zaklad = Metro.SEDA_DLAZDICE, vyber = Metro.SEDA_VYBER, barvaPopisu = Metro.OBRYS)
         val zpet = mdl(R.drawable.ik_tv, "Zpět", "Titulky čte televize", null) { zpetNaVyber() }
         spodek.addView(stav.d, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 2f))
@@ -503,7 +504,8 @@ class MainActivity : Activity() {
 
         val muzePrekryvat = Settings.canDrawOverlays(this)
         val xbox = XboxUcet.konzole(this)
-        val rezimTel = prefsBeta.getString("rezimHry", "tv") == "tel" || jeSlabaTv()
+        // [Fuki] ruční volba má přednost; slabá TV rozhoduje jen, dokud si uživatel nevybral
+        val rezimTel = when (prefsBeta.getString("rezimHry", null)) { "tel" -> true; "tv" -> false; else -> jeSlabaTv() }
 
         // HRÁT (2×2, červená)
         val hrat = Metro.Dlazdice(c, Metro.CERVENA, Metro.CERVENA_VYBER, lista = true)
@@ -528,7 +530,7 @@ class MainActivity : Activity() {
                 !muzePrekryvat -> pozadejOPovoleni()
                 !nejakaKonzole -> upozorneniPredPrihlasenim(xbox = true)
                 rezimTel -> hratSTelefonem()
-                jeSlabaTv() -> varovaniSlabaTv()
+                jeSlabaTv() && prefsBeta.getString("rezimHry", null) == null -> varovaniSlabaTv()
                 else -> hratTelevizi()
             }
         }
@@ -551,9 +553,11 @@ class MainActivity : Activity() {
         // Kdo čte titulky (2×1) – přepínač
         val rezim = Metro.Dlazdice(c, Metro.MODRA, Metro.MODRA_VYBER, false)
         naplnit(rezim, R.drawable.ik_tv, "Titulky čte", if (rezimTel) "Telefon" else "Televize", if (rezimTel) "Rychlejší, doporučeno" else "OK přepne na telefon", barvaPod = Metro.ZLUTA)
+        rezim.tag = "rezim"
         rezim.setOnClickListener {
             prefsBeta.edit().putString("rezimHry", if (rezimTel) "tv" else "tel").apply()
             if (rezimTel) getSharedPreferences("uspora", MODE_PRIVATE).edit().putBoolean("varovat", false).apply()
+            fokusTv = "rezim"
             ukazHlavni()
         }
         umisti(rezim, 2, 1, 2, 1)
@@ -570,7 +574,8 @@ class MainActivity : Activity() {
         fun mala(sl: Int, ikona: Int, nazev: String, stav: String?, zap: Boolean, akce: () -> Unit) {
             val d = Metro.Dlazdice(c, Metro.MODRA, Metro.MODRA_VYBER, zap)
             naplnit(d, ikona, null, nazev, stav, vel = 0.8f, barvaPod = if (zap) Metro.ZLUTA else Metro.TEXT_NA_MODRE)
-            d.setOnClickListener { akce() }
+            d.tag = "mala$sl"
+            d.setOnClickListener { fokusTv = "mala$sl"; akce() }
             umisti(d, sl, 2, 1, 1)
         }
         // [Fuki] česky nahlas (místo výběru jazyka – zatím jen čeština)
@@ -630,8 +635,21 @@ class MainActivity : Activity() {
         obnovStav()
         ui.removeCallbacks(obnova)
         ui.postDelayed(obnova, 1000)
-        hrat.requestFocus()
+        // [Fuki] po přepnutí zůstat na stejné dlaždici (ne skákat na Hrát)
+        val f = fokusTv
+        fokusTv = null
+        ((f?.let { koren.findViewWithTag<View>(it) }) ?: hrat).requestFocus()
     }
+
+    /** [Fuki] IP adresa televize v domácí síti (pro ruční zadání v telefonu). */
+    private fun mojeIp(): String? = runCatching {
+        java.net.NetworkInterface.getNetworkInterfaces().toList().filter { it.isUp && !it.isLoopback }
+            .flatMap { it.inetAddresses.toList() }
+            .firstOrNull { it is java.net.Inet4Address && !it.isLoopbackAddress }?.hostAddress
+    }.getOrNull()
+
+    /** [Fuki] Dlaždice, na které má po překreslení zůstat výběr. */
+    private var fokusTv: String? = null
 
     /** Podpora autora PlayCaption – QR Platba v okně (na TV). */
     private fun podporaDialog() {

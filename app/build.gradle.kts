@@ -22,8 +22,8 @@ android {
         minSdk = 26
         targetSdk = 34
         // [Fuki] versionCode = 100 + číslo verze Fuki (každá nová verze musí mít vyšší číslo kvůli aktualizacím)
-        versionCode = 124
-        versionName = "0.20.1-fuki24"
+        versionCode = 125
+        versionName = "0.20.1-fuki25"
         buildConfigField("String", "GEMINI_KEY", "\"" + mistni.getProperty("gemini.key", "") + "\"")
         buildConfigField("String", "GEMINI_MODEL", "\"" + mistni.getProperty("gemini.model", "gemini-3.5-flash-lite") + "\"")
         // jen procesory, které mají televize (ARM) – aplikace je tak o třetinu menší
