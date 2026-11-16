@@ -4,6 +4,9 @@
 Od verze 0.10 se vyvíjí jen jedna aplikace (dřívější NextGen, větev `master`) – umí „Jen televize“ i „S telefonem“.
 Při každé nové verzi se zvýší číslo v `app/build.gradle.kts` (versionCode + versionName) a sem se dopíše, co je nového.
 
+## 0.20.1-fuki28
+- PlayStation úplně deaktivován jedním vypínačem (`PS5_ZAPNUTO = false` v RemotePlay.kt): aplikace PS5 nehledá, nepřipojuje ani nenabízí, i když v zařízení zůstalo staré spárování. Vždy se hraje přes Xbox. České hlášky už PS5 nezmiňují.
+
 ## 0.20.1-fuki27
 - Telefon se zhasnutým displejem počítá dál, když posílá titulky do televize (dřív se po minutě od zhasnutí ukončil). Drží si k tomu procesor i Wi-Fi vzhůru.
 

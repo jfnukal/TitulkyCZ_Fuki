@@ -16,6 +16,12 @@ import com.metallic.chiaki.lib.Target
  * Uložené údaje pro Remote Play (PSN Account ID, IP konzole, klíče z párování).
  * Klíče z párování jsou citlivé – zůstávají jen v televizi, v soukromém úložišti aplikace.
  */
+/**
+ * [Fuki] Hlavní vypínač PlayStationu. false = PS5 se nikde nenabízí, nehledá ani nepřipojuje
+ * (i když v zařízení zůstalo staré spárování). Kód PS5 zůstává pro budoucnost – viz BACKLOG.md.
+ */
+const val PS5_ZAPNUTO = false
+
 class RemotePlayUdaje(context: Context) {
     private val prefs = context.getSharedPreferences("remote_play", Context.MODE_PRIVATE)
 
@@ -35,7 +41,8 @@ class RemotePlayUdaje(context: Context) {
         get() = prefs.getString("rp_key", null)?.let { Base64.decode(it, Base64.NO_WRAP) }
         set(v) = prefs.edit().putString("rp_key", v?.let { Base64.encodeToString(it, Base64.NO_WRAP) }).apply()
 
-    val sparovano get() = ipKonzole != null && registKey != null && rpKey != null
+    /** [Fuki] PS5 je vypnuté jedním přepínačem [PS5_ZAPNUTO] – aplikace se pak chová, jako by PS5 nikdy spárované nebylo. */
+    val sparovano get() = PS5_ZAPNUTO && ipKonzole != null && registKey != null && rpKey != null
 
     /** Account ID je 8 bajtů zakódovaných v base64 (např. "AbCdEfGhIjk="). */
     fun accountIdBajty(): ByteArray? = accountId?.let {

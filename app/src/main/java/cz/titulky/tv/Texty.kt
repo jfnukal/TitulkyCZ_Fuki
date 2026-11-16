@@ -40,8 +40,8 @@ object Texty {
             "Connessione alla console tramite Riproduzione remota e associazione con PIN."),
         "sparovano" to listOf("Spárováno", "Spárované", "Gekoppelt", "Sparowano", "Associée", "Vinculada", "Associata"),
         "stavPripojeno" to listOf("Připojeno – překlad běží", "Pripojené – preklad beží", "Verbunden – Übersetzung läuft", "Połączono – tłumaczenie działa", "Connecté – traduction active", "Conectado – traducción activa", "Connesso – traduzione attiva"),
-        "stavCekam" to listOf("Čekám na zapnutí PS5…", "Čakám na zapnutie PS5…", "Warte auf die PS5…", "Czekam na włączenie PS5…", "En attente de la PS5…", "Esperando a la PS5…", "In attesa della PS5…"),
-        "stavPripojuji" to listOf("Připojuji k PS5… může to trvat až 2 min", "Pripájam k PS5… môže to trvať až 2 min", "Verbinde mit PS5… kann bis zu 2 Min. dauern", "Łączę z PS5… może to potrwać do 2 min", "Connexion à la PS5… cela peut prendre jusqu'à 2 min", "Conectando con la PS5… puede tardar hasta 2 min", "Connessione alla PS5… può richiedere fino a 2 min"),
+        "stavCekam" to listOf("Čekám na zapnutí Xboxu…", "Čakám na zapnutie PS5…", "Warte auf die PS5…", "Czekam na włączenie PS5…", "En attente de la PS5…", "Esperando a la PS5…", "In attesa della PS5…"),
+        "stavPripojuji" to listOf("Připojuji ke konzoli… může to chvíli trvat", "Pripájam k PS5… môže to trvať až 2 min", "Verbinde mit PS5… kann bis zu 2 Min. dauern", "Łączę z PS5… może to potrwać do 2 min", "Connexion à la PS5… cela peut prendre jusqu'à 2 min", "Conectando con la PS5… puede tardar hasta 2 min", "Connessione alla PS5… può richiedere fino a 2 min"),
         "stavVypnuto" to listOf("Překlad vypnutý – zapni OK", "Preklad vypnutý – zapni OK", "Übersetzung aus – OK zum Starten", "Tłumaczenie wyłączone – naciśnij OK", "Traduction arrêtée – OK pour démarrer", "Traducción apagada – pulsa OK", "Traduzione spenta – premi OK"),
         "stavNesparovano" to listOf("Nejdřív připoj konzoli", "Najprv pripoj konzolu", "Zuerst Konsole verbinden", "Najpierw połącz konsolę", "Connecte d'abord la console", "Primero conecta la consola", "Prima collega la console"),
         "zobrazeni" to listOf("Zobrazení titulků", "Zobrazenie titulkov", "Untertitel-Anzeige", "Wyświetlanie napisów", "Affichage des sous-titres", "Visualización de subtítulos", "Visualizzazione sottotitoli"),
@@ -110,7 +110,7 @@ object Texty {
         "prijemCekam" to listOf("Čekám na telefon…", "Čakám na telefón…"),
         "prijemPripojen" to listOf("✔ Telefon připojen – titulky chodí", "✔ Telefón pripojený – titulky chodia"),
         "prijemPopis" to listOf(
-            "Televize se teď k PS5 nepřipojuje – titulky čte a překládá telefon, televize je jen ukazuje. Je to rychlejší a hodí se i pro slabší televize.\n\n1. V Android telefonu otevři TitulkyCZ_Fuki.\n2. Jen poprvé klepni na „Vyhledat televizi“ a vyber tuhle televizi ({tv}). Telefon si přihlášení vezme z televize. Kdo je v telefonu už přihlášený sám, tenhle krok přeskočí.\n3. Pak už jen zmáčkni „Hotovo – hrát“ – telefon se k televizi připojí sám.\n4. Telefon nech ležet s otevřenou aplikací (ideálně na nabíječce).\n\nTelefon i televize musí být na stejné Wi-Fi.",
+            "Televize se teď ke konzoli nepřipojuje – titulky čte a překládá telefon, televize je jen ukazuje. Je to rychlejší a hodí se i pro slabší televize.\n\n1. V Android telefonu otevři TitulkyCZ_Fuki.\n2. Jen poprvé klepni na „Vyhledat televizi“ a vyber tuhle televizi ({tv}). Telefon si přihlášení vezme z televize. Kdo je v telefonu už přihlášený sám, tenhle krok přeskočí.\n3. Pak už jen zmáčkni „Hotovo – hrát“ – telefon se k televizi připojí sám.\n4. Telefon nech ležet s otevřenou aplikací (ideálně na nabíječce).\n\nTelefon i televize musí být na stejné Wi-Fi.",
             "Televízor sa teraz k PS5 nepripája – titulky číta a prekladá telefón, televízor ich len ukazuje. Je to rýchlejšie a hodí sa aj pre slabšie televízory.\n\n1. V Android telefóne otvor TitulkyCZ_Fuki.\n2. Len prvýkrát klepni na „Vyhľadať televízor“ a vyber tento televízor ({tv}). Telefón si prihlásenie vezme z televízora. Kto je v telefóne už prihlásený sám, tento krok preskočí.\n3. Potom už len stlač „Hotovo – hrať“ – telefón sa k televízoru pripojí sám.\n4. Telefón nechaj ležať s otvorenou aplikáciou (ideálne na nabíjačke).\n\nTelefón aj televízor musia byť na rovnakej Wi-Fi."),
         "prijemHrat" to listOf("Hrát", "Hrať"),
         "prijemZpet" to listOf("Zpět – titulky čte televize", "Späť – titulky číta televízor"),
@@ -170,7 +170,7 @@ object Texty {
             "💡 Keď prihlásenie „kľúčom“ nejde (chyba), klepni na „Prihlásiť sa iným spôsobom“ a zvoľ heslo alebo kód na e-mail / SMS."),
         "xboxOtevritOdkaz" to listOf("Otevřít microsoft.com/link", "Otvoriť microsoft.com/link"),
         "slabaNadpis" to listOf("⚠️ Televize má slabý výkon", "⚠️ Televízor má slabý výkon"),
-        "slabaText" to listOf("Titulky můžou chodit pozdě, spojení s PS5 se může přerušovat a aplikace se může zaseknout nebo ukončit.\n\n👍 Doporučujeme Android telefon / tablet – dej Zpět a vyber „S telefonem“.", "Titulky môžu chodiť neskoro, spojenie s PS5 sa môže prerušovať a aplikácia sa môže zaseknúť alebo ukončiť.\n\n👍 Odporúčame Android telefón / tablet – daj Späť a vyber „S telefónom“."),
+        "slabaText" to listOf("Titulky můžou chodit pozdě, spojení s konzolí se může přerušovat a aplikace se může zaseknout nebo ukončit.\n\n👍 Doporučujeme Android telefon / tablet – dej Zpět a vyber „S telefonem“.", "Titulky môžu chodiť neskoro, spojenie s PS5 sa môže prerušovať a aplikácia sa môže zaseknúť alebo ukončiť.\n\n👍 Odporúčame Android telefón / tablet – daj Späť a vyber „S telefónom“."),
         "padloNadpis" to listOf("⚠️ Aplikace minule spadla", "⚠️ Aplikácia minule spadla"),
         "padloText" to listOf("Televize nejspíš nestíhá číst titulky sama. Proto jsem se tentokrát nepřipojil automaticky.\n\n👍 Doporučujeme Android telefon / tablet – dej Zpět a vyber „S telefonem“.", "Televízor asi nestíha čítať titulky sám. Preto som sa tentoraz nepripojil automaticky.\n\n👍 Odporúčame Android telefón / tablet – daj Späť a vyber „S telefónom“."),
         "slabaTel" to listOf("Zpět", "Späť"),
@@ -218,13 +218,13 @@ object Texty {
         "pridatZavrit" to listOf("Zavřít", "Zavrieť"),
         "pridatHotovo" to listOf("✔ Spárováno: {jmeno}\nTelefon / tablet teď umí titulky do televize i jen u sebe.", "✔ Spárované: {jmeno}\nTelefón / tablet teraz vie titulky do televízora aj len u seba."),
         "prevzitNeodpovida" to listOf("Televize neodpovídá. Zkontroluj, že je na ní TitulkyCZ_Fuki v režimu „S telefonem“, a zkus to znovu.", "Televízor neodpovedá. Skontroluj, že je na ňom TitulkyCZ_Fuki v režime „S telefónom“, a skús to znova."),
-        "prevzitNesparovano" to listOf("Tahle televize není spárovaná s PS5 – nevadí. Spáruj s PS5 rovnou telefon, televize pak jen ukazuje titulky (na televizi zvol „S telefonem“).", "Tento televízor nie je spárovaný s PS5 – nevadí. Spáruj s PS5 priamo telefón, televízor potom len ukazuje titulky (na televízore zvoľ „S telefónom“)."),
+        "prevzitNesparovano" to listOf("Tahle televize ještě nemá připojený Xbox – nevadí. Připoj Xbox rovnou v telefonu, televize pak jen ukazuje titulky (na televizi přepni „Titulky čte“ na Telefon).", "Tento televízor nie je spárovaný s PS5 – nevadí. Spáruj s PS5 priamo telefón, televízor potom len ukazuje titulky (na televízore zvoľ „S telefónom“)."),
         "upozorneniNadpis" to listOf("📱 Používáš TitulkyCZ_Fuki v telefonu?", "📱 Používaš TitulkyCZ_Fuki v telefóne?"),
         "upozorneniText" to listOf("Při používání mobilní aplikace (Android telefon / tablet) NENÍ potřeba přihlašování k PS účtu v televizi.\n\nPřihlas se jen v mobilním zařízení – televize pak jen ukazuje titulky.", "Pri používaní mobilnej aplikácie (Android telefón / tablet) NIE JE potrebné prihlasovanie k PS účtu v televízore.\n\nPrihlás sa len v mobilnom zariadení – televízor potom len ukazuje titulky."),
         "upozorneni2Text" to listOf("Pro hraní s telefonem / tabletem vyber dole na hlavní obrazovce dlaždici „📱➜📺 S telefonem“.\n\nPak v telefonu klepni na „Připojit“ a přihlas se tam.", "Pre hranie s telefónom / tabletom vyber dole na hlavnej obrazovke dlaždicu „📱➜📺 S telefónom“.\n\nPotom v telefóne klepni na „Pripojiť“ a prihlás sa tam."),
         "upozorneniZpet" to listOf("Zpět (budu používat mobilní aplikaci)", "Späť (budem používať mobilnú aplikáciu)"),
         "upozorneniOk" to listOf("OK (přihlásit televizi)", "OK (prihlásiť televízor)"),
-        "pridatSparovatTel" to listOf("Spárovat telefon s PS5", "Spárovať telefón s PS5"),
+        "pridatSparovatTel" to listOf("Připojit telefon k Xboxu", "Spárovať telefón s PS5"),
         "prevzitKodNadpis" to listOf("Kód z televize", "Kód z televízora"),
         "prevzitKodText" to listOf("Opiš 4místný kód z televize:", "Opíš 4-miestny kód z televízora:"),
         "prevzitKodTv" to listOf("📱 Kód pro telefon: {kod}", "📱 Kód pre telefón: {kod}"),
@@ -275,13 +275,13 @@ object Texty {
             "Without PlayCaption this app would not exist – buy Adam a coffee ☕\nScan the QR code in your banking app, choose any amount.",
             "Without PlayCaption this app would not exist – buy Adam a coffee ☕\nScan the QR code in your banking app, choose any amount.",
             "Without PlayCaption this app would not exist – buy Adam a coffee ☕\nScan the QR code in your banking app, choose any amount."),
-        "hratInfo" to listOf("✔ TitulkyCZ_Fuki běží – přepni na PlayStation a hraj", "✔ TitulkyCZ_Fuki beží – prepni na PlayStation a hraj", "✔ TitulkyCZ_Fuki läuft – wechsle zur PlayStation und spiel", "✔ TitulkyCZ_Fuki działa – przełącz na PlayStation i graj", "✔ TitulkyCZ_Fuki est actif – passe sur la PlayStation et joue", "✔ TitulkyCZ_Fuki activo – cambia a la PlayStation y juega", "✔ TitulkyCZ_Fuki attivo – passa alla PlayStation e gioca"),
+        "hratInfo" to listOf("✔ TitulkyCZ_Fuki běží – přepni na Xbox a hraj", "✔ TitulkyCZ_Fuki beží – prepni na PlayStation a hraj", "✔ TitulkyCZ_Fuki läuft – wechsle zur PlayStation und spiel", "✔ TitulkyCZ_Fuki działa – przełącz na PlayStation i graj", "✔ TitulkyCZ_Fuki est actif – passe sur la PlayStation et joue", "✔ TitulkyCZ_Fuki activo – cambia a la PlayStation y juega", "✔ TitulkyCZ_Fuki attivo – passa alla PlayStation e gioca"),
         "zpet" to listOf("Zpět", "Späť", "Zurück", "Wstecz", "Retour", "Atrás", "Indietro"),
         "povoleni" to listOf("Povolit zobrazení přes jiné aplikace", "Povoliť zobrazenie cez iné aplikácie", "Über anderen Apps anzeigen erlauben", "Zezwól na wyświetlanie nad innymi aplikacjami", "Autoriser l'affichage par-dessus", "Permitir mostrar sobre otras apps", "Consenti la visualizzazione sopra altre app"),
         "povoleniNavodBtn" to listOf("Nejde to? Návod", "Nejde to? Návod", "Geht nicht? Anleitung", "Nie działa? Instrukcja", "Ça ne marche pas ? Aide", "¿No funciona? Ayuda", "Non funziona? Guida"),
         "povoleniNavodNadpis" to listOf("Jak povolit zobrazení přes jiné aplikace", "Ako povoliť zobrazenie cez iné aplikácie", "Überlagerung erlauben", "Jak zezwolić na wyświetlanie nad aplikacjami", "Autoriser la superposition", "Permitir mostrar sobre otras apps", "Consentire la sovrapposizione"),
         "povoleniNavod" to listOf(
-            "Bez tohoto povolení nemůže TitulkyCZ_Fuki ukázat titulky přes obraz z PS5.\n\n" +
+            "Bez tohoto povolení nemůže TitulkyCZ_Fuki ukázat titulky přes obraz ze hry.\n\n" +
             "1) Zkus v televizi: Nastavení → Aplikace → Zvláštní přístup aplikací → Zobrazení přes jiné aplikace (nebo „Překrytí“) → TitulkyCZ_Fuki → Povolit.\n" +
             "   Někde: Nastavení → Aplikace → TitulkyCZ_Fuki → Oprávnění.\n\n" +
             "2) Některé televize tuhle volbu schovávají (hlavně starší a slabší modely). Pak jde povolit jen z počítače:\n" +
@@ -359,7 +359,7 @@ object Texty {
             "Tippe auf den Text, um die Schriftgröße zu ändern", "Dotknij tekstu, aby zmienić rozmiar czcionki",
             "Touche le texte pour changer la taille", "Toca el texto para cambiar el tamaño",
             "Tocca il testo per cambiare la dimensione"),
-        "prevzato" to listOf("PS5 teď používá televize", "PS5 teraz používa televízor", "Die PS5 wird jetzt vom Fernseher genutzt", "PS5 używa teraz telewizor", "La PS5 est maintenant utilisée par la TV", "La PS5 la está usando ahora la TV", "La PS5 ora è usata dalla TV"),
+        "prevzato" to listOf("Konzoli teď používá televize", "PS5 teraz používa televízor", "Die PS5 wird jetzt vom Fernseher genutzt", "PS5 używa teraz telewizor", "La PS5 est maintenant utilisée par la TV", "La PS5 la está usando ahora la TV", "La PS5 ora è usata dalla TV"),
         "infoStart" to listOf("TitulkyCZ_Fuki: překlad se spouští…", "TitulkyCZ_Fuki: preklad sa spúšťa…", "TitulkyCZ_Fuki: Übersetzung startet…", "TitulkyCZ_Fuki: uruchamiam tłumaczenie…", "TitulkyCZ_Fuki : démarrage de la traduction…", "TitulkyCZ_Fuki: iniciando traducción…", "TitulkyCZ_Fuki: avvio traduzione…"),
         "infoAktivni" to listOf("✔ TitulkyCZ_Fuki: překlad aktivní", "✔ TitulkyCZ_Fuki: preklad aktívny", "✔ TitulkyCZ_Fuki: Übersetzung aktiv", "✔ TitulkyCZ_Fuki: tłumaczenie aktywne", "✔ TitulkyCZ_Fuki : traduction active", "✔ TitulkyCZ_Fuki: traducción activa", "✔ TitulkyCZ_Fuki: traduzione attiva")
     )

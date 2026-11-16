@@ -2,7 +2,7 @@
 
 - **Slovenština** jako jazyk překladu (texty `sk` v Texty.kt už existují; zapnout v `MainActivity.AKTIVNI_JAZYKY`).
 - Další jazyky (de, pl, fr, es, it) – zatím jen „Připravujeme“.
-- **PlayStation (PS5)** – skryto; kód (`ukazPripojeni`, `ukazPsn`, Chiaki) zůstává pro budoucnost.
+- **PlayStation (PS5)** – deaktivováno vypínačem `PS5_ZAPNUTO` v RemotePlay.kt (false). Kód (`ukazPripojeni`, `ukazPsn`, Chiaki) zůstává; zapnutí = true + vrátit dlaždici do UI.
 
 ## Nápady (15. 11. 2026)
 - Česky nahlas: hotovo ve fuki19. Dál zvážit různé hlasy pro muže / ženy podle profilu hry.

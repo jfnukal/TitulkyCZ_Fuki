@@ -152,7 +152,7 @@ class RemotePlayService : Service() {
                     ui.removeCallbacks(hlidac)
                     // stisknuto Připojit → druhé zařízení (TV/telefon) se odpojí; chvilku mu dát
                     val prevzit = intent?.getBooleanExtra(EXTRA_PREVZIT, false) == true
-                    if (prevzit) chciPS5 = true
+                    if (prevzit && PS5_ZAPNUTO) chciPS5 = true
                     if (prevzit) {
                         zapis("[Hotovo – hrát: připojuji (případné jiné zařízení s PlayCaption se odpojí)]")
                         neuspechu = 0
@@ -340,7 +340,7 @@ class RemotePlayService : Service() {
         val maPs5 = udaje.sparovano && ip != null
         val chciXbox = preferXbox(this)
         if (!maPs5 && xboxId == null) {
-            stav = "Televize ještě není spárovaná s PS5 (tlačítko 7)."
+            stav = "Xbox ještě není připojený – otevři aplikaci a dlaždici Konzole."
             ukazJednou(stav)
             return
         }
@@ -2304,7 +2304,7 @@ class RemotePlayService : Service() {
         const val ACTION_PREPNOUT = "cz.titulky.tv.REMOTE_PREPNOUT"
 
         /** Volba tlačítkem ⇄: když jsou zapnuté obě konzole, hrát na Xboxu (jinak PS5). */
-        fun preferXbox(context: android.content.Context) =
+        fun preferXbox(context: android.content.Context) = !PS5_ZAPNUTO ||
             context.getSharedPreferences("konzole", android.content.Context.MODE_PRIVATE).getBoolean("xbox", false)
 
         /** Přepnout překlad na druhou konzoli (a připojit se k ní, když překlad běží). */
