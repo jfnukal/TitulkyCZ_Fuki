@@ -572,8 +572,22 @@ class MainActivity : Activity() {
             d.setOnClickListener { akce() }
             umisti(d, sl, 2, 1, 1)
         }
-        val j = Texty.JAZYKY.firstOrNull { it.kod == jazyk } ?: Texty.JAZYKY[0]
-        mala(0, R.drawable.ik_translate, j.nazev, "Jazyk", false) { ukazJazyk() }
+        // [Fuki] česky nahlas (místo výběru jazyka – zatím jen čeština)
+        val hlasZap = Hlas.zapnuto(c)
+        mala(0, R.drawable.ik_hlas, "Nahlas", if (hlasZap) "ZAP" else "VYP", hlasZap) {
+            val ano = !Hlas.zapnuto(this)
+            getSharedPreferences("gamelingo", MODE_PRIVATE).edit().putBoolean(Hlas.PREF_ZAP, ano).putString(Hlas.PREF_KDE, "tv").apply()
+            if (ano) {
+                Hlas.zkouska(this)
+                // čeština chybí → nabídnout instalaci hlasu
+                ui.postDelayed({
+                    if (Hlas.chyba.isNotEmpty()) android.app.AlertDialog.Builder(this).setTitle("Česky nahlas")
+                        .setMessage(Hlas.chyba + ". Otevřít instalaci hlasů a stáhnout češtinu?")
+                        .setPositiveButton("Otevřít") { _, _ -> Hlas.nainstalujCestinu(this) }.setNegativeButton("Zavřít", null).show()
+                }, 2500)
+            }
+            ukazHlavni()
+        }
         mala(1, R.drawable.ik_chat, "Dialogy", if (nast.dialogy) "ZAP" else "VYP", nast.dialogy) { nast.dialogy = !nast.dialogy; ukazHlavni() }
         mala(2, R.drawable.ik_widgets, "Přes hru", if (nast.prekryvat) "ZAP" else "VYP", nast.prekryvat) { nast.prekryvat = !nast.prekryvat; ukazHlavni() }
         val aiZap = AiPrekladac.klic(c).isNotEmpty() && AiPrekladac.povoleno(c)

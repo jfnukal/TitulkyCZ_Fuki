@@ -81,6 +81,9 @@ object Propojeni {
         /** Kód pro převzetí spárování telefonem – ukázat na televizi ("" = schovat). */
         private val priKoduSparovani: ((String) -> Unit)? = null
     ) {
+        /** [Fuki] pro čtení nahlas na televizi */
+        private val hlasCtx: Context = context.applicationContext
+        @Volatile private var posledniMluv = 0L
         @Volatile private var bezi = true
         private val c = context.applicationContext
         private val zamek = zamekSite(c)
@@ -227,6 +230,15 @@ object Propojeni {
                         // barvy jmen postav ("B:-16711936,0") – posílá telefon od verze 0.17
                         val barvy = casti.drop(5).firstOrNull { it.startsWith("B:") }?.let { b ->
                             runCatching { b.removePrefix("B:").trim().split(",").map { it.trim().toInt() }.toIntArray() }.getOrNull()
+                        }
+                        // [Fuki] česky nahlas – telefon řekne, kdy a co má televize přečíst ("M:<číslo>:<rychlost>:<text>")
+                        casti.drop(5).firstOrNull { it.startsWith("M:") }?.let { m ->
+                            val k = m.removePrefix("M:").split(":", limit = 3)
+                            val n = k.getOrNull(0)?.toLongOrNull()
+                            if (k.size == 3 && n != null && n != posledniMluv) {
+                                posledniMluv = n
+                                Hlas.rekni(hlasCtx, odEscapuj(k[2]), k[1].toFloatOrNull() ?: 1f)
+                            }
                         }
                         // [Fuki] pozadí titulků z telefonu ("P:0.6")
                         casti.drop(5).firstOrNull { it.startsWith("P:") }?.let { p ->
@@ -396,6 +408,16 @@ object Propojeni {
         /** [Fuki] Pozadí titulků na televizi: 0 = průhledné, 1 = plně černé. */
         @Volatile var pozadi = 1f
 
+        // [Fuki] česky nahlas – co má televize přečíst
+        @Volatile private var mluvCislo = 0L
+        @Volatile private var mluvText = ""
+        @Volatile private var mluvRychlost = 1f
+        fun maCil() = cilIp != null
+        fun mluv(t: String, rychlost: Float) {
+            synchronized(zamek) { mluvText = t; mluvRychlost = rychlost; mluvCislo = System.currentTimeMillis(); cislo++ }
+            posliTed()
+        }
+
         fun nastavPozadi(p: Float) {
             synchronized(zamek) { pozadi = p.coerceIn(0f, 1f); cislo++ }
             posliTed()
@@ -438,7 +460,9 @@ object Propojeni {
             val sBarvami = if (b != null && b.any { it != 0 }) "\tB:" + b.joinToString(",") else ""
             // [Fuki] pozadí titulků se značkou "P:" – starší televize ho přeskočí
             val sPozadim = "\tP:$pozadi"
-            "$TITULEK\t$cislo\t$doba\t${escapuj(text)}\t${escapuj(napoveda)}$konec$sBarvami$sPozadim".toByteArray(Charsets.UTF_8)
+            // [Fuki] česky nahlas: číslo promluvy (televize přečte jen novou), rychlost, text
+            val sHlasem = if (mluvCislo > 0) "\tM:$mluvCislo:$mluvRychlost:${escapuj(mluvText)}" else ""
+            "$TITULEK\t$cislo\t$doba\t${escapuj(text)}\t${escapuj(napoveda)}$konec$sBarvami$sPozadim$sHlasem".toByteArray(Charsets.UTF_8)
         }
 
         private fun posliTed() = posliData(zprava())

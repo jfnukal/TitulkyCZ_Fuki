@@ -1053,6 +1053,7 @@ class RemotePlayService : Service() {
         ctecky.forEach { it.cilovyJazyk = cil }
         var dobryHotov = false
         var aiHotov = false
+        var aiBezi = false
         fun ukazJestli(cesky: String, dobry: Boolean, zAi: Boolean = false) {
             if (cislo < posledniUkazany) return // mezitím se ukázala novější replika
             // [Fuki] mezitím se začala překládat novější replika → starý (pomalý) překlad už neukazovat
@@ -1064,6 +1065,7 @@ class RemotePlayService : Service() {
             posledniUkazany = cislo
             ukazCesky(cesky, box, radku, barvyJmen)
             if (dobry) ai.zapamatuj(cislo, repliky, cesky)
+            if (dobry) hlasPlan(cislo, cesky, zAi, cekatNaAi = aiBezi)
         }
         // [Fuki] AI překlad s kontextem hry běží souběžně – až dorazí, nahradí překlad z Googlu
         // (když jsou všechny repliky v tabulce hotových překladů, AI není potřeba – lidský překlad je lepší)
@@ -1073,7 +1075,8 @@ class RemotePlayService : Service() {
         val zacatekAi = System.currentTimeMillis()
         // [Fuki] úsporný režim: krátké repliky („Yeah.“, „Come on!“) přeloží Google, AI jen delší věty
         val delsi = repliky.sumOf { r -> r.substringAfter(": ", r).trim().split(Regex("\\s+")).size } >= 6
-        if (ai.zapnuto && !vseZTabulky && (delsi || !AiPrekladac.usporne(this))) ai.preloz(cislo, repliky, cil) { lepsi ->
+        aiBezi = ai.zapnuto && !vseZTabulky && (delsi || !AiPrekladac.usporne(this))
+        if (aiBezi) ai.preloz(cislo, repliky, cil) { lepsi ->
             stPreklad("ai", System.currentTimeMillis() - zacatekAi)
             zapisRychlost("AI", System.currentTimeMillis() - zacatekAi)
             ukazJestli(lepsi, dobry = true, zAi = true)
@@ -1888,6 +1891,34 @@ class RemotePlayService : Service() {
             }.apply { isDaemon = true; name = "hra-xbox" }.start()
             ui.postDelayed(this, 300_000)
         }
+    }
+
+    // ------------------------------------------------------------------ [Fuki] česky nahlas
+
+    private var hlasCislo = -1L
+    private var hlasMluveno = -1L
+    private var hlasText = ""
+    private val hlasTed = Runnable {
+        if (hlasCislo <= hlasMluveno) return@Runnable
+        hlasMluveno = hlasCislo
+        val r = Hlas.rychlost(this)
+        // telefon posílá titulky do TV a hlas má být z televize → přečte televize
+        if (telefon && Propojeni.Vysilac.maCil() && Hlas.kde(this) == "tv") Propojeni.Vysilac.mluv(hlasText, r)
+        else Hlas.rekni(this, hlasText, r)
+    }
+
+    /**
+     * Naplánuje přečtení repliky. Když ještě běží AI (lepší překlad), chvilku na ni počká,
+     * ať se nečte dvakrát. Jednou přečtená replika se znovu nečte.
+     */
+    private fun hlasPlan(cislo: Long, text: String, zAi: Boolean, cekatNaAi: Boolean) {
+        if (!Hlas.zapnuto(this) || text.isBlank()) return
+        if (cislo < hlasCislo || cislo <= hlasMluveno) return
+        if (cislo == hlasCislo && !zAi) return
+        hlasCislo = cislo
+        hlasText = text
+        ui.removeCallbacks(hlasTed)
+        if (zAi || !cekatNaAi) ui.post(hlasTed) else ui.postDelayed(hlasTed, 1200)
     }
 
     /** [Fuki] Tlačítko „Změnil jsem hru“: zapomenout starou hru a hned se zeptat Xboxu na novou. */

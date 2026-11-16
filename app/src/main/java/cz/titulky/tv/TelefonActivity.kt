@@ -562,6 +562,30 @@ class TelefonActivity : Activity() {
         })
         napoveda("Krátká replika zmizí rychle, dlouhá vydrží déle. „Déle“ se hodí, když čtení nestíhají děti.")
 
+        // ---- česky nahlas
+        stitek("Česky nahlas")
+        val hlasZap = Hlas.zapnuto(this)
+        val hlasKde = Hlas.kde(this)
+        pridej(radekVoleb(listOf("Vypnuto" to !hlasZap, "Mluví televize" to (hlasZap && hlasKde == "tv"), "Mluví telefon" to (hlasZap && hlasKde == "tel"))) { i ->
+            prefs.edit().putBoolean(Hlas.PREF_ZAP, i != 0).apply {
+                if (i == 1) putString(Hlas.PREF_KDE, "tv"); if (i == 2) putString(Hlas.PREF_KDE, "tel")
+            }.apply()
+            if (i == 1) Propojeni.Vysilac.mluv("Ahoj, takhle budu číst české titulky.", Hlas.rychlost(this))
+            if (i == 2) Hlas.zkouska(this)
+            obnovUpravy()
+        })
+        if (hlasZap) {
+            val rych = listOf("Pomaleji" to 0.85f, "Normálně" to 1f, "Rychleji" to 1.25f)
+            val tedR = Hlas.rychlost(this)
+            pridej(radekVoleb(rych.map { (n, v) -> n to (kotlin.math.abs(tedR - v) < 0.05f) }) { i ->
+                prefs.edit().putFloat(Hlas.PREF_RYCHLOST, rych[i].second).apply()
+                if (hlasKde == "tv") Propojeni.Vysilac.mluv("Takhle rychle budu mluvit.", rych[i].second) else Hlas.rekni(this, "Takhle rychle budu mluvit.", rych[i].second)
+                obnovUpravy()
+            }, 4)
+            if (Hlas.chyba.isNotEmpty() && hlasKde == "tel") pridej(volbaDl(Hlas.chyba + " – nainstalovat", false) { Hlas.nainstalujCestinu(this) }, 4)
+        }
+        napoveda("Přeložené titulky čte český hlas (jména postav vynechá). Když televize nemluví, chybí v ní český hlas – nastav ho v TV: Nastavení → Systém → Převod textu na řeč.")
+
         // ---- co překládat navíc (dialogy se překládají vždy)
         stitek("Co překládat navíc k dialogům")
         val rezim = if (!Volby.zapnuto) 0 else if (Volby.rezimText) 2 else if (Volby.rezimMenu) 3 else 1

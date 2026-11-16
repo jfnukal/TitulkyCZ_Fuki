@@ -5,7 +5,7 @@
 - **PlayStation (PS5)** – skryto; kód (`ukazPripojeni`, `ukazPsn`, Chiaki) zůstává pro budoucnost.
 
 ## Nápady (15. 11. 2026)
-- **Česky nahlas** (Android TTS) – jednoduchý dabing, hlavně pro děti. Zvážit, zapínat v Úpravách.
+- Česky nahlas: hotovo ve fuki19. Dál zvážit různé hlasy pro muže / ženy podle profilu hry.
 - **Oprava překladu jedním dotykem** – podržet titulek v telefonu, napsat správně, uložit do osobní tabulky hry.
 - **Historie titulků v telefonu** – posledních ~50 vět, klepnutím i anglický originál.
 - **Dvojjazyčné titulky** – malým anglický originál nad českým (učení angličtiny).

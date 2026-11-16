@@ -4,6 +4,12 @@
 Od verze 0.10 se vyvíjí jen jedna aplikace (dřívější NextGen, větev `master`) – umí „Jen televize“ i „S telefonem“.
 Při každé nové verzi se zvýší číslo v `app/build.gradle.kts` (versionCode + versionName) a sem se dopíše, co je nového.
 
+## 0.20.1-fuki19
+- **Česky nahlas:** přeložené titulky čte český hlas (Android převod textu na řeč), jména postav vynechá, nová replika přeruší starou. Když běží AI, hlas chvilku počká na lepší překlad, ať se nečte dvakrát.
+  - Telefon → Úpravy: Vypnuto / Mluví televize / Mluví telefon, rychlost Pomaleji / Normálně / Rychleji (s ukázkou).
+  - TV: dlaždice „Nahlas“ (místo Jazyka – zatím je jen čeština). Když v TV chybí český hlas, nabídne instalaci.
+- Nápověda pole pro AI klíč zná nový formát klíčů AQ.
+
 ## 0.20.1-fuki18
 - Hra z Xboxu se zjišťuje při připojení a pak každých 5 minut (dotaz na Xbox účet je zdarma, AI se volá jen při změně hry).
 - Tlačítko **Změnil jsem hru**: telefon → Úpravy (sekce Překlad), TV → O aplikaci. Zapomene profil staré hry a hned zjistí novou.
