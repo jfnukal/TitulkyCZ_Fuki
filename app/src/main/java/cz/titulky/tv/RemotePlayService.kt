@@ -934,6 +934,8 @@ class RemotePlayService : Service() {
                 val cesky = opravJmena(cista, preklad)
                 zapis("  → NÁPOVĚDA: $cesky" + (tlacitko?.let { " [$it]" } ?: ""))
                 ukazNapovedu(if (tlacitko != null) "$tlacitko  $cesky" else cesky, box)
+                // [Fuki] česky nahlas i nápovědy (návody, např. chytání ryb)
+                hlasNapoveda(cesky)
             },
             chyba = {})
     }
@@ -1919,6 +1921,14 @@ class RemotePlayService : Service() {
         hlasText = text
         ui.removeCallbacks(hlasTed)
         if (zAi || !cekatNaAi) ui.post(hlasTed) else ui.postDelayed(hlasTed, 1200)
+    }
+
+    /** [Fuki] Nápověda se čte hned (nečeká na AI). */
+    private fun hlasNapoveda(text: String) {
+        if (!Hlas.zapnuto(this) || text.isBlank()) return
+        val r = Hlas.rychlost(this)
+        if (telefon && Propojeni.Vysilac.maCil() && Hlas.kde(this) == "tv") Propojeni.Vysilac.mluv(text, r)
+        else Hlas.rekni(this, text, r)
     }
 
     /** [Fuki] Tlačítko „Změnil jsem hru“: zapomenout starou hru a hned se zeptat Xboxu na novou. */

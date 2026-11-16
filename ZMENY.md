@@ -4,6 +4,10 @@
 Od verze 0.10 se vyvíjí jen jedna aplikace (dřívější NextGen, větev `master`) – umí „Jen televize“ i „S telefonem“.
 Při každé nové verzi se zvýší číslo v `app/build.gradle.kts` (versionCode + versionName) a sem se dopíše, co je nového.
 
+## 0.20.1-fuki20
+- TV: opravená hlavička – tlačítka Restart a Vypnout mají pevnou šířku a už nepřekrývají logo ani verzi; Restart má ikonu šipky dokola.
+- Česky nahlas čte i nápovědy a návody ve hře (např. chytání ryb).
+
 ## 0.20.1-fuki19
 - **Česky nahlas:** přeložené titulky čte český hlas (Android převod textu na řeč), jména postav vynechá, nová replika přeruší starou. Když běží AI, hlas chvilku počká na lepší překlad, ať se nečte dvakrát.
   - Telefon → Úpravy: Vypnuto / Mluví televize / Mluví telefon, rychlost Pomaleji / Normálně / Rychleji (s ukázkou).

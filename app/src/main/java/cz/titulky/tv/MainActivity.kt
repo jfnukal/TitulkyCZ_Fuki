@@ -460,22 +460,22 @@ class MainActivity : Activity() {
             val d = Metro.Dlazdice(c, Metro.SEDA_DLAZDICE, Metro.SEDA_VYBER, false)
             val r = vodorovne().apply { gravity = Gravity.CENTER_VERTICAL; setPadding((hlavaH * 0.15f).toInt(), 0, (hlavaH * 0.2f).toInt(), 0) }
             r.addView(ImageView(c).apply { setImageResource(ikona); setColorFilter(Metro.PRIMARNI) }, LinearLayout.LayoutParams((hlavaH * 0.3f).toInt(), (hlavaH * 0.3f).toInt()).apply { rightMargin = (hlavaH * 0.1f).toInt() })
-            r.addView(txt(popis, hlavaH * 0.2f, Metro.TEXT, 600).apply { maxLines = 1 })
+            r.addView(txt(popis, hlavaH * 0.2f, Metro.TEXT, 600).apply { maxLines = 1; includeFontPadding = false; setLineSpacing(0f, 1f) })
             d.obsah.gravity = Gravity.CENTER_VERTICAL
             d.obsah.addView(r)
             d.setOnClickListener { akce() }
             return d
         }
-        horniPravy.addView(horniTlacitko(R.drawable.ik_system_update, "Restart") {
+        horniPravy.addView(horniTlacitko(R.drawable.ik_restart, "Restart") {
             android.app.AlertDialog.Builder(this).setTitle("Restartovat aplikaci?")
                 .setMessage("Zastaví překlad i spojení s konzolí a aplikaci spustí znovu načisto.")
                 .setPositiveButton("Restartovat") { _, _ -> Vypinac.restart(this) }.setNegativeButton("Zpět", null).show()
-        }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, (hlavaH * 0.6f).toInt()).apply { rightMargin = gap })
+        }, LinearLayout.LayoutParams((hlavaH * 2.3f).toInt(), (hlavaH * 0.6f).toInt()).apply { rightMargin = gap })
         horniPravy.addView(horniTlacitko(R.drawable.ik_vypnout, "Vypnout") {
             android.app.AlertDialog.Builder(this).setTitle("Vypnout aplikaci?")
                 .setMessage("Zastaví překlad a aplikaci úplně ukončí (nezůstane v paměti).")
                 .setPositiveButton("Vypnout") { _, _ -> Vypinac.vypnout(this) }.setNegativeButton("Zpět", null).show()
-        }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, (hlavaH * 0.6f).toInt()))
+        }, LinearLayout.LayoutParams((hlavaH * 2.3f).toInt(), (hlavaH * 0.6f).toInt()))
         koren.addView(horniPravy, FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, (hlavaH * 0.7f).toInt(), Gravity.TOP or Gravity.END).apply { rightMargin = okrajX; topMargin = okrajY })
 
         val y0 = okrajY + hlavaH
