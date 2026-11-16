@@ -4,6 +4,9 @@
 Od verze 0.10 se vyvíjí jen jedna aplikace (dřívější NextGen, větev `master`) – umí „Jen televize“ i „S telefonem“.
 Při každé nové verzi se zvýší číslo v `app/build.gradle.kts` (versionCode + versionName) a sem se dopíše, co je nového.
 
+## 0.20.1-fuki30
+- TV: tlačítka Restart a Vypnout už nemají uříznutý text.
+
 ## 0.20.1-fuki29
 - **Průvodce nastavením** (první spuštění, kdykoli znovu z O aplikaci): Kdo čte titulky (Jen televize / Telefon, s doporučením podle výkonu TV) → Připojit Xbox → Spárovat telefon (jen v režimu Telefon) → Kdo bude hrát (Dospělý / Dítě / Vlastní) → Hotovo. V telefonu kratší: Xbox → Kdo bude hrát → Hotovo.
 - Předvolba Dítě: větší písmo, titulky zůstanou déle, český hlas zapnutý. Dospělý: běžné písmo, bez hlasu.

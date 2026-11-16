@@ -463,14 +463,17 @@ class MainActivity : Activity() {
         val horniPravy = vodorovne().apply { gravity = Gravity.CENTER_VERTICAL }
         horniPravy.addView(txt(verze, hlavaH * 0.2f, Metro.OBRYS, 600), LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { rightMargin = (hlavaH * 0.3f).toInt() })
         fun horniTlacitko(ikona: Int, popis: String, akce: () -> Unit): View {
-            val d = Metro.Dlazdice(c, Metro.SEDA_DLAZDICE, Metro.SEDA_VYBER, false)
-            val r = vodorovne().apply { gravity = Gravity.CENTER_VERTICAL; setPadding((hlavaH * 0.15f).toInt(), 0, (hlavaH * 0.2f).toInt(), 0) }
+            // obyčejný řádek (ne Dlazdice – její vnitřní okraje text na výšku uřízly)
+            val r = vodorovne().apply {
+                gravity = Gravity.CENTER
+                setPadding((hlavaH * 0.15f).toInt(), 0, (hlavaH * 0.2f).toInt(), 0)
+                background = Metro.pozadi(Metro.SEDA_DLAZDICE, Metro.SEDA_VYBER)
+                isFocusable = true; isClickable = true
+                setOnClickListener { akce() }
+            }
             r.addView(ImageView(c).apply { setImageResource(ikona); setColorFilter(Metro.PRIMARNI) }, LinearLayout.LayoutParams((hlavaH * 0.3f).toInt(), (hlavaH * 0.3f).toInt()).apply { rightMargin = (hlavaH * 0.1f).toInt() })
             r.addView(txt(popis, hlavaH * 0.2f, Metro.TEXT, 600).apply { maxLines = 1; includeFontPadding = false; setLineSpacing(0f, 1f) })
-            d.obsah.gravity = Gravity.CENTER_VERTICAL
-            d.obsah.addView(r)
-            d.setOnClickListener { akce() }
-            return d
+            return r
         }
         horniPravy.addView(horniTlacitko(R.drawable.ik_restart, "Restart") {
             android.app.AlertDialog.Builder(this).setTitle("Restartovat aplikaci?")
