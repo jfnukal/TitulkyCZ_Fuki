@@ -121,6 +121,7 @@ class MainActivity : Activity() {
             "xbox" -> { xboxRelace?.zastav(); xboxRelace = null; ukazHlavni() }
             "pripojeni", "jazyk" -> if (nast.jazyk != null) ukazHlavni() else super.onBackPressed()
             "prijem" -> zpetNaVyber()
+            "pruvodce" -> if (pruvodceKrok > 1) { pruvodceKrok--; ukazPruvodce() } else konecPruvodce()
             else -> super.onBackPressed()
         }
     }
@@ -184,7 +185,11 @@ class MainActivity : Activity() {
     private lateinit var stavKarta: LinearLayout
 
     private fun ukazHlavni() {
+        // [Fuki] běží průvodce → vrátit se do něj (např. po připojení Xboxu)
+        if (pruvodceKrok > 0) { ukazPruvodce(); return }
         if (!telefon && PrijemService.bezi) { ukazPrijem(); return }
+        // první spuštění (ještě žádná konzole) → průvodce
+        if (!prefsBeta.getBoolean("pruvodceHotov", false) && !nejakaKonzole) { spustPruvodce(); return }
         // [Fuki] telefon i televize: nová obrazovka v dlaždicích
         if (telefon) { ukazHlavniTelefon(); return }
         ukazHlavniTv()
@@ -195,7 +200,6 @@ class MainActivity : Activity() {
     /** Zpět z čekání na telefon → hlavní obrazovka s výběrem "Jak chceš hrát?". */
     private fun zpetNaVyber() {
         PrijemService.zastav(this)
-        prefsBeta.edit().putString("rezimHry", "tv").apply()
         obrazovka = "hlavni"
         ukazHlavni()
     }
@@ -603,7 +607,7 @@ class MainActivity : Activity() {
             ukazHlavni()
         }
         mala(1, R.drawable.ik_chat, "Dialogy", if (nast.dialogy) "ZAP" else "VYP", nast.dialogy) { nast.dialogy = !nast.dialogy; ukazHlavni() }
-        mala(2, R.drawable.ik_widgets, "Přes hru", if (nast.prekryvat) "ZAP" else "VYP", nast.prekryvat) { nast.prekryvat = !nast.prekryvat; ukazHlavni() }
+        mala(2, R.drawable.ik_widgets, "Zakrýt EN", if (nast.prekryvat) "Česky přes anglické" else "Česky nad anglickými", nast.prekryvat) { nast.prekryvat = !nast.prekryvat; ukazHlavni() }
         val aiZap = AiPrekladac.klic(c).isNotEmpty() && AiPrekladac.povoleno(c)
         mala(3, R.drawable.ik_auto_awesome, "AI překlad", if (aiZap) "ZAP" else "VYP", aiZap) { Nabidky.aiNastaveni(this) { ukazHlavni() } }
         mala(4, R.drawable.ik_system_update, "Podpořit", "autora PlayCaption", false) { podporaDialog() }
@@ -845,7 +849,7 @@ class MainActivity : Activity() {
                 RemotePlayService.zmenaHry(this)
                 android.widget.Toast.makeText(this, if (RemotePlayService.aktivni) "Zjišťuji novou hru…" else "Překlad neběží", android.widget.Toast.LENGTH_SHORT).show()
             }
-            .setNegativeButton("Zavřít", null)
+            .setNegativeButton("Průvodce nastavením") { _, _ -> spustPruvodce() }
             .show()
     }
 
@@ -1482,6 +1486,149 @@ class MainActivity : Activity() {
                 .setPositiveButton("OK", null)
                 .show()
         }
+    }
+
+    // ------------------------------------------------------------------ [Fuki] průvodce nastavením
+
+    /** 0 = průvodce neběží, jinak číslo kroku (od 1). */
+    private var pruvodceKrok = 0
+
+    private fun pruvodceKroky(): List<String> = when {
+        telefon -> listOf("xbox", "kdo", "hotovo")
+        prefsBeta.getString("rezimHry", null) == "tel" -> listOf("rezim", "xbox", "telefon", "kdo", "hotovo")
+        else -> listOf("rezim", "xbox", "kdo", "hotovo")
+    }
+
+    private fun spustPruvodce() { pruvodceKrok = 1; ukazPruvodce() }
+
+    private fun konecPruvodce() {
+        pruvodceKrok = 0
+        prefsBeta.edit().putBoolean("pruvodceHotov", true).apply()
+        ukazHlavni()
+    }
+
+    /** Předvolba podle toho, kdo hraje. */
+    private fun predvolba(kdo: String) {
+        prefsBeta.edit().putString("kdoHraje", kdo).apply()
+        if (kdo == "vlastni") return
+        val dite = kdo == "dite"
+        val e = getSharedPreferences("gamelingo", MODE_PRIVATE).edit()
+        e.putFloat(RemotePlayService.PREF_DOBA, if (dite) 1.6f else 1f)
+        e.putBoolean(Hlas.PREF_ZAP, dite)
+        if (dite) e.putString(Hlas.PREF_KDE, "tv").putFloat(Hlas.PREF_HLASITOST, 1f).putFloat(Hlas.PREF_RYCHLOST, 1f)
+        if (telefon) e.putFloat("tvPismo", if (dite) 1.35f else 1f)
+        e.apply()
+        if (dite && !telefon) Hlas.zkouska(this)
+    }
+
+    private fun ukazPruvodce() {
+        val kroky = pruvodceKroky()
+        if (pruvodceKrok > kroky.size) { konecPruvodce(); return }
+        obrazovka = "pruvodce"
+        val krok = kroky[pruvodceKrok - 1]
+        fun dal() { pruvodceKrok++; ukazPruvodce() }
+        val obsah = svisle()
+        fun uvod(s: String) = obsah.addView(mt(s, 0.028f, 15f, TEXT2),
+            LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { bottomMargin = mez * 4 })
+        /** Řada velkých dlaždic (TV vedle sebe, telefon pod sebou). */
+        fun rada(vararg dl: Dl) {
+            val r = if (telefon) svisle() else vodorovne()
+            dl.forEachIndexed { i, d ->
+                if (telefon) { d.d.minimumHeight = Metro.dp(this, 120f)
+                    r.addView(d.d, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { if (i > 0) topMargin = mez })
+                } else r.addView(d.d, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply { if (i > 0) leftMargin = mez })
+            }
+            obsah.addView(r, if (telefon) LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                else LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+        }
+        var fokus: View? = null
+        val nadpis: String
+        when (krok) {
+            "rezim" -> {
+                nadpis = "Kdo bude číst titulky?"
+                val slaba = jeSlabaTv()
+                uvod("Aplikace se dívá na hru, čte anglické titulky a překládá je. Tu práci může dělat televize sama, nebo telefon.")
+                val tv = mdl(R.drawable.ik_tv, if (!slaba) "Doporučeno pro tuto televizi" else "Jednodušší", "Jen televize",
+                    "Nic dalšího nepotřebuješ. Telefon zůstane volný." + if (slaba) "\nTahle televize je slabší – titulky můžou chodit později." else "",
+                    lista = !slaba, barvaPopisu = Metro.TEXT) {
+                    prefsBeta.edit().putString("rezimHry", "tv").apply()
+                    getSharedPreferences("uspora", MODE_PRIVATE).edit().putBoolean("varovat", false).apply()
+                    dal()
+                }
+                val tel = mdl(R.drawable.ik_smartphone, if (slaba) "Doporučeno pro tuto televizi" else "Rychlejší", "Telefon",
+                    "Telefon čte a překládá, televize jen ukazuje. Rychlejší titulky. Při hraní musí telefon běžet (na nabíječce).",
+                    lista = slaba, barvaPopisu = Metro.TEXT) {
+                    prefsBeta.edit().putString("rezimHry", "tel").apply(); dal()
+                }
+                rada(tv, tel)
+                fokus = if (slaba) tel.d else tv.d
+            }
+            "xbox" -> {
+                nadpis = "Připojit Xbox"
+                val x = XboxUcet.konzole(this)
+                if (x != null) {
+                    uvod("Xbox je připojený, můžeš pokračovat.")
+                    val ok = mdl(R.drawable.ik_check_circle, "Připojeno", x.second, "Pokračovat", lista = true, barvaPopisu = Metro.ZLUTA) { dal() }
+                    val jiny = mdl(R.drawable.ik_sports_esports, "Jiný účet nebo konzole", "Připojit znovu", null,
+                        zaklad = Metro.SEDA_DLAZDICE, vyber = Metro.SEDA_VYBER) { ukazPripojeniXbox() }
+                    rada(ok, jiny); fokus = ok.d
+                } else {
+                    uvod("Přihlásíš se účtem Microsoft, který máš na Xboxu, a aplikace si Xbox najde. Stačí jednou.")
+                    val pripojit = mdl(R.drawable.ik_sports_esports, "Krok za krokem", "Připojit Xbox", "Přihlášení přes QR kód nebo odkaz",
+                        zaklad = Metro.CERVENA, vyber = Metro.CERVENA_VYBER, lista = true, barvaPopisu = Metro.TEXT_NA_CERVENE) { ukazPripojeniXbox() }
+                    val list = mutableListOf(pripojit)
+                    if (telefon) list.add(0, mdl(R.drawable.ik_tv, "Máš aplikaci už v televizi?", "Převzít z televize",
+                        "V televizi dej Telefon → Přidat a tady klepni. Nemusíš se přihlašovat znovu.", barvaPopisu = Metro.TEXT) { prevzitSparovaniZTv() })
+                    list.add(mdl(null, "Udělám to později", "Přeskočit", null, zaklad = Metro.SEDA_DLAZDICE, vyber = Metro.SEDA_VYBER) { dal() })
+                    rada(*list.toTypedArray()); fokus = (if (telefon) list[0] else pripojit).d
+                }
+            }
+            "telefon" -> {
+                nadpis = "Spárovat telefon"
+                val pridane = prefsBeta.getString("pridaneZarizeni", "") ?: ""
+                uvod("Nainstaluj TitulkyCZ_Fuki i do telefonu (stejná Wi-Fi jako televize). Telefon si od televize vezme přihlášení k Xboxu.")
+                val par = mdl(R.drawable.ik_smartphone, if (pridane.isBlank()) "Krok 1" else "Spárováno: $pridane", "Ukázat kód pro telefon",
+                    "V telefonu otevři aplikaci → dlaždice Televize → zadej kód z televize.", lista = pridane.isBlank(), barvaPopisu = Metro.TEXT) {
+                    if (nejakaKonzole) pridatZarizeni() else android.widget.Toast.makeText(this, "Nejdřív připoj Xbox (o krok zpět)", android.widget.Toast.LENGTH_LONG).show()
+                }
+                val hotovo = mdl(R.drawable.ik_check_circle, "Krok 2", "Telefon je spárovaný", "Pokračovat", lista = pridane.isNotBlank(), barvaPopisu = Metro.ZLUTA) { dal() }
+                rada(par, hotovo); fokus = if (pridane.isBlank()) par.d else hotovo.d
+            }
+            "kdo" -> {
+                nadpis = "Kdo bude hrát?"
+                uvod("Nastaví vše najednou. Kdykoli to změníš" + if (telefon) " v Úpravách." else " na hlavní obrazovce (v režimu Telefon v telefonu → Úpravy).")
+                val dosp = mdl(R.drawable.ik_text_fields, "Čte rychle", "Dospělý", "Běžné písmo, titulky mizí normálně, bez hlasu.", barvaPopisu = Metro.TEXT) { predvolba("dospely"); dal() }
+                val dite = mdl(R.drawable.ik_hlas, "Čte pomaleji nebo vůbec", "Dítě", "Větší písmo, titulky zůstanou déle, český hlas je čte nahlas.", barvaPopisu = Metro.TEXT) { predvolba("dite"); dal() }
+                val vl = mdl(R.drawable.ik_widgets, "Nic neměnit", "Vlastní", "Nechat, jak je nastaveno.", zaklad = Metro.SEDA_DLAZDICE, vyber = Metro.SEDA_VYBER, barvaPopisu = Metro.TEXT) { predvolba("vlastni"); dal() }
+                rada(dosp, dite, vl); fokus = dosp.d
+            }
+            else -> {
+                nadpis = "Hotovo"
+                val rezimTel = !telefon && prefsBeta.getString("rezimHry", null) == "tel"
+                val maXbox = XboxUcet.konzole(this) != null
+                uvod(when {
+                    !maXbox -> "Zbývá připojit Xbox – najdeš ho na hlavní obrazovce pod dlaždicí Konzole."
+                    telefon -> "Zapni hru na Xboxu a dej Hrát. Titulky pošli do televize přepínačem Televize nahoře."
+                    rezimTel -> "Při hraní: 1) tady dej Hrát – televize počká na telefon. 2) V telefonu dej Hrát a polož ho na nabíječku."
+                    else -> "Zapni hru na Xboxu, přepni televizi na jeho HDMI a tady dej Hrát. Titulky se objeví samy."
+                })
+                val h = mdl(R.drawable.ik_play_arrow, null, "Na hlavní obrazovku", "Tam stiskni Hrát",
+                    zaklad = Metro.CERVENA, vyber = Metro.CERVENA_VYBER, lista = true, barvaPopisu = Metro.TEXT_NA_CERVENE) { konecPruvodce() }
+                rada(h); fokus = h.d
+            }
+        }
+        // spodní řada: Zpět · krok X z Y · Zavřít průvodce
+        val spodek = vodorovne().apply { gravity = Gravity.CENTER_VERTICAL }
+        val vyskaSp = if (telefon) Metro.dp(this, 52f) else (vyskaObr * 0.1f).toInt()
+        val zpet = mdl(null, null, if (pruvodceKrok > 1) "Zpět" else "Zavřít", null, zaklad = Metro.SEDA_DLAZDICE, vyber = Metro.SEDA_VYBER) { onBackPressed() }
+        spodek.addView(zpet.d, LinearLayout.LayoutParams(0, vyskaSp, 1f))
+        spodek.addView(mt("Krok $pruvodceKrok z ${kroky.size}", 0.024f, 13f, Metro.OBRYS, 600).apply { gravity = Gravity.CENTER },
+            LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 2f))
+        val zavrit = mdl(null, null, "Přeskočit průvodce", null, zaklad = Metro.SEDA_DLAZDICE, vyber = Metro.SEDA_VYBER) { konecPruvodce() }
+        spodek.addView(zavrit.d, LinearLayout.LayoutParams(0, vyskaSp, 1f))
+        obsah.addView(spodek, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = mez * 2 })
+        metroRam(nadpis, obsah)
+        fokus?.requestFocus()
     }
 
     // ------------------------------------------------------------------ [Fuki] Metro: společný rám a dlaždice
