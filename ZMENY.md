@@ -4,6 +4,11 @@
 Od verze 0.10 se vyvíjí jen jedna aplikace (dřívější NextGen, větev `master`) – umí „Jen televize“ i „S telefonem“.
 Při každé nové verzi se zvýší číslo v `app/build.gradle.kts` (versionCode + versionName) a sem se dopíše, co je nového.
 
+## 0.20.1-fuki24
+- Hlas začíná číst hned: nečeká na AI, čte první hotový překlad; Google se kvůli AI drží jen 0,5 s.
+- Hlas méně useknutý: delší repliky čte o něco rychleji (×1,15 / ×1,3) a když je předchozí replika skoro dočtená (< 1,2 s), nová se zařadí za ni místo přerušení.
+- „Nor“ je zase jméno postavy (oprava z fuki21 ho blokovala a pak se překládalo jako „Ani“).
+
 ## 0.20.1-fuki23
 - Uspání při nečinnosti: po 30 min bez titulků/nápověd nebo po 10 min bez obrazu z konzole (Xbox vypnutý) se překlad sám uspí – odpojí se od konzole, pustí Wi-Fi, služba skončí. Na TV se předtím ukáže hláška. Znovu tlačítkem Hrát.
 - Úklid místa: stažený instalační soubor aktualizace (desítky MB) se po aktualizaci smaže; všechny záznamy (logy) mají strop 300 kB.

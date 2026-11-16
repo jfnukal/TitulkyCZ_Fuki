@@ -461,7 +461,7 @@ class Ctecka {
         /** Běžná anglická slova – u krátkých replik, kde rozpoznání jazyka nic neřekne. */
         /** [Fuki] Slova, kterými začínají anglické věty – nejsou to jména postav („Nor are they…“ ≠ „Nor:“). */
         private val NE_JMENA = setOf(
-            "nor", "or", "if", "then", "when", "while", "because", "maybe", "perhaps", "still", "even", "only", "also",
+            "or", "if", "then", "when", "while", "because", "maybe", "perhaps", "still", "even", "only", "also",
             "let", "lets", "see", "take", "give", "keep", "make", "tell", "listen", "think", "know", "good", "great",
             "fine", "no", "one", "two", "three", "some", "any", "every", "after", "before", "since", "until", "unless",
             "though", "although", "yet", "anyway", "first", "next", "last", "both", "either", "neither", "each",

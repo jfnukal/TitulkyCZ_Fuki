@@ -1076,7 +1076,8 @@ class RemotePlayService : Service() {
             posledniUkazany = cislo
             ukazCesky(cesky, box, radku, barvyJmen)
             if (dobry) ai.zapamatuj(cislo, repliky, cesky)
-            if (dobry) hlasPlan(cislo, cesky, zAi, cekatNaAi = aiBezi)
+            // hlas čte hned první dobrý překlad (na AI nečeká – jinak začne číst pozdě)
+            if (dobry) hlasPlan(cislo, cesky, zAi, cekatNaAi = false)
         }
         // [Fuki] AI překlad s kontextem hry běží souběžně – až dorazí, nahradí překlad z Googlu
         // (když jsou všechny repliky v tabulce hotových překladů, AI není potřeba – lidský překlad je lepší)
@@ -1112,7 +1113,7 @@ class RemotePlayService : Service() {
             stPreklad(prekladac.zdroj, System.currentTimeMillis() - zacatekPrekladu)
             zapisRychlost(prekladac.zdroj, System.currentTimeMillis() - zacatekPrekladu)
             // [Fuki] běží AI → Google chvilku podržet (do 0,9 s od začátku); stihne-li AI, ukáže se jen AI
-            val zbyvaNaAi = if (aiBezi && !aiHotov) 900 - (System.currentTimeMillis() - zacatekAi) else 0L
+            val zbyvaNaAi = if (aiBezi && !aiHotov) 500 - (System.currentTimeMillis() - zacatekAi) else 0L
             if (zbyvaNaAi > 0) ui.postDelayed({ ukazJestli(cesky, dobry = true) }, zbyvaNaAi)
             else ukazJestli(cesky, dobry = true)
         }

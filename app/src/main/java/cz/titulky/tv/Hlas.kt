@@ -74,12 +74,33 @@ object Hlas {
         }
     }
 
+    /** Kdy začala a jak dlouho asi potrvá právě čtená replika (odhad podle délky a rychlosti). */
+    @Volatile private var mluviOd = 0L
+    @Volatile private var mluviDelka = 0L
+    private var cisloPromluvy = 0
+
+    /** Odhad délky řeči: ~65 ms na znak při rychlosti 1. */
+    private fun odhad(text: String, rychlost: Float) = (65L * text.length / rychlost).toLong()
+
     private fun mluv(text: String, rychlost: Float, hlasitost: Float) {
         val t = tts ?: return
         runCatching {
-            t.setSpeechRate(rychlost.coerceIn(0.5f, 2f))
+            // delší replika = o něco rychlejší řeč, ať stihne doběhnout, než přijde další
+            val zrychleni = when {
+                text.length > 110 -> 1.3f
+                text.length > 70 -> 1.15f
+                else -> 1f
+            }
+            val r = (rychlost * zrychleni).coerceIn(0.5f, 2f)
+            val ted = System.currentTimeMillis()
+            val zbyva = mluviOd + mluviDelka - ted
+            // předchozí replika skoro dočtená (< 1,2 s) → nepřerušit, jen zařadit za ni
+            val rezim = if (t.isSpeaking && zbyva in 1..1200) TextToSpeech.QUEUE_ADD else TextToSpeech.QUEUE_FLUSH
+            t.setSpeechRate(r)
             val par = Bundle().apply { putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, hlasitost.coerceIn(0.05f, 1f)) }
-            t.speak(text, TextToSpeech.QUEUE_FLUSH, par, "titulek")
+            t.speak(text, rezim, par, "titulek${++cisloPromluvy}")
+            mluviOd = if (rezim == TextToSpeech.QUEUE_ADD) ted + zbyva else ted
+            mluviDelka = odhad(text, r)
         }
     }
 
