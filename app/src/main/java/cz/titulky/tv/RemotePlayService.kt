@@ -1054,6 +1054,7 @@ class RemotePlayService : Service() {
         prekladac.nastavJazyk(cil)
         ctecky.forEach { it.cilovyJazyk = cil }
         var dobryHotov = false
+        var dobryKdy = 0L
         var aiHotov = false
         var aiBezi = false
         fun ukazJestli(cesky: String, dobry: Boolean, zAi: Boolean = false) {
@@ -1062,6 +1063,7 @@ class RemotePlayService : Service() {
             if (cislo < posledniPrekladany) return
             if (!dobry && dobryHotov) return     // rychlý překlad přišel až po dobrém → nic
             if (!zAi && aiHotov) return          // [Fuki] AI (lepší) už je venku → Google ani náhled nepřepíše
+            if (dobry && !dobryHotov) dobryKdy = System.currentTimeMillis()
             if (dobry) dobryHotov = true
             if (zAi) aiHotov = true
             posledniUkazany = cislo
@@ -1080,6 +1082,11 @@ class RemotePlayService : Service() {
         aiBezi = ai.zapnuto && !vseZTabulky && (delsi || !AiPrekladac.usporne(this))
         if (aiBezi) ai.preloz(cislo, repliky, cil) { lepsi ->
             stPreklad("ai", System.currentTimeMillis() - zacatekAi)
+            // [Fuki] AI přišla pozdě (Googlův překlad už se čte > 2 s) → titulek nepřepisovat, ať neskáče
+            if (dobryHotov && System.currentTimeMillis() - dobryKdy > 2000) {
+                zapisRychlost("AI (pozdě)", System.currentTimeMillis() - zacatekAi)
+                return@preloz
+            }
             zapisRychlost("AI", System.currentTimeMillis() - zacatekAi)
             ukazJestli(lepsi, dobry = true, zAi = true)
         }
@@ -1087,7 +1094,8 @@ class RemotePlayService : Service() {
         // rychlý překlad ukázat, jen když Google do 0,15 s neodpoví – jinak by titulek "problikl"
         // (nejdřív horší překlad z telefonu, za 50 ms jiný od Googlu)
         val zacatekNahledu = System.currentTimeMillis()
-        if (RYCHLY_NAHLED && !uspora) prelozVse(repliky, rychle = true) { cesky ->
+        // [Fuki] když běží AI, rychlý náhled se neukazuje (jinak by titulek skákal 3× za sebou)
+        if (RYCHLY_NAHLED && !uspora && !aiBezi) prelozVse(repliky, rychle = true) { cesky ->
             val zbyva = 150 - (System.currentTimeMillis() - zacatekNahledu)
             if (zbyva <= 0) ukazJestli(cesky, dobry = false)
             else ui.postDelayed({ ukazJestli(cesky, dobry = false) }, zbyva)
@@ -1096,7 +1104,10 @@ class RemotePlayService : Service() {
             zapis("  → ČESKY (čtení ${casCteni} ms, překlad ${System.currentTimeMillis() - zacatekPrekladu} ms ${prekladac.zdroj}, chyb Googlu ${prekladac.chybGooglu}): " + cesky.replace("\n", " / "))
             stPreklad(prekladac.zdroj, System.currentTimeMillis() - zacatekPrekladu)
             zapisRychlost(prekladac.zdroj, System.currentTimeMillis() - zacatekPrekladu)
-            ukazJestli(cesky, dobry = true)
+            // [Fuki] běží AI → Google chvilku podržet (do 0,9 s od začátku); stihne-li AI, ukáže se jen AI
+            val zbyvaNaAi = if (aiBezi && !aiHotov) 900 - (System.currentTimeMillis() - zacatekAi) else 0L
+            if (zbyvaNaAi > 0) ui.postDelayed({ ukazJestli(cesky, dobry = true) }, zbyvaNaAi)
+            else ukazJestli(cesky, dobry = true)
         }
     }
 

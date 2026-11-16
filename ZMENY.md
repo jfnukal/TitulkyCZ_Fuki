@@ -4,6 +4,10 @@
 Od verze 0.10 se vyvíjí jen jedna aplikace (dřívější NextGen, větev `master`) – umí „Jen televize“ i „S telefonem“.
 Při každé nové verzi se zvýší číslo v `app/build.gradle.kts` (versionCode + versionName) a sem se dopíše, co je nového.
 
+## 0.20.1-fuki21
+- Titulky neskáčou: když běží AI, neukazuje se rychlý náhled a Google se podrží do 0,9 s. Stihne-li AI, ukáže se rovnou její překlad. AI, která dorazí víc než 2 s po Googlu, už titulek nepřepíše (uloží se jen do kontextu).
+- Jména postav: běžná anglická slova na začátku věty („Nor“, „Then“, „Maybe“…) se už nepovažují za jméno (dřív vzniklo „Nor: Jsou v pořádku…“).
+
 ## 0.20.1-fuki20
 - TV: opravená hlavička – tlačítka Restart a Vypnout mají pevnou šířku a už nepřekrývají logo ani verzi; Restart má ikonu šipky dokola.
 - Česky nahlas čte i nápovědy a návody ve hře (např. chytání ryb).

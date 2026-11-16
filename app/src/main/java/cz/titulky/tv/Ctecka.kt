@@ -326,7 +326,7 @@ class Ctecka {
         val m = Regex("^([A-Z][a-z]{1,14}) (.+)$").find(text) ?: return null
         val jm = m.groupValues[1]
         val zbytek = m.groupValues[2]
-        if (jm.lowercase() in ANGLICKA) return null
+        if (jm.lowercase() in ANGLICKA || jm.lowercase() in NE_JMENA) return null
         val ted = System.currentTimeMillis()
         val videno = synchronized(nedavne) {
             nedavne.any { (t, kdy) -> ted - kdy < 3000 && podobnaJmena(zbytek, t) }
@@ -459,6 +459,25 @@ class Ctecka {
         /** Stažený tvar ("we're", "don't", "'em") – typický pro dialog. "O'Driscoll" se nepočítá. */
         val STAZENINA = Regex("[a-z]['’][a-z]|(?<![A-Za-z])['’](em|cause|til|round)\\b")
         /** Běžná anglická slova – u krátkých replik, kde rozpoznání jazyka nic neřekne. */
+        /** [Fuki] Slova, kterými začínají anglické věty – nejsou to jména postav („Nor are they…“ ≠ „Nor:“). */
+        private val NE_JMENA = setOf(
+            "nor", "or", "if", "then", "when", "while", "because", "maybe", "perhaps", "still", "even", "only", "also",
+            "let", "lets", "see", "take", "give", "keep", "make", "tell", "listen", "think", "know", "good", "great",
+            "fine", "no", "one", "two", "three", "some", "any", "every", "after", "before", "since", "until", "unless",
+            "though", "although", "yet", "anyway", "first", "next", "last", "both", "either", "neither", "each",
+            "much", "many", "more", "most", "less", "little", "few", "such", "quite", "really", "actually", "guess",
+            "hope", "mean", "need", "want", "try", "could", "would", "should", "might", "must", "can", "will",
+            "shall", "may", "have", "has", "had", "do", "does", "were", "been", "being", "am", "his", "its", "their",
+            "which", "whom", "nothing", "something", "everything", "anything", "someone", "everyone", "nobody",
+            "somebody", "these", "those", "as", "at", "by", "from", "into", "over", "under", "about", "around",
+            "through", "against", "between", "without", "like", "than", "on", "off", "to", "back", "away",
+            "together", "alone", "already", "soon", "later", "today", "tonight", "tomorrow", "yesterday", "enough",
+            "almost", "true", "careful", "quick", "quiet", "hold", "move", "follow", "bring", "leave", "turn",
+            "watch", "hurry", "ready", "say", "said", "tried", "got", "went", "came", "seems", "looks", "sounds",
+            "thought", "told", "heard", "saw", "felt", "found", "left", "lost", "won", "kept", "gave", "made",
+            "once", "twice", "everybody", "anybody", "whatever", "whoever", "however", "otherwise", "instead",
+            "besides", "meanwhile", "unfortunately", "luckily", "honestly", "seriously", "clearly", "certainly"
+        )
         private val ANGLICKA = setOf(
             // bez slov, která jsou i česká ("a", "i", "to", "no", "on")
             "an", "the", "you", "he", "she", "we", "they", "it", "me", "him", "her", "us", "them",
