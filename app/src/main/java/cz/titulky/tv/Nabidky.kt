@@ -15,7 +15,7 @@ object Nabidky {
         val prefs = a.getSharedPreferences("gamelingo", Activity.MODE_PRIVATE)
         val d = a.resources.displayMetrics.density
         val pole = android.widget.EditText(a).apply {
-            hint = "API klíč Gemini (AIza…)"
+            hint = "API klíč Gemini (AQ.… nebo AIza…)"
             setText(prefs.getString(AiPrekladac.PREF_KLIC, "") ?: "")
             setSingleLine(true)
             inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD

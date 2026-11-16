@@ -245,7 +245,7 @@ object Texty {
         "aiVyp" to listOf("🤖 AI překlad: vypnuto", "🤖 AI preklad: vypnutý"),
         "aiBezKlice" to listOf("🤖 AI překlad: zadat klíč", "🤖 AI preklad: zadať kľúč"),
         "aiNap" to listOf("Gemini pozná hru a překládá s ohledem na postavy (rod), jména a předchozí věty. Klíč získáš zdarma na aistudio.google.com → Get API key. Text titulků se posílá Googlu.", "Gemini spozná hru a prekladá s ohľadom na postavy (rod), mená a predchádzajúce vety. Kľúč získaš na aistudio.google.com → Get API key. Text titulkov sa posiela Googlu."),
-        "aiKlic" to listOf("API klíč Gemini (AIza…)", "API kľúč Gemini (AIza…)"),
+        "aiKlic" to listOf("API klíč Gemini (AQ.… nebo AIza…)", "API kľúč Gemini (AQ.… alebo AIza…)"),
         "aiUlozit" to listOf("Uložit", "Uložiť"),
         "aiVypnout" to listOf("Vypnout AI", "Vypnúť AI"),
         "aiZrusit" to listOf("Zrušit", "Zrušiť"),
