@@ -4,6 +4,9 @@
 Od verze 0.10 se vyvíjí jen jedna aplikace (dřívější NextGen, větev `master`) – umí „Jen televize“ i „S telefonem“.
 Při každé nové verzi se zvýší číslo v `app/build.gradle.kts` (versionCode + versionName) a sem se dopíše, co je nového.
 
+## 0.20.1-fuki26
+- Hlas už nepřerušuje: rozečtená replika se vždy dočte. Co přijde mezitím, počká (jen ta nejnovější, starší čekající se zahodí) a přečte se o něco rychleji. Postupně vypisovaná věta se nečte znovu.
+
 ## 0.20.1-fuki25
 - TV: dlaždice „Titulky čte“ opravdu přepíná. Dřív slabá TV (pod 2,5 GB RAM) vždy vynutila „Telefon“; teď má přednost ruční volba.
 - TV: po přepnutí dlaždice (Titulky čte, Dialogy, Přes hru, Nahlas…) zůstane výběr na ní, neskáče na Hrát.
