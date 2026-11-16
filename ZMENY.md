@@ -4,6 +4,9 @@
 Od verze 0.10 se vyvíjí jen jedna aplikace (dřívější NextGen, větev `master`) – umí „Jen televize“ i „S telefonem“.
 Při každé nové verzi se zvýší číslo v `app/build.gradle.kts` (versionCode + versionName) a sem se dopíše, co je nového.
 
+## 0.20.1-fuki27
+- Telefon se zhasnutým displejem počítá dál, když posílá titulky do televize (dřív se po minutě od zhasnutí ukončil). Drží si k tomu procesor i Wi-Fi vzhůru.
+
 ## 0.20.1-fuki26
 - Hlas už nepřerušuje: rozečtená replika se vždy dočte. Co přijde mezitím, počká (jen ta nejnovější, starší čekající se zahodí) a přečte se o něco rychleji. Postupně vypisovaná věta se nečte znovu.
 

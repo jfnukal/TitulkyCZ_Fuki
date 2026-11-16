@@ -193,6 +193,7 @@ class RemotePlayService : Service() {
      * zpoždění, jako to dělají aplikace na streamování her.
      */
     private var wifiZamek: android.net.wifi.WifiManager.WifiLock? = null
+    private var cpuZamek: android.os.PowerManager.WakeLock? = null
 
     private fun drzWifi(ano: Boolean) {
         runCatching {
@@ -204,8 +205,17 @@ class RemotePlayService : Service() {
                     wifiZamek = wm.createWifiLock(rezim, "playcaption:stream").apply { setReferenceCounted(false) }
                 }
                 if (wifiZamek?.isHeld != true) wifiZamek?.acquire()
+                // [Fuki] telefon se zhasnutým displejem musí počítat dál (titulky jdou do TV)
+                if (telefon) {
+                    if (cpuZamek == null) {
+                        val pm = applicationContext.getSystemService(POWER_SERVICE) as android.os.PowerManager
+                        cpuZamek = pm.newWakeLock(android.os.PowerManager.PARTIAL_WAKE_LOCK, "titulkycz:preklad").apply { setReferenceCounted(false) }
+                    }
+                    if (cpuZamek?.isHeld != true) cpuZamek?.acquire(6 * 60 * 60_000L)
+                }
             } else {
                 if (wifiZamek?.isHeld == true) wifiZamek?.release()
+                if (cpuZamek?.isHeld == true) cpuZamek?.release()
             }
         }
     }

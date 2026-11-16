@@ -153,8 +153,11 @@ class TelefonActivity : Activity() {
      * dál – televize by se pak nemohla připojit ("already in use").
      */
     private val odlozeno = Runnable {
-        if (!isFinishing) finish()
+        if (!isFinishing && !beziDoTv()) finish()
     }
+
+    /** [Fuki] Telefon posílá titulky do televize – má běžet i se zhasnutým displejem. */
+    private fun beziDoTv() = Propojeni.Vysilac.cilIp != null
 
     /** PlayCaption je v pozadí (foťák, jiná aplikace…). */
     private var vPozadi = false
@@ -166,7 +169,7 @@ class TelefonActivity : Activity() {
     private val displej = object : android.content.BroadcastReceiver() {
         override fun onReceive(c: android.content.Context?, i: Intent?) {
             when (i?.action) {
-                Intent.ACTION_SCREEN_OFF -> if (vPozadi) { ui.removeCallbacks(odlozeno); ui.postDelayed(odlozeno, 60_000) }
+                Intent.ACTION_SCREEN_OFF -> if (vPozadi && !beziDoTv()) { ui.removeCallbacks(odlozeno); ui.postDelayed(odlozeno, 60_000) }
                 Intent.ACTION_SCREEN_ON -> ui.removeCallbacks(odlozeno)
             }
         }
@@ -190,7 +193,8 @@ class TelefonActivity : Activity() {
             vPozadi = true
             // displej už nesvítí (telefon zamčený) → za 1 min konec; svítí (jiná aplikace) → čekat na zhasnutí
             val sviti = runCatching { (getSystemService(POWER_SERVICE) as android.os.PowerManager).isInteractive }.getOrDefault(false)
-            if (!sviti) ui.postDelayed(odlozeno, 60_000)
+            // [Fuki] titulky jdou do televize → zhasnutý telefon počítá dál (neukončovat)
+            if (!sviti && !beziDoTv()) ui.postDelayed(odlozeno, 60_000)
         }
         super.onStop()
     }
