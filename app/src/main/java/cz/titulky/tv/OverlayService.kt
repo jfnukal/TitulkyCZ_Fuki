@@ -51,7 +51,9 @@ class OverlayService : Service() {
 
     private fun zapisLog(s: String) {
         runCatching {
-            java.io.File(filesDir, "titulky.log").appendText(
+            val f = java.io.File(filesDir, "titulky.log")
+            if (f.length() > 300_000) f.writeText("")
+            f.appendText(
                 java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.ROOT).format(java.util.Date()) + " " + s + "\n")
         }
     }

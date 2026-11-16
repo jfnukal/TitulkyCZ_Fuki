@@ -76,6 +76,7 @@ class MainActivity : Activity() {
         // podpisová značka Fuki – úvodní animace (jednou za spuštění)
         FukiIntro.ukaz(this)
         // [Fuki] nová verze na GitHubu? (jednou za spuštění)
+        Aktualizace.uklid(this)
         Aktualizace.zkontroluj(this)
     }
 

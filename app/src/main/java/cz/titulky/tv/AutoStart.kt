@@ -42,7 +42,9 @@ class AutoStart : BroadcastReceiver() {
     companion object {
         private fun zapis(c: Context, t: String) = runCatching {
             val cas = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.US).format(java.util.Date())
-            java.io.File(c.filesDir, "titulky.log").appendText("$cas $t\n")
+            val f = java.io.File(c.filesDir, "titulky.log")
+            if (f.length() > 300_000) f.writeText("")
+            f.appendText("$cas $t\n")
         }
         private fun prefs(c: Context) = c.getSharedPreferences("auto", Context.MODE_PRIVATE)
         /** Uživatel chce titulky automaticky (vypne se tlačítkem 8 → Zastavit). */

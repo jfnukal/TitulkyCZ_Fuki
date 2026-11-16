@@ -33,6 +33,15 @@ object Aktualizace {
     data class Vydani(val verze: String, val apkUrl: String, val popis: String)
 
     /** Jednou za spuštění aplikace: zkontrolovat a případně nabídnout aktualizaci. */
+    /** [Fuki] Úklid: stažený instalační soubor po aktualizaci už není potřeba (desítky MB). */
+    fun uklid(c: android.content.Context) {
+        runCatching {
+            c.getExternalFilesDir("aktualizace")?.listFiles()?.forEach { f ->
+                if (System.currentTimeMillis() - f.lastModified() > 10 * 60_000L) f.delete()
+            }
+        }
+    }
+
     fun zkontroluj(a: Activity, rucne: Boolean = false) {
         if (zkontrolovano && !rucne) return
         zkontrolovano = true

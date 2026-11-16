@@ -4,6 +4,10 @@
 Od verze 0.10 se vyvíjí jen jedna aplikace (dřívější NextGen, větev `master`) – umí „Jen televize“ i „S telefonem“.
 Při každé nové verzi se zvýší číslo v `app/build.gradle.kts` (versionCode + versionName) a sem se dopíše, co je nového.
 
+## 0.20.1-fuki23
+- Uspání při nečinnosti: po 30 min bez titulků/nápověd nebo po 10 min bez obrazu z konzole (Xbox vypnutý) se překlad sám uspí – odpojí se od konzole, pustí Wi-Fi, služba skončí. Na TV se předtím ukáže hláška. Znovu tlačítkem Hrát.
+- Úklid místa: stažený instalační soubor aktualizace (desítky MB) se po aktualizaci smaže; všechny záznamy (logy) mají strop 300 kB.
+
 ## 0.20.1-fuki22
 - Česky nahlas – hlasitost: Tiše / Středně / Naplno (vůči hlasitosti zařízení). Telefon → Úpravy (s ukázkou, platí i pro hlas z TV). TV: dlaždice Nahlas přepíná OK: vypnuto → tiše → středně → naplno → vypnuto.
 

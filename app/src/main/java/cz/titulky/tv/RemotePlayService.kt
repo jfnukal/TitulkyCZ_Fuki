@@ -143,6 +143,11 @@ class RemotePlayService : Service() {
                 ui.postDelayed(hlidacSpojeni, 5000)
                 ui.removeCallbacks(kontrolaObou)
                 ui.post(kontrolaObou)
+                // [Fuki] hlídání nečinnosti – po spuštění počítat znovu
+                posledniAktivita = System.currentTimeMillis()
+                spusteno = System.currentTimeMillis()
+                ui.removeCallbacks(hlidacNecinnosti)
+                ui.postDelayed(hlidacNecinnosti, 60_000)
                 if (!pripojeno()) {
                     ui.removeCallbacks(hlidac)
                     // stisknuto Připojit → druhé zařízení (TV/telefon) se odpojí; chvilku mu dát
@@ -925,6 +930,7 @@ class RemotePlayService : Service() {
             return
         }
         bezNapovedy = 0
+        posledniAktivita = System.currentTimeMillis()
         if (podobne(text, posledniNapoveda)) return
         posledniNapoveda = text
         val (cista, tlacitko) = tlacitko(text)
@@ -1007,6 +1013,7 @@ class RemotePlayService : Service() {
     private var posledniSpojeno = false
 
     private fun prelozAUkaz(surove: List<String>, box: FloatArray?, radku: Int, barvyJmen: IntArray, cislo: Long, oprava: Boolean = false) {
+        posledniAktivita = System.currentTimeMillis()
         if (!nast.dialogy) return
         if (cislo > posledniPrekladany) posledniPrekladany = cislo
         synchronized(casyPosledni) { casyPosledni.clear() }
@@ -1934,6 +1941,41 @@ class RemotePlayService : Service() {
         if (zAi || !cekatNaAi) ui.post(hlasTed) else ui.postDelayed(hlasTed, 1200)
     }
 
+    // ------------------------------------------------------------------ [Fuki] uspání při nečinnosti
+
+    @Volatile private var posledniAktivita = 0L
+    @Volatile private var spusteno = 0L
+
+    /**
+     * Každou minutu: 30 min bez jediného titulku/nápovědy nebo 10 min bez obrazu z konzole
+     * (Xbox vypnutý) → překlad se sám uspí: odpojí se od konzole, pustí Wi-Fi a služba skončí.
+     * Znovu se zapne tlačítkem Hrát (nebo dalším spuštěním aplikace).
+     */
+    private val hlidacNecinnosti: Runnable = object : Runnable {
+        override fun run() {
+            if (!aktivni) return
+            val ted = System.currentTimeMillis()
+            val bezTitulku = ted - maxOf(posledniAktivita, spusteno)
+            val bezObrazu = ted - maxOf(posledniSnimekKdy, spusteno)
+            val duvod = when {
+                bezObrazu > NECINNOST_OBRAZ_MS -> "konzole ${NECINNOST_OBRAZ_MS / 60_000} min neposílá obraz (je vypnutá?)"
+                bezTitulku > NECINNOST_TITULKY_MS -> "${NECINNOST_TITULKY_MS / 60_000} min žádné titulky"
+                else -> null
+            }
+            if (duvod == null) { ui.postDelayed(this, 60_000); return }
+            zapis("[uspávám překlad: $duvod]")
+            ukazInfo("Překlad uspán ($duvod). Zapneš ho v aplikaci tlačítkem Hrát.", 8000)
+            ui.postDelayed({
+                if (!aktivni) return@postDelayed
+                automat = false
+                aktivni = false
+                ui.removeCallbacks(hlidac)
+                zastav("", ukazat = false)
+                stopSelf()
+            }, 8500)
+        }
+    }
+
     /** [Fuki] Nápověda se čte hned (nečeká na AI). */
     private fun hlasNapoveda(text: String) {
         if (!Hlas.zapnuto(this) || text.isBlank()) return
@@ -2231,6 +2273,7 @@ class RemotePlayService : Service() {
         automat = false
         aktivni = false
         ui.removeCallbacks(hlidac)
+        ui.removeCallbacks(hlidacNecinnosti)
         posluchac?.zavri()
         posluchac = null
         if (pripojeno()) zastav("Remote Play zastaveno.")
@@ -2265,6 +2308,9 @@ class RemotePlayService : Service() {
         const val CEKANI_NA_PS5_MS = 10_000L
         /** Po výpadku spojení počkat, než si PS5 uklidí (jinak "Server shutting down"). */
         const val PO_VYPADKU_MS = 45_000L
+        /** [Fuki] uspání: bez titulků / bez obrazu z konzole */
+        const val NECINNOST_TITULKY_MS = 30 * 60_000L
+        const val NECINNOST_OBRAZ_MS = 10 * 60_000L
         /** Po zapnutí PS5 počkat, než na ní naběhne Remote Play. */
         const val ROZBEH_PS5_MS = 20_000L
         /** Po probuzení Xboxu počkat, než se zapne ovladač hráče (jinak hra hlásí „reconnect the controller“). */
