@@ -14,11 +14,13 @@ object Hlas {
     /** "tv" = mluví televize, "tel" = mluví telefon (když titulky jdou z telefonu do TV) */
     const val PREF_KDE = "hlasKde"
     const val PREF_RYCHLOST = "hlasRychlost"
+    /** Hlasitost hlasu 0,1–1 (1 = jako hlasitost médií v zařízení) */
+    const val PREF_HLASITOST = "hlasHlasitost"
 
     private var tts: TextToSpeech? = null
     @Volatile private var pripraven = false
     @Volatile private var startuje = false
-    private var cekajici: Pair<String, Float>? = null
+    private var cekajici: Triple<String, Float, Float>? = null
     /** Poslední problém (prázdné = vše v pořádku). */
     @Volatile var chyba: String = ""
         private set
@@ -27,6 +29,7 @@ object Hlas {
     fun zapnuto(c: Context) = prefs(c).getBoolean(PREF_ZAP, false)
     fun kde(c: Context) = prefs(c).getString(PREF_KDE, "tv") ?: "tv"
     fun rychlost(c: Context) = prefs(c).getFloat(PREF_RYCHLOST, 1f)
+    fun hlasitost(c: Context) = prefs(c).getFloat(PREF_HLASITOST, 1f)
 
     private val JMENO = Regex("^[\\p{Lu}][\\p{L}0-9 .'-]{0,24}:\\s+")
 
@@ -34,17 +37,17 @@ object Hlas {
     fun cisty(text: String) = text.lines().map { JMENO.replace(it.trim(), "") }.filter { it.isNotBlank() }
         .joinToString(" ") { if (it.last() in ".!?…") it else "$it." }
 
-    fun rekni(c: Context, text: String, rychlost: Float = rychlost(c)) {
+    fun rekni(c: Context, text: String, rychlost: Float = rychlost(c), hlasitost: Float = hlasitost(c)) {
         val t = cisty(text)
         if (t.isBlank()) return
         synchronized(this) {
             if (!pripraven) {
-                cekajici = t to rychlost
+                cekajici = Triple(t, rychlost, hlasitost)
                 if (!startuje) spust(c)
                 return
             }
         }
-        mluv(t, rychlost)
+        mluv(t, rychlost, hlasitost)
     }
 
     fun zkouska(c: Context) = rekni(c, "Ahoj, takhle budu číst české titulky.")
@@ -65,17 +68,18 @@ object Hlas {
                 }
                 chyba = ""
                 pripraven = true
-                cekajici?.let { mluv(it.first, it.second) }
+                cekajici?.let { mluv(it.first, it.second, it.third) }
                 cekajici = null
             }
         }
     }
 
-    private fun mluv(text: String, rychlost: Float) {
+    private fun mluv(text: String, rychlost: Float, hlasitost: Float) {
         val t = tts ?: return
         runCatching {
             t.setSpeechRate(rychlost.coerceIn(0.5f, 2f))
-            t.speak(text, TextToSpeech.QUEUE_FLUSH, Bundle(), "titulek")
+            val par = Bundle().apply { putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, hlasitost.coerceIn(0.05f, 1f)) }
+            t.speak(text, TextToSpeech.QUEUE_FLUSH, par, "titulek")
         }
     }
 

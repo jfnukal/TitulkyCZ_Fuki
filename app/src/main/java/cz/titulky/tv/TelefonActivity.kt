@@ -582,9 +582,17 @@ class TelefonActivity : Activity() {
                 if (hlasKde == "tv") Propojeni.Vysilac.mluv("Takhle rychle budu mluvit.", rych[i].second) else Hlas.rekni(this, "Takhle rychle budu mluvit.", rych[i].second)
                 obnovUpravy()
             }, 4)
+            val hl = listOf("Tiše" to 0.35f, "Středně" to 0.65f, "Naplno" to 1f)
+            val tedH = Hlas.hlasitost(this)
+            pridej(radekVoleb(hl.map { (n, v) -> n to (kotlin.math.abs(tedH - v) < 0.05f) }) { i ->
+                prefs.edit().putFloat(Hlas.PREF_HLASITOST, hl[i].second).apply()
+                if (hlasKde == "tv") Propojeni.Vysilac.mluv("Takhle nahlas budu mluvit.", Hlas.rychlost(this), hl[i].second)
+                else Hlas.rekni(this, "Takhle nahlas budu mluvit.", Hlas.rychlost(this), hl[i].second)
+                obnovUpravy()
+            }, 4)
             if (Hlas.chyba.isNotEmpty() && hlasKde == "tel") pridej(volbaDl(Hlas.chyba + " – nainstalovat", false) { Hlas.nainstalujCestinu(this) }, 4)
         }
-        napoveda("Přeložené titulky čte český hlas (jména postav vynechá). Když televize nemluví, chybí v ní český hlas – nastav ho v TV: Nastavení → Systém → Převod textu na řeč.")
+        napoveda("Hlasitost je vůči hlasitosti zařízení – „Naplno“ = jako zvuk televize / telefonu. Přeložené titulky čte český hlas (jména postav vynechá). Když televize nemluví, chybí v ní český hlas – nastav ho v TV: Nastavení → Systém → Převod textu na řeč.")
 
         // ---- co překládat navíc (dialogy se překládají vždy)
         stitek("Co překládat navíc k dialogům")

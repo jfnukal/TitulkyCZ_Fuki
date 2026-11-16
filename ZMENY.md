@@ -4,6 +4,9 @@
 Od verze 0.10 se vyvíjí jen jedna aplikace (dřívější NextGen, větev `master`) – umí „Jen televize“ i „S telefonem“.
 Při každé nové verzi se zvýší číslo v `app/build.gradle.kts` (versionCode + versionName) a sem se dopíše, co je nového.
 
+## 0.20.1-fuki22
+- Česky nahlas – hlasitost: Tiše / Středně / Naplno (vůči hlasitosti zařízení). Telefon → Úpravy (s ukázkou, platí i pro hlas z TV). TV: dlaždice Nahlas přepíná OK: vypnuto → tiše → středně → naplno → vypnuto.
+
 ## 0.20.1-fuki21
 - Titulky neskáčou: když běží AI, neukazuje se rychlý náhled a Google se podrží do 0,9 s. Stihne-li AI, ukáže se rovnou její překlad. AI, která dorazí víc než 2 s po Googlu, už titulek nepřepíše (uloží se jen do kontextu).
 - Jména postav: běžná anglická slova na začátku věty („Nor“, „Then“, „Maybe“…) se už nepovažují za jméno (dřív vzniklo „Nor: Jsou v pořádku…“).

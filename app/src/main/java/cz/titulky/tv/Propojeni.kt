@@ -237,7 +237,8 @@ object Propojeni {
                             val n = k.getOrNull(0)?.toLongOrNull()
                             if (k.size == 3 && n != null && n != posledniMluv) {
                                 posledniMluv = n
-                                Hlas.rekni(hlasCtx, odEscapuj(k[2]), k[1].toFloatOrNull() ?: 1f)
+                                val rh = k[1].split("/")
+                                Hlas.rekni(hlasCtx, odEscapuj(k[2]), rh[0].toFloatOrNull() ?: 1f, rh.getOrNull(1)?.toFloatOrNull() ?: 1f)
                             }
                         }
                         // [Fuki] pozadí titulků z telefonu ("P:0.6")
@@ -412,9 +413,10 @@ object Propojeni {
         @Volatile private var mluvCislo = 0L
         @Volatile private var mluvText = ""
         @Volatile private var mluvRychlost = 1f
+        @Volatile private var mluvHlasitost = 1f
         fun maCil() = cilIp != null
-        fun mluv(t: String, rychlost: Float) {
-            synchronized(zamek) { mluvText = t; mluvRychlost = rychlost; mluvCislo = System.currentTimeMillis(); cislo++ }
+        fun mluv(t: String, rychlost: Float, hlasitost: Float = 1f) {
+            synchronized(zamek) { mluvText = t; mluvRychlost = rychlost; mluvHlasitost = hlasitost; mluvCislo = System.currentTimeMillis(); cislo++ }
             posliTed()
         }
 
@@ -461,7 +463,7 @@ object Propojeni {
             // [Fuki] pozadí titulků se značkou "P:" – starší televize ho přeskočí
             val sPozadim = "\tP:$pozadi"
             // [Fuki] česky nahlas: číslo promluvy (televize přečte jen novou), rychlost, text
-            val sHlasem = if (mluvCislo > 0) "\tM:$mluvCislo:$mluvRychlost:${escapuj(mluvText)}" else ""
+            val sHlasem = if (mluvCislo > 0) "\tM:$mluvCislo:$mluvRychlost/$mluvHlasitost:${escapuj(mluvText)}" else ""
             "$TITULEK\t$cislo\t$doba\t${escapuj(text)}\t${escapuj(napoveda)}$konec$sBarvami$sPozadim$sHlasem".toByteArray(Charsets.UTF_8)
         }
 

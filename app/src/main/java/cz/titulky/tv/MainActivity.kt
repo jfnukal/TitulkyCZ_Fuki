@@ -574,9 +574,17 @@ class MainActivity : Activity() {
         }
         // [Fuki] česky nahlas (místo výběru jazyka – zatím jen čeština)
         val hlasZap = Hlas.zapnuto(c)
-        mala(0, R.drawable.ik_hlas, "Nahlas", if (hlasZap) "ZAP" else "VYP", hlasZap) {
-            val ano = !Hlas.zapnuto(this)
-            getSharedPreferences("gamelingo", MODE_PRIVATE).edit().putBoolean(Hlas.PREF_ZAP, ano).putString(Hlas.PREF_KDE, "tv").apply()
+        val hlasHl = Hlas.hlasitost(c)
+        val urovne = listOf(0.35f to "tiše", 0.65f to "středně", 1f to "naplno")
+        val uroven = urovne.indexOfFirst { kotlin.math.abs(it.first - hlasHl) < 0.05f }.let { if (it < 0) 2 else it }
+        mala(0, R.drawable.ik_hlas, "Nahlas", if (hlasZap) urovne[uroven].second.uppercase() else "VYP · OK zapne", hlasZap) {
+            // OK: vypnuto → tiše → středně → naplno → vypnuto
+            val pr = getSharedPreferences("gamelingo", MODE_PRIVATE).edit().putString(Hlas.PREF_KDE, "tv")
+            val ano: Boolean
+            if (!Hlas.zapnuto(this)) { ano = true; pr.putBoolean(Hlas.PREF_ZAP, true).putFloat(Hlas.PREF_HLASITOST, urovne[0].first) }
+            else if (uroven < 2) { ano = true; pr.putFloat(Hlas.PREF_HLASITOST, urovne[uroven + 1].first) }
+            else { ano = false; pr.putBoolean(Hlas.PREF_ZAP, false) }
+            pr.apply()
             if (ano) {
                 Hlas.zkouska(this)
                 // čeština chybí → nabídnout instalaci hlasu

@@ -1916,7 +1916,7 @@ class RemotePlayService : Service() {
         hlasMluveno = hlasCislo
         val r = Hlas.rychlost(this)
         // telefon posílá titulky do TV a hlas má být z televize → přečte televize
-        if (telefon && Propojeni.Vysilac.maCil() && Hlas.kde(this) == "tv") Propojeni.Vysilac.mluv(hlasText, r)
+        if (telefon && Propojeni.Vysilac.maCil() && Hlas.kde(this) == "tv") Propojeni.Vysilac.mluv(hlasText, r, Hlas.hlasitost(this))
         else Hlas.rekni(this, hlasText, r)
     }
 
@@ -1938,7 +1938,7 @@ class RemotePlayService : Service() {
     private fun hlasNapoveda(text: String) {
         if (!Hlas.zapnuto(this) || text.isBlank()) return
         val r = Hlas.rychlost(this)
-        if (telefon && Propojeni.Vysilac.maCil() && Hlas.kde(this) == "tv") Propojeni.Vysilac.mluv(text, r)
+        if (telefon && Propojeni.Vysilac.maCil() && Hlas.kde(this) == "tv") Propojeni.Vysilac.mluv(text, r, Hlas.hlasitost(this))
         else Hlas.rekni(this, text, r)
     }
 
