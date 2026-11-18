@@ -765,6 +765,13 @@ class TelefonActivity : Activity() {
                     { zmenRamecek(null, it / 100f) }, { ulozAPosliVolby() })
             }
 
+            stitek("Uložené texty")
+            val ukl = Uloziste.ukladat(this)
+            pridej(radekVoleb(listOf("Pamatovat si překlady" to ukl, "Nic neukládat" to !ukl)) { i ->
+                prefs.edit().putBoolean(Uloziste.PREF_PAMET, i == 0).apply(); obnovUpravy()
+            })
+            napoveda(Uloziste.prehled(this) + "\nPaměť zrychluje opakované věty. Smazat vše jde v diagnostice (podržet logo → Vymazat uložené texty).")
+
             pridej(Metro.text(c, "Obnovit výchozí vzhled titulků", 13f, Metro.PRIMARNI, 600).apply {
                 setPadding(0, dp(12), 0, dp(4))
                 setOnClickListener {

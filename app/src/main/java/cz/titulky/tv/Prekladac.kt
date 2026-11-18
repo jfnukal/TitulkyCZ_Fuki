@@ -84,6 +84,8 @@ class Prekladac(context: android.content.Context? = null, cilovy: String = "cs")
     }
 
     private fun ulozDoPameti(anglicky: String, cesky: String) {
+        // [Fuki] uživatel si ukládání přeložených vět vypnul
+        if (appContext?.let { Uloziste.ukladat(it) } == false) return
         val kod = cil
         runCatching { disk.execute {
             runCatching {

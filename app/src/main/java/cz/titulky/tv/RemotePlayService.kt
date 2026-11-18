@@ -1619,6 +1619,7 @@ class RemotePlayService : Service() {
         if (otisk == volbyOtisk && ted - volbyCtenoKdy < 800) return
         volbyOtisk = otisk
         volbyCtenoKdy = ted
+        val otiskTextu = if (Volby.rezimText) OtiskOcr.barvy(barvy, w, h) else null
         // 2× zvětšit – volby bývají drobné písmo a čtečka pak přečte i řádek na světlém podbarvení
         val bmp = Bitmap.createScaledBitmap(Bitmap.createBitmap(barvy, w, h, Bitmap.Config.ARGB_8888), w * 2, h * 2, true)
         volbyCtu = true
@@ -1629,7 +1630,7 @@ class RemotePlayService : Service() {
             val vybrana = runCatching { zvyraznena(boxy, barvy, w, h) }.getOrDefault(-1)
             ui.post {
                 when {
-                    Volby.rezimText -> zpracujText(radky.map { it.first })
+                    Volby.rezimText -> zpracujText(radky.map { it.first }, otiskTextu)
                     Volby.rezimMenu -> zpracujMenu(radky.map { it.first })
                     else -> zpracujVolby(radky.map { it.first }, vybrana)
                 }
@@ -1680,25 +1681,19 @@ class RemotePlayService : Service() {
      * Režim Text: řádky ve žlutém rámečku spojit do jednoho textu, přeložit jako celek a poslat
      * na televizi jedním oknem (vedle originálu). Drobné rozdíly ve čtení se nepřekládají znovu.
      */
-    private fun zpracujText(radky: List<String>) {
-        val text = radky.map { it.trim() }.filter { it.isNotEmpty() }
-            .fold("") { acc, r -> when { acc.isEmpty() -> r; acc.endsWith("-") -> acc.dropLast(1) + r; else -> "$acc $r" } }
-            .replace(Regex("\\s+"), " ").trim()
-        val ted = System.currentTimeMillis()
-        if (text.count { it.isLetter() } < 3 || Ctecka.jeNesmysl(text)) {
-            if (textPosledni.isNotEmpty()) {
-                if (volbyPrazdneOd == 0L) volbyPrazdneOd = ted
-                // text chvíli není vidět → schovat až po 1,5 s (ať okno nebliká)
-                if (ted - volbyPrazdneOd > 1500) {
-                    textPosledni = ""
-                    volbyPosledni = emptyList()
-                    Propojeni.Vysilac.nastavVolby(emptyList(), -1)
-                    zapis("[text zmizel]")
-                }
-            }
+    private val textVRamecku = TextVRamecku()
+
+    private fun zpracujText(radky: List<String>, otiskObrazu: String?) {
+        // [z PlayCaption 0.22] víceřádkový text se neztrácí ani nebliká: změnu potvrzuje druhé čtení / otisk obrazu
+        val vstup = if (Ctecka.jeNesmysl(TextVRamecku.spoj(radky))) emptyList() else radky
+        val text = textVRamecku.zpracuj(vstup, Volby.zapnuto && Volby.rezimText, System.currentTimeMillis(), otiskObrazu) ?: return
+        if (text.isEmpty()) {
+            textPosledni = ""
+            volbyPosledni = emptyList()
+            Propojeni.Vysilac.nastavVolby(emptyList(), -1)
+            zapis("[text zmizel]")
             return
         }
-        volbyPrazdneOd = 0L
         if (textPosledni.isNotEmpty() && podobne(text, textPosledni)) return
         textPosledni = text
         zapis("[text: ${text.take(120)}]")

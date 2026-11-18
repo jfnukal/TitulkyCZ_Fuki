@@ -4,6 +4,10 @@
 Od verze 0.10 se vyvíjí jen jedna aplikace (dřívější NextGen, větev `master`) – umí „Jen televize“ i „S telefonem“.
 Při každé nové verzi se zvýší číslo v `app/build.gradle.kts` (versionCode + versionName) a sem se dopíše, co je nového.
 
+## 0.20.1-fuki32
+- Režim Text (dopisy, SMS): stabilizace z PlayCaption 0.22 – víceřádkový text nebliká a neztrácí řádky.
+- Uložené texty pod kontrolou: v diagnostice tlačítko **Vymazat uložené texty** (paměť překladů, profil hry, záznamy; volitelně i tabulky) s přehledem velikostí. V telefonu → Pokročilé volba **Pamatovat si překlady / Nic neukládat**.
+
 ## 0.20.1-fuki31
 Převzato z PlayCaption 0.21–0.22 (Adam Růžička, Rudolf Nohal – díky!):
 - Čtečka titulků z 0.22 (VyberTitulku): lepší výběr řádků a seskupení replik; sloučeno s našimi úpravami jmen.

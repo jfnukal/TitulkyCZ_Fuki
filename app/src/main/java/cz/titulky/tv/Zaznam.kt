@@ -96,6 +96,15 @@ object Zaznam {
             }, android.widget.LinearLayout.LayoutParams(android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT).apply { rightMargin = px(4) })
             if (sVyvojem) addView(tlacitko("Vývoj") { a.startActivity(Intent(a, VyvojActivity::class.java)) },
                 android.widget.LinearLayout.LayoutParams(android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT).apply { rightMargin = px(4) })
+            addView(tlacitko("Vymazat uložené texty") {
+                AlertDialog.Builder(a).setTitle("Vymazat uložené texty?")
+                    .setMessage(Uloziste.prehled(a) + "\n\nSmaže paměť přeložených vět, profil hry a záznamy. Nahrané tabulky zůstanou.")
+                    .setPositiveButton("Vymazat") { _, _ -> Uloziste.vymaz(a); dlg.dismiss()
+                        android.widget.Toast.makeText(a, "Vymazáno", android.widget.Toast.LENGTH_SHORT).show() }
+                    .setNeutralButton("I tabulky") { _, _ -> Uloziste.vymaz(a, iTabulky = true); dlg.dismiss()
+                        android.widget.Toast.makeText(a, "Vymazáno včetně tabulek", android.widget.Toast.LENGTH_SHORT).show() }
+                    .setNegativeButton("Zpět", null).show()
+            }, android.widget.LinearLayout.LayoutParams(android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT).apply { rightMargin = px(4) })
             addView(tlacitko("Zavřít") { dlg.dismiss() })
         }
         val koren = android.widget.LinearLayout(a).apply {
