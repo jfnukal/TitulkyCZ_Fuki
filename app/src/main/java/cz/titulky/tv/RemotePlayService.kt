@@ -105,6 +105,7 @@ class RemotePlayService : Service() {
     private val ai by lazy { AiPrekladac(this) { zapis(it) } }
 
     private var prectenoPosledne = ""
+    private val stabilitaTitulku = StabilitaTextu()
     private var prazdnychZaSebou = 0
     @Volatile private var snimkuCelkem = 0
 
@@ -592,6 +593,7 @@ class RemotePlayService : Service() {
         snimkuCelkem++
         val ted = System.currentTimeMillis()
         posledniSnimekKdy = ted
+        obrazKdy = ted
         // PS5: poškozený obraz (kostičky) nečíst
         if (xbox == null && obrazPoskozen(ted)) return null
         // pojistka: kdyby se čtení někde zaseklo, po 5 s čtečku uvolnit
@@ -654,6 +656,7 @@ class RemotePlayService : Service() {
             synchronized(dialogy) { dialogy.clear() }
             synchronized(napovedy) { napovedy.clear() }
             posledniOtisk = null; otiskMinulehoSnimku = null
+            stabilitaTitulku.reset()
         }
         val odX = if (rucni != null) (sirkaObrazu * rucni[0]).toInt().and(1.inv()).toFloat() else sirkaObrazu * (1 - STRED_SIRKA) / 2
         val odY = if (rucni != null) (vyskaObrazu * rucni[1]).toInt().and(1.inv()).toFloat() else vyskaObrazu * (1 - SPODNI_CAST)
@@ -713,6 +716,8 @@ class RemotePlayService : Service() {
         odX: Float, odY: Float, sirkaObrazu: Float, vyskaObrazu: Float, ctecka: Ctecka,
         uzkyPas: Boolean = false, jas: Int = 0, nadNapovedou: Boolean = false
     ) {
+        // [z PlayCaption 0.22] otisk obrazu – víceřádkový titulek se neztratí, když OCR jednou vynechá řádek
+        val otiskObrazu = OtiskOcr.sedy(vyrez.jas, vyrez.w, vyrez.h)
         // kde dřív byla nápověda (ve výřezu) → přepočítat do souřadnic čteného pásu
         val pasmaNapovedy = synchronized(napovedy) { napovedy.toList() }.map { (t, b) ->
             ((t - pas.nahore) * pas.meritko).toInt()..((b - pas.nahore) * pas.meritko).toInt()
@@ -792,7 +797,13 @@ class RemotePlayService : Service() {
                         zapis("[televize čte rychle – bez úsporného režimu a upozornění]")
                     }
                 }
-                zapis(ctecka.diagnostika)
+                zapis("[OCR #$cislo, řádků ${titulek.radku}] ${ctecka.diagnostika}")
+                // [z PlayCaption 0.22] zkrácený / mizející / rozepsaný titulek musí potvrdit druhé čtení
+                if (!stabilitaTitulku.prijmi(text, otiskObrazu, titulek.radku)) {
+                    zapis("  → čekám na úplné/potvrzené OCR (${text.length} znaků)")
+                    posledniOtisk = null // neúplný výsledek potvrdit dalším OCR, ne až za 3 s
+                    return@prectiPosledniTitulek
+                }
                 // nic se nenašlo – zapsat, ať je v záznamu vidět, že se četlo (a jak světlá byla scéna)
                 posledniPrazdne = text.length < 4 && surovy.napoveda == null
                 if (text.length < 4 && surovy.napoveda == null)
@@ -1054,7 +1065,8 @@ class RemotePlayService : Service() {
             val zacatek = predKonec.trimEnd('.', '…', ' ')
             val konec = novaZacatek.trimStart('.', '…', ' ')
             // "Now all of you..." → "all of you..." je jen opakování, ne pokračování → nespojovat
-            val opakovani = zacatek.lowercase().endsWith(konec.trimEnd('.', '…', ' ').lowercase())
+            val opakovani = zacatek.lowercase().endsWith(konec.trimEnd('.', '…', ' ').lowercase()) ||
+                StabilitaTextu.opakovaneCteni(zacatek, konec)
             if (zacatek.isNotEmpty() && konec.isNotEmpty() && !opakovani) {
                 // tři tečky nechat – Google pak ví, že jde o pauzu v řeči ("we've had... well, a bad couple of days")
                 repliky = listOf(if (predTecky) "$zacatek... $konec" else "$zacatek $konec")
@@ -2192,6 +2204,8 @@ class RemotePlayService : Service() {
     }
 
     private fun zastav(zprava: String, ukazat: Boolean = true) {
+        obrazKdy = 0L
+        stabilitaTitulku.reset()
         drzWifi(false)
         bezi = false
         stav = zprava
@@ -2391,6 +2405,8 @@ class RemotePlayService : Service() {
         /** Právě se hraje / připojuje na Xboxu (jinak PS5). */
         @Volatile var naXboxu = false
         /** [Fuki] Hra, kterou hlásí Xbox (prázdné = neznámá). */
+        /** [Fuki] Kdy naposledy přišel obraz z konzole (0 = v tomto běhu ještě ne). */
+        @Volatile var obrazKdy = 0L
         @Volatile var hraNaXboxu = ""
         const val ACTION_HRA = "cz.titulky.tv.REMOTE_HRA"
         /** [Fuki] Hráč změnil hru (tlačítko v aplikaci). */

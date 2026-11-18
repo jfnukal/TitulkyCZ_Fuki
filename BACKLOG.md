@@ -11,3 +11,8 @@
 - **Dvojjazyčné titulky** – malým anglický originál nad českým (učení angličtiny).
 - **Profily vzhledu podle hry** – poloha / velikost titulků zvlášť pro každou hru, přepínat podle hry z Xboxu.
 - Doba zobrazení titulků nastavitelná i na TV (teď jen v telefonu).
+
+## Z PlayCaption 0.21–0.22 zatím nepřevzato
+- **Příběhový režim** (čtecí fronta + SkladaniVet – skládání nedokončených vět přes více titulků). Zvážit pro AI a hlas.
+- **Přijímače pro LG (webOS) a Samsung (Tizen)** – titulky z telefonu na ne-Android TV.
+- Opravy PS5 (zasekávání, dvojitý zvuk) – až se PS5 zapne.

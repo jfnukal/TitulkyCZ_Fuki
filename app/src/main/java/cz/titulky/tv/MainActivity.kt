@@ -388,8 +388,15 @@ class MainActivity : Activity() {
         // při připojování ukázat i přesný důvod, proč to zatím nejde (např. "Remote Play ukončeno: …")
         val duvod = RemotePlayService.stav
         val k = if (RemotePlayService.naXboxu && (klic == "stavPripojeno" || klic == "stavPripojuji")) klic + "Xbox" else klic
-        stavText.text = if (klic == "stavPripojuji" && duvod.isNotBlank() && !duvod.contains("běží", true) && !RemotePlayService.naXboxu)
-            t(k) + "\n" + duvod.take(90) else t(k)
+        // [podle PlayCaption 0.22] přesnější stav: připojuji → čekám na obraz → obraz běží
+        val stari = System.currentTimeMillis() - RemotePlayService.obrazKdy
+        stavText.text = when {
+            klic == "stavPripojeno" && RemotePlayService.obrazKdy == 0L -> "Připojeno – čekám na obraz ze hry…"
+            klic == "stavPripojeno" && stari > 30_000 -> "Obraz z konzole ${stari / 1000} s nechodí – je Xbox zapnutý?"
+            klic == "stavPripojeno" -> "Obraz běží – překlad je připravený"
+            klic == "stavPripojuji" && duvod.isNotBlank() && !duvod.contains("běží", true) -> t(k) + "\n" + duvod.take(90)
+            else -> t(k)
+        }
         stavTecka.background = zaobleni(if (barva == ZELENA) Color.parseColor("#3CFF6E") else Color.parseColor("#DDDDDD"), 999f)
         stavKarta.background = vyber(barva, radius = 999f)
         // na čem se hraje: připojeno → podle spojení, jinak podle volby
@@ -456,7 +463,10 @@ class MainActivity : Activity() {
         // hlavička
         koren.addView(ImageView(this).apply {
             setImageResource(R.drawable.hlavicka); adjustViewBounds = true; scaleType = ImageView.ScaleType.FIT_START
-            isFocusable = false
+            // [podle PlayCaption 0.22] najet na logo + OK = diagnostika přes celou obrazovku
+            isFocusable = true; isClickable = true
+            background = Metro.pozadi(Color.TRANSPARENT, Metro.MODRA_VYBER)
+            setOnClickListener { Zaznam.ukaz(this@MainActivity, sVyvojem = true) }
             setOnLongClickListener { Zaznam.ukaz(this@MainActivity, sVyvojem = true); true }
         }, FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, (hlavaH * 0.62f).toInt()).apply { leftMargin = okrajX; topMargin = okrajY })
         // vpravo nahoře: verze + Restart + Vypnout (TCL a jiné TV drží aplikaci v paměti)

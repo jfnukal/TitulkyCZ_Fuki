@@ -4,6 +4,14 @@
 Od verze 0.10 se vyvíjí jen jedna aplikace (dřívější NextGen, větev `master`) – umí „Jen televize“ i „S telefonem“.
 Při každé nové verzi se zvýší číslo v `app/build.gradle.kts` (versionCode + versionName) a sem se dopíše, co je nového.
 
+## 0.20.1-fuki31
+Převzato z PlayCaption 0.21–0.22 (Adam Růžička, Rudolf Nohal – díky!):
+- Čtečka titulků z 0.22 (VyberTitulku): lepší výběr řádků a seskupení replik; sloučeno s našimi úpravami jmen.
+- Víceřádkové titulky se neztrácejí: zkrácený, mizející nebo rozepsaný titulek musí potvrdit druhé čtení (StabilitaTextu, OtiskOcr).
+- Rozdělená věta se nespojí sama se sebou (opakované čtení téhož titulku).
+- Přesnější stav na dlaždici Hrát: připojuji → čekám na obraz → obraz běží / obraz nechodí.
+- Diagnostika přes celou obrazovku: na TV najeď na logo a dej OK, šipky listují, Zpět zavře. V telefonu podržet logo, navíc tlačítko Sdílet.
+
 ## 0.20.1-fuki30
 - TV: tlačítka Restart a Vypnout už nemají uříznutý text.
 

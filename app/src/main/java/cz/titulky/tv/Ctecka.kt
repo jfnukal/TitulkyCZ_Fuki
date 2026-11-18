@@ -61,9 +61,9 @@ class Ctecka {
             .addOnSuccessListener { vysledek ->
                 val kusy = vysledek.textBlocks
                     .flatMap { it.lines }
-                    .mapNotNull { l -> l.boundingBox?.let { Kus(l.text.trim(), it.left, it.top, it.right, it.bottom) } }
+                    .mapNotNull { l -> l.boundingBox?.let { OcrKus(l.text.trim(), it.left, it.top, it.right, it.bottom) } }
                     .sortedBy { it.top }
-                val radky = mutableListOf<MutableList<Kus>>()
+                val radky = mutableListOf<MutableList<OcrKus>>()
                 for (k in kusy) {
                     val posledni = radky.lastOrNull()
                     if (posledni != null && k.stred in (posledni.minOf { it.top }..posledni.maxOf { it.bottom })) posledni += k
@@ -127,48 +127,14 @@ class Ctecka {
         recognizer.process(InputImage.fromBitmap(vstup, 0))
             .addOnSuccessListener { vysledek ->
                 nesmysl = false
-                val kusy = vysledek.textBlocks
-                    .flatMap { it.lines }
-                    .mapNotNull { l -> l.boundingBox?.let { Kus(l.text.trim(), it.left, it.top, it.right, it.bottom) } }
-                    .filter { k -> k.text.count { it.isLetter() } >= 2 }
-                    .sortedBy { it.top }
-
-                // 1) seskupit kusy na stejné výšce do jednoho vizuálního řádku (jméno + text bývají zvlášť)
-                val radky = mutableListOf<MutableList<Kus>>()
-                for (k in kusy) {
-                    val posledni = radky.lastOrNull()
-                    if (posledni != null && k.stred in (posledni.minOf { it.top }..posledni.maxOf { it.bottom })) {
-                        posledni += k
-                    } else {
-                        radky += mutableListOf(k)
-                    }
+                val kusy = vysledek.textBlocks.flatMapIndexed { blok, b ->
+                    b.lines.mapNotNull { l -> l.boundingBox?.let {
+                        OcrKus(l.text.trim(), it.left, it.top, it.right, it.bottom, blok)
+                    } }
                 }
-                // kusy na stejné výšce, ale daleko od sebe (menu: vlevo popis, vpravo "Select ⓧ Back ◯")
-                // nejsou jeden řádek → rozdělit na samostatné skupiny
-                val skupiny = radky.flatMap { r ->
-                    val serazene = r.sortedBy { it.left }
-                    val vyska = (r.maxOf { it.bottom } - r.minOf { it.top }).coerceAtLeast(1)
-                    val vysledek = mutableListOf(mutableListOf(serazene.first()))
-                    for (k in serazene.drop(1)) {
-                        if (k.left - vysledek.last().last().right > vyska * 2.5f) vysledek += mutableListOf(k)
-                        else vysledek.last() += k
-                    }
-                    vysledek
-                }
-                var hotoveRadky = skupiny.map { r ->
-                    Radek(
-                        doplnJmeno(r.joinToString(" ") { it.text }),
-                        r.minOf { it.left }, r.minOf { it.top }, r.maxOf { it.right }, r.maxOf { it.bottom },
-                        r
-                    )
-                }.filter { r -> r.text.count { it.isLetter() } >= 3 }
-                    // titulky bývají uprostřed – menu vlevo a nápověda vpravo ne
-                    .filter { r ->
-                        val stred = (r.left + r.right) / 2f / obraz.width
-                        stred in 0.3f..0.7f
-                    }
-                    // krátké řádky velkými písmeny bez interpunkce = položky menu ("STORY", "SETTINGS")
-                    .filterNot { r -> jePolozkaMenu(r.text) }
+                var hotoveRadky = VyberTitulku.radky(kusy, obraz.width, ::doplnJmeno)
+                val seskupenych = hotoveRadky.size
+                fun pocty(vybranych: Int) = "OCR řádky (surové/seskupené/po filtrech/vybrané): ${kusy.size}/$seskupenych/${hotoveRadky.size}/$vybranych"
 
                 // spodní nápověda / úkol mise: nejspodnější řádek, který je nápověda k ovládání,
                 // nebo nekončí tečkou a je oddělený mezerou od řádků nad ním
@@ -181,7 +147,7 @@ class Ctecka {
                     if (pasmaNapovedy.any { stredY in it } && r.text.none { it in ".!?…" }) return@takeIf true
                     // úkol mise: krátký, bez jakékoli interpunkce ("Lead the horse to the hitching post");
                     // dialog má skoro vždy čárku, tečku nebo apostrof ("We're fixing to rob some train, …")
-                    if (konci(r.text) || pocetSlov(r.text) < 2 || pocetSlov(r.text) > 9 ||
+                    if (konci(r.text) || VyberTitulku.pocetSlov(r.text) < 2 || VyberTitulku.pocetSlov(r.text) > 9 ||
                         r.text.any { it in ".,!?\"…:;" } || STAZENINA.containsMatchIn(r.text) ||
                         JMENO.containsMatchIn(r.text)) return@takeIf false
                     // první řádek dlouhé repliky končí spojkou/předložkou ("…a lot less intimidating than")
@@ -200,10 +166,10 @@ class Ctecka {
                 val napovedaBox = napovedaRadek?.let { Rect(it.left, it.top, it.right, it.bottom) }
 
                 if (hotoveRadky.isEmpty()) {
-                    if (napovedaText == null) { diagnostika = ""; hotovo(Titulek.NIC); return@addOnSuccessListener }
+                    if (napovedaText == null) { diagnostika = pocty(0); hotovo(Titulek.NIC); return@addOnSuccessListener }
                     jazyk.identifyLanguage(napovedaText)
                         .addOnSuccessListener { kod ->
-                            diagnostika = "nápověda jazyk=$kod | $napovedaText"
+                            diagnostika = "${pocty(0)} | nápověda jazyk=$kod | $napovedaText"
                             val bezDiakritiky = napovedaText.none { it.isLetter() && it.code > 127 }
                             hotovo(if (kod == "en" || (kod != "cs" && kod != "sk" && kod != cilovyJazyk && bezDiakritiky && anglickeSlovo(napovedaText))) Titulek(emptyList(), null, 0, emptyList(), vycisti(napovedaText), napovedaBox) else Titulek.NIC)
                         }
@@ -215,7 +181,7 @@ class Ctecka {
                 // → spodní řádky bez interpunkce zahodit, když je nad nimi věta s tečkou/otazníkem
                 run {
                     fun konciVetou(t: String) = t.trimEnd().lastOrNull() in setOf('.', '!', '?', '"', '…')
-                    val posledniVeta = hotoveRadky.indexOfLast { konciVetou(it.text) && pocetSlov(it.text) >= 2 }
+                    val posledniVeta = hotoveRadky.indexOfLast { konciVetou(it.text) && VyberTitulku.pocetSlov(it.text) >= 2 }
                     if (posledniVeta >= 0 && posledniVeta < hotoveRadky.lastIndex) {
                         val pod = hotoveRadky.subList(posledniVeta + 1, hotoveRadky.size)
                         val nad = hotoveRadky[posledniVeta]
@@ -227,48 +193,14 @@ class Ctecka {
                     }
                 }
 
-                // 2) od spodu nahoru, dokud nenajdeme začátek repliky
-                val vybrane = ArrayDeque<Radek>()
-                var spodni = hotoveRadky.last()
-                vybrane.addFirst(spodni)
-                if (!JMENO.containsMatchIn(spodni.text)) {
-                    for (r in hotoveRadky.dropLast(1).asReversed()) {
-                        val vyska = (spodni.bottom - spodni.top).coerceAtLeast(1)
-                        val mezera = spodni.top - r.bottom
-                        if (mezera > vyska * 0.9) break       // velká mezera = jiná replika
-                        vybrane.addFirst(r)
-                        spodni = r
-                        if (JMENO.containsMatchIn(r.text)) break // tady replika začíná
-                    }
-                }
-                // 2b) rozhovor jako v GTA: krátké repliky se jmény těsně nad sebou ("Lucia: …" / "Jason: …")
-                //     → vzít i ty (nejvýš 3 repliky). U Cyberpunku má starší replika víc řádků
-                //     a její poslední řádek jméno nemá, takže se sem nepřidá.
-                if (vybrane.size == 1 && JMENO.containsMatchIn(vybrane.first().text)) {
-                    var horni = vybrane.first()
-                    for (r in hotoveRadky.dropLast(1).asReversed()) {
-                        if (vybrane.size >= 3) break
-                        val vyska = (horni.bottom - horni.top).coerceAtLeast(1)
-                        if (horni.top - r.bottom > vyska * 0.9) break
-                        if (!JMENO.containsMatchIn(r.text)) break
-                        vybrane.addFirst(r)
-                        horni = r
-                    }
-                }
-
-                // rozdělit na repliky: nová replika začíná řádkem se jménem
-                val repliky = mutableListOf<String>()
-                val jmenaBoxy = mutableListOf<Rect?>()
-                for (r in vybrane) {
-                    if (repliky.isEmpty() || JMENO.containsMatchIn(r.text)) {
-                        repliky += r.text
-                        jmenaBoxy += boxJmena(r)
-                    } else repliky[repliky.lastIndex] = repliky.last() + " " + r.text
-                }
+                val vybrane = VyberTitulku.vyber(hotoveRadky)
+                val seskupene = VyberTitulku.repliky(vybrane)
+                val repliky = seskupene.map { it.text }
+                val jmenaBoxy = seskupene.map { boxJmena(it.prvniRadek) }
 
                 // sloupec krátkých řádků (1–2 slova) = menu, ne titulek
-                if (vybrane.size >= 3 && vybrane.count { pocetSlov(it.text) <= 2 } >= vybrane.size - 1) {
-                    diagnostika = "menu (sloupec krátkých řádků) | " + vybrane.joinToString(" / ") { it.text }
+                if (vybrane.size >= 3 && vybrane.count { VyberTitulku.pocetSlov(it.text) <= 2 } >= vybrane.size - 1) {
+                    diagnostika = "${pocty(vybrane.size)} | menu (sloupec krátkých řádků) | " + vybrane.joinToString(" / ") { it.text }
                     hotovo(Titulek.NIC); return@addOnSuccessListener
                 }
                 val box = Rect(
@@ -282,12 +214,12 @@ class Ctecka {
                 // → nepřekládat a neukazovat, jinak by na televizi byl nesmysl
                 if (jeNesmysl(bezJmen)) {
                     nesmysl = true
-                    diagnostika = "  [rozmazané – čtu znovu: " + repliky.joinToString(" / ") + "]"
+                    diagnostika = "${pocty(vybrane.size)} | [rozmazané – čtu znovu: " + repliky.joinToString(" / ") + "]"
                     hotovo(Titulek.NIC); return@addOnSuccessListener
                 }
                 jazyk.identifyLanguage(bezJmen)
                     .addOnSuccessListener { kod ->
-                        diagnostika = "jazyk=$kod | " + repliky.joinToString(" / ") +
+                        diagnostika = "${pocty(vybrane.size)} | jazyk=$kod | " + repliky.joinToString(" / ") +
                             (napovedaText?.let { " || nápověda: $it" } ?: "")
                         // krátké repliky ("Ah, gentlemen.", "Arthur...") rozpoznávač jazyka často neurčí →
                         // když v textu nejsou žádné znaky s diakritikou, bereme ho jako angličtinu
@@ -392,28 +324,8 @@ class Ctecka {
         LanguageIdentificationOptions.Builder().setConfidenceThreshold(0.5f).build()
     )
 
-    private fun pocetSlov(t: String) = t.split(Regex("\\s+")).count { sl -> sl.count { it.isLetter() } >= 2 }
-
-    private fun jePolozkaMenu(t: String): Boolean {
-        val pismena = t.filter { it.isLetter() }
-        if (pismena.isEmpty()) return true
-        val velka = pismena.count { it.isUpperCase() }.toFloat() / pismena.length
-        val maInterpunkci = t.any { it in ".,!?:;'" }
-        if (velka > 0.8f && pocetSlov(t) <= 3 && !maInterpunkci) return true
-        // dlouhý řádek skoro celý VELKÝMI písmeny = lišta ovládání ("SETTINGS PHOTO MODE SELECT BACK")
-        return velka > 0.85f && pocetSlov(t) >= 4
-    }
-
-    private class Kus(val text: String, val left: Int, val top: Int, val right: Int, val bottom: Int) {
-        val stred get() = (top + bottom) / 2
-    }
-    private class Radek(
-        val text: String, val left: Int, val top: Int, val right: Int, val bottom: Int,
-        val kusy: List<Kus> = emptyList()
-    )
-
     /** Odhadne, kde v řádku je jméno postavy ("Lucia:"), aby šlo zjistit jeho barvu. */
-    private fun boxJmena(r: Radek): Rect? {
+    private fun boxJmena(r: OcrRadek): Rect? {
         val jmeno = JMENO_CELE.find(r.text)?.let { r.text.substringBefore(':') } ?: return null
         // jméno bývá samostatný kus (jinou barvou) – pak máme přesný obdélník
         r.kusy.firstOrNull { it.text.trimEnd(':', ' ') == jmeno }?.let { return Rect(it.left, it.top, it.right, it.bottom) }
@@ -448,7 +360,7 @@ class Ctecka {
 
     companion object {
         /** Začátek repliky: "Jméno:" nebo "DOKTOR PARADOX:" na začátku řádku. */
-        val JMENO = Regex("^[A-Z][A-Za-z0-9 .'-]{1,24}:\\s")
+        val JMENO = VyberTitulku.JMENO
         /** Nápověda k ovládání: "press/tap/hold/use … to …", tlačítka R1/L2…, symboly tlačítek. */
         /** Slova, kterými nekončí úkol mise, ale klidně první řádek rozdělené repliky. */
         val NEDOKONCENE = setOf(
