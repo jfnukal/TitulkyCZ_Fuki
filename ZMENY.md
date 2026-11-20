@@ -4,6 +4,11 @@
 Od verze 0.10 se vyvíjí jen jedna aplikace (dřívější NextGen, větev `master`) – umí „Jen televize“ i „S telefonem“.
 Při každé nové verzi se zvýší číslo v `app/build.gradle.kts` (versionCode + versionName) a sem se dopíše, co je nového.
 
+## 0.20.1-fuki34
+- Krátké repliky („Hey“, „But“) se už nezahazují jako prázdné čtení (dřív se texty do 3 znaků ignorovaly).
+- Samotné jméno bez textu („Arthur:“) se neukazuje.
+- O něco rychlejší zobrazení, když běží AI: Google se drží jen 0,25 s místo 0,5 s.
+
 ## 0.20.1-fuki33
 Podle rozpracovaných návrhů PlayCaption (PR 28 a 37):
 - Světlé scény (telefon): když se bílé písmo na světlém pozadí nepřečte, zkusí se pás se zvýrazněnými řádky.

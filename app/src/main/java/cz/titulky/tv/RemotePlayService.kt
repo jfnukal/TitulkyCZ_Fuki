@@ -814,11 +814,13 @@ class RemotePlayService : Service() {
                     return@prectiPosledniTitulek
                 }
                 // nic se nenašlo – zapsat, ať je v záznamu vidět, že se četlo (a jak světlá byla scéna)
-                posledniPrazdne = text.length < 4 && surovy.napoveda == null
-                if (text.length < 4 && surovy.napoveda == null)
+                // [Fuki] krátká celá slova („Hey“, „But“, „No“) jsou titulek, ne prázdné čtení
+                val prazdny = text.length < 4 && !(text.length >= 2 && text.all { it.isLetter() } && Ctecka.anglickeSlovo(text))
+                posledniPrazdne = prazdny && surovy.napoveda == null
+                if (prazdny && surovy.napoveda == null)
                     zapis("  [nic nepřečteno: jas $jas, ${casCteni} ms" +
                         (if (nadNapovedou) ", nad nápovědou" else if (druhyPokus) ", 2. pokus" else "") + "]")
-                if (text.length < 4) {
+                if (prazdny) {
                     prazdnychZaSebou++
                     if (prazdnychZaSebou >= 1 && prectenoPosledne.isNotEmpty()) {
                         prectenoPosledne = ""
@@ -1049,6 +1051,9 @@ class RemotePlayService : Service() {
         synchronized(casyPosledni) { casyPosledni.clear() }
         // číslice nalepená před slovem ("3Miss Grimshaw..") je smetí ze čtení
         val puvodni = surove.map { Regex("^[0-9](?=[A-Z][a-z])").replace(it, "") }
+            // [Fuki] samotné jméno bez textu („Arthur:“) není replika – neukazovat
+            .filter { !Regex("^[\\p{Lu}][\\p{L}0-9 .'-]{0,24}:\\s*[.…]*\\s*$").matches(it.trim()) }
+        if (puvodni.isEmpty()) { zapis("  [jen jméno bez textu – přeskakuji]"); return }
         // Hra (např. RDR2) dělí dlouhou větu na dva titulky: "we need to" → "get that fire lit quick."
         // Druhý kousek začíná malým písmenem → přeložit ho dohromady s předchozím (zatím jen telefon).
         var repliky = puvodni
@@ -1144,7 +1149,7 @@ class RemotePlayService : Service() {
             stPreklad(prekladac.zdroj, System.currentTimeMillis() - zacatekPrekladu)
             zapisRychlost(prekladac.zdroj, System.currentTimeMillis() - zacatekPrekladu)
             // [Fuki] běží AI → Google chvilku podržet (do 0,9 s od začátku); stihne-li AI, ukáže se jen AI
-            val zbyvaNaAi = if (aiBezi && !aiHotov) 500 - (System.currentTimeMillis() - zacatekAi) else 0L
+            val zbyvaNaAi = if (aiBezi && !aiHotov) 250 - (System.currentTimeMillis() - zacatekAi) else 0L
             if (zbyvaNaAi > 0) ui.postDelayed({ ukazJestli(cesky, dobry = true) }, zbyvaNaAi)
             else ukazJestli(cesky, dobry = true)
         }
