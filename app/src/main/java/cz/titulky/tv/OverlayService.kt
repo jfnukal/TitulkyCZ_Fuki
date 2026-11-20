@@ -139,6 +139,12 @@ class OverlayService : Service() {
         runCatching { wm.updateViewLayout(tv, lp) }
         tv.text = text
         tv.visibility = android.view.View.VISIBLE
+        // právě ukázaný titulek posunout nad úkol, ať se nepřekrývají
+        if (textView?.visibility == android.view.View.VISIBLE) {
+            vyhniSeNapovede()
+            textView?.let { t -> layout?.let { l -> runCatching { wm.updateViewLayout(t, l) } } }
+            srovnejPodklad()
+        }
         ui.postDelayed(schovejNapovedu, 60_000) // pojistka, kdyby zpráva o zmizení nepřišla
     }
 
@@ -150,7 +156,7 @@ class OverlayService : Service() {
         pod.setTextSize(TypedValue.COMPLEX_UNIT_PX, tv.textSize)
         pod.maxLines = tv.maxLines
         pod.minHeight = tv.minHeight
-        pod.text = tv.text.toString()
+        pod.text = sPozadimRadku(tv.text.toString(), POZADI)
         // [Fuki] průhlednější pozadí → podklad schovat (dvě vrstvy by pozadí zase ztmavily)
         pod.visibility = if (aktualniPozadi >= 0.99f) tv.visibility else android.view.View.INVISIBLE
         runCatching { wm.updateViewLayout(pod, WindowManager.LayoutParams().apply { copyFrom(lp) }) }
@@ -158,10 +164,51 @@ class OverlayService : Service() {
 
     private var layout: WindowManager.LayoutParams? = null
     /** Konec úprav polohy → zase obyčejné černé pozadí bez rámečku. */
-    private val konecUpravy = Runnable { textView?.setBackgroundColor(barvaPozadi()) }
+    private val konecUpravy = Runnable { textView?.setBackgroundColor(barvaBoxu()) }
 
     /** [Fuki] Aktuálně použité pozadí titulků (0..1). */
     private var aktualniPozadi = 1f
+    private var pouzityVzhled = 1f
+    /** [podle PlayCaption, PR 37] Pozadí jen pod řádky textu (když český titulek nezakrývá anglický). */
+    private var jenPodRadky = false
+    private fun barvaBoxu(): Int = if (jenPodRadky) Color.TRANSPARENT else barvaPozadi()
+
+    /** Pozadí pod každým řádkem jen tak široké jako text (vystředěný). */
+    private class PozadiRadku(private val barva: Int, private val okraj: Float) : android.text.style.LineBackgroundSpan {
+        override fun drawBackground(c: android.graphics.Canvas, p: android.graphics.Paint, left: Int, right: Int, top: Int,
+                                    baseline: Int, bottom: Int, text: CharSequence, start: Int, end: Int, lineNumber: Int) {
+            var konec = end
+            while (konec > start && text[konec - 1].isWhitespace()) konec--
+            if (konec <= start) return
+            val w = p.measureText(text, start, konec)
+            val stred = (left + right) / 2f
+            val puvodni = p.color
+            p.color = barva
+            c.drawRect(stred - w / 2 - okraj, top.toFloat(), stred + w / 2 + okraj, bottom.toFloat(), p)
+            p.color = puvodni
+        }
+    }
+    private fun sPozadimRadku(text: CharSequence, barva: Int): CharSequence {
+        if (!jenPodRadky || text.isBlank() || (barva ushr 24) < 5) return text
+        return android.text.SpannableStringBuilder(text).apply {
+            setSpan(PozadiRadku(barva, 22f), 0, length, android.text.Spanned.SPAN_INCLUSIVE_INCLUSIVE)
+        }
+    }
+
+    /** Titulek nesmí překrýt žlutý úkol mise / nápovědu → posunout ho nad ni. */
+    private fun vyhniSeNapovede() {
+        val n = napoveda ?: return
+        val lpN = layoutNapovedy ?: return
+        val tv = textView ?: return
+        val lp = layout ?: return
+        if (n.visibility != android.view.View.VISIBLE || n.text.isNullOrBlank()) return
+        val napDole = lpN.y
+        val napNahore = lpN.y + maxOf(n.height, n.minHeight)
+        val tvVyska = maxOf(tv.height, tv.minHeight, (tv.textSize * 1.6f).toInt())
+        if (lp.y < napNahore && lp.y + tvVyska > napDole)
+            lp.y = napNahore + (6 * resources.displayMetrics.density).toInt()
+    }
+
     private fun barvaPozadi(): Int =
         if (aktualniPozadi >= 0.99f) POZADI else ((aktualniPozadi.coerceIn(0f, 1f) * 255).toInt() shl 24)
 
@@ -172,12 +219,15 @@ class OverlayService : Service() {
      */
     private fun pouzijPozadi() {
         val p = (if (pozadiZTelefonu >= 0f) pozadiZTelefonu else 1f).coerceIn(0f, 1f)
-        if (kotlin.math.abs(p - aktualniPozadi) < 0.005f) return
+        val klic = p + if (jenPodRadky) 10f else 0f
+        if (kotlin.math.abs(klic - pouzityVzhled) < 0.005f) return
+        pouzityVzhled = klic
         aktualniPozadi = p
         val barva = barvaPozadi()
-        val format = if (p >= 0.99f) PixelFormat.OPAQUE else PixelFormat.TRANSLUCENT
+        val format = if (p >= 0.99f && !jenPodRadky) PixelFormat.OPAQUE else PixelFormat.TRANSLUCENT
         val stin = if (p < 0.5f) 10f else 6f
-        textView?.apply { setBackgroundColor(barva); setShadowLayer(stin, 0f, 0f, Color.BLACK) }
+        textView?.apply { setBackgroundColor(barvaBoxu()); setShadowLayer(stin, 0f, 0f, Color.BLACK) }
+        podklad?.setBackgroundColor(if (jenPodRadky) Color.TRANSPARENT else POZADI)
         napoveda?.setBackgroundColor(barva)
         layout?.let { lp -> lp.format = format; textView?.let { tv -> runCatching { wm.updateViewLayout(tv, lp) } } }
         layoutNapovedy?.let { lp -> lp.format = format; napoveda?.let { n -> runCatching { wm.updateViewLayout(n, lp) } } }
@@ -209,7 +259,7 @@ class OverlayService : Service() {
         if (r.size >= 5 && r[4] == 1f) {
             val d = resources.displayMetrics.density
             textView?.background = android.graphics.drawable.GradientDrawable().apply {
-                setColor(barvaPozadi())
+                setColor(barvaBoxu())
                 setStroke((3 * d).toInt(), ZELENA, 14 * d, 8 * d)
             }
             ui.removeCallbacks(konecUpravy)
@@ -408,10 +458,12 @@ class OverlayService : Service() {
             ukazNapovedu(intent.getStringExtra(EXTRA_TEXT).orEmpty(), intent.getFloatArrayExtra(EXTRA_BOX))
         }
         if (intent?.action == ACTION_SET_TEXT) {
-            pouzijPozadi()
             val text = intent.getStringExtra(EXTRA_TEXT).orEmpty()
             val box = intent.getFloatArrayExtra(EXTRA_BOX)
             val vlastni = intent.getFloatArrayExtra(EXTRA_VLASTNI)
+            // pozadí jen pod řádky, když český titulek anglický nezakrývá (vlastní poloha / „nad anglickými“)
+            jenPodRadky = (vlastni != null && vlastni.size >= 4) || box == null || box.size != 4 || !Nastaveni(this).prekryvat
+            pouzijPozadi()
             if (vlastni != null && vlastni.size >= 4) {
                 nastavVlastniPolohu(vlastni)
             } else if (box != null && box.size == 4) {
@@ -421,8 +473,9 @@ class OverlayService : Service() {
                 konecUpravy.run()
                 nastavVychoziPolohu()
             }
+            vyhniSeNapovede()
             textView?.let { tv -> layout?.let { lp -> runCatching { wm.updateViewLayout(tv, lp) } } }
-            showText(obarvi(text, intent.getIntArrayExtra(EXTRA_BARVY_JMEN)), intent.getLongExtra(EXTRA_DOBA, 6000))
+            showText(sPozadimRadku(obarvi(text, intent.getIntArrayExtra(EXTRA_BARVY_JMEN)), barvaPozadi()), intent.getLongExtra(EXTRA_DOBA, 6000))
         }
         return START_STICKY
     }

@@ -737,6 +737,15 @@ class RemotePlayService : Service() {
                         return@prectiPosledniTitulek
                     }
                 }
+                // [z PlayCaption, PR 28] telefon: bílé písmo na světlém pozadí (sníh, obloha) → zkusit pás se zvýrazněnými řádky
+                if (!druhyPokus && !uspora && telefon && surovy.repliky.isEmpty() && surovy.napoveda == null && jas > 110) {
+                    val znovu = runCatching { zvyraznenyPas(pas) }.getOrNull()
+                    if (znovu != null) {
+                        stKontrast++
+                        cti(c, cislo, zacatek, vyrez, znovu, svetla, druhyPokus = true, odX, odY, sirkaObrazu, vyskaObrazu, ctecka, jas = jas)
+                        return@prectiPosledniTitulek
+                    }
+                }
                 obsazeno[c].set(false)
                 // druhá čtečka mezitím přečetla novější snímek → tenhle výsledek je zastaralý
                 if (cislo < posledniVysledek) return@prectiPosledniTitulek
@@ -1330,6 +1339,14 @@ class RemotePlayService : Service() {
      * Celá oblast titulků s vytaženým kontrastem: světlé pozadí (mlha ~200) ztmavne,
      * bílé písmo (~250) zůstane bílé → čtečka ho najde i ve sněhu.
      */
+    private fun zvyraznenyPas(pas: Pas): Pas? {
+        val bmp = pas.bitmapa
+        val pixely = IntArray(bmp.width * bmp.height)
+        bmp.getPixels(pixely, 0, bmp.width, 0, 0, bmp.width, bmp.height)
+        val upravene = SvetlyDialog.priprav(pixely, bmp.width, bmp.height) ?: return null
+        return Pas(Bitmap.createBitmap(upravene, bmp.width, bmp.height, Bitmap.Config.ARGB_8888), pas.nahore, pas.meritko, pas.vlevo)
+    }
+
     private fun kontrastniPas(v: Vyrez): Pas {
         val px = IntArray(v.w * v.h)
         for (i in px.indices) {

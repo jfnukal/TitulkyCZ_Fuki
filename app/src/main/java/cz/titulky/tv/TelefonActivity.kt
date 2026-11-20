@@ -512,6 +512,18 @@ class TelefonActivity : Activity() {
             if (v.layoutParams.height != chci) { v.layoutParams = v.layoutParams.apply { height = chci }; v.requestLayout() }
             if (w != or_ - ol) v.post { prekresli() } else prekresli()
         }
+        // [podle PlayCaption, PR 37] vodicí čáry středu; do 2,5 % od středu se titulek i rámečky přichytí
+        val caraV = View(this).apply { setBackgroundColor(0x55FFFFFF); visibility = View.INVISIBLE }
+        val caraH = View(this).apply { setBackgroundColor(0x55FFFFFF); visibility = View.INVISIBLE }
+        nahled.addView(caraV, FrameLayout.LayoutParams(dp(1), ViewGroup.LayoutParams.MATCH_PARENT, Gravity.CENTER_HORIZONTAL))
+        nahled.addView(caraH, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1), Gravity.CENTER_VERTICAL))
+        fun cary(ukazat: Boolean, naStreduX: Boolean = false, naStreduY: Boolean = false) {
+            caraV.visibility = if (ukazat) View.VISIBLE else View.INVISIBLE
+            caraH.visibility = if (ukazat) View.VISIBLE else View.INVISIBLE
+            caraV.setBackgroundColor(if (naStreduX) Metro.ZLUTA else 0x55FFFFFF)
+            caraH.setBackgroundColor(if (naStreduY) Metro.ZLUTA else 0x55FFFFFF)
+        }
+        fun prichyt(v: Float) = if (kotlin.math.abs(v - 0.5f) < 0.025f) 0.5f else v
         var posledniPoslani = 0L
         var tahamVolby = false
         var tahamModry = false
@@ -519,7 +531,7 @@ class TelefonActivity : Activity() {
         nahled.setOnTouchListener { v, e ->
             // prst v náhledu posouvá titulek (a v Pokročilých i rámečky) – stránka se při tom nehýbe
             if (e.action == android.view.MotionEvent.ACTION_DOWN) { v.parent?.requestDisallowInterceptTouchEvent(true); ui.removeCallbacks(konecUprav) }
-            if (e.action == android.view.MotionEvent.ACTION_UP || e.action == android.view.MotionEvent.ACTION_CANCEL) ui.postDelayed(konecUprav, 1000)
+            if (e.action == android.view.MotionEvent.ACTION_UP || e.action == android.view.MotionEvent.ACTION_CANCEL) { ui.postDelayed(konecUprav, 1000); cary(false) }
             val w = v.width.toFloat(); val h = v.height.toFloat()
             if (w <= 0 || h <= 0) return@setOnTouchListener true
             val fx = e.x / w; val fy = e.y / h
@@ -534,18 +546,27 @@ class TelefonActivity : Activity() {
             when {
                 tahamModry -> {
                     val m = OblastTitulku.oblast.copyOf(); val mw = m[2] - m[0]; val mh = m[3] - m[1]
-                    m[0] = (fx - chytX).coerceIn(0f, 1f - mw); m[1] = (fy - chytY).coerceIn(0f, 1f - mh); m[2] = m[0] + mw; m[3] = m[1] + mh
+                    m[0] = (fx - chytX).coerceIn(0f, 1f - mw); m[1] = (fy - chytY).coerceIn(0f, 1f - mh)
+                    val sx = prichyt(m[0] + mw / 2); val sy = prichyt(m[1] + mh / 2)
+                    m[0] = (sx - mw / 2).coerceIn(0f, 1f - mw); m[1] = (sy - mh / 2).coerceIn(0f, 1f - mh)
+                    if (e.action != android.view.MotionEvent.ACTION_UP) cary(true, sx == 0.5f, sy == 0.5f)
+                    m[2] = m[0] + mw; m[3] = m[1] + mh
                     OblastTitulku.oblast = m; prekresli()
                     if (poslat) { posledniPoslani = ted; ulozAPosliOblastTitulku() }
                 }
                 tahamVolby -> {
                     val o = Volby.oblast.copyOf(); val ow = o[2] - o[0]; val oh = o[3] - o[1]
-                    o[0] = (fx - chytX).coerceIn(0f, 1f - ow); o[1] = (fy - chytY).coerceIn(0f, 1f - oh); o[2] = o[0] + ow; o[3] = o[1] + oh
+                    o[0] = (fx - chytX).coerceIn(0f, 1f - ow); o[1] = (fy - chytY).coerceIn(0f, 1f - oh)
+                    val sx = prichyt(o[0] + ow / 2); val sy = prichyt(o[1] + oh / 2)
+                    o[0] = (sx - ow / 2).coerceIn(0f, 1f - ow); o[1] = (sy - oh / 2).coerceIn(0f, 1f - oh)
+                    if (e.action != android.view.MotionEvent.ACTION_UP) cary(true, sx == 0.5f, sy == 0.5f)
+                    o[2] = o[0] + ow; o[3] = o[1] + oh
                     Volby.oblast = o; prekresli()
                     if (poslat) { posledniPoslani = ted; ulozAPosliVolby() }
                 }
                 else -> {
-                    rozvrh[0] = fx.coerceIn(0f, 1f)
+                    rozvrh[0] = prichyt(fx.coerceIn(0f, 1f))
+                    if (e.action != android.view.MotionEvent.ACTION_UP) cary(true, rozvrh[0] == 0.5f)
                     val pulBoxu = (0.06f * rozvrh[3]).coerceIn(0.03f, 0.17f)
                     rozvrh[1] = (fy + pulBoxu).coerceIn(0.1f, 1f)
                     prekresli()

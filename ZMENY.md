@@ -4,6 +4,13 @@
 Od verze 0.10 se vyvíjí jen jedna aplikace (dřívější NextGen, větev `master`) – umí „Jen televize“ i „S telefonem“.
 Při každé nové verzi se zvýší číslo v `app/build.gradle.kts` (versionCode + versionName) a sem se dopíše, co je nového.
 
+## 0.20.1-fuki33
+Podle rozpracovaných návrhů PlayCaption (PR 28 a 37):
+- Světlé scény (telefon): když se bílé písmo na světlém pozadí nepřečte, zkusí se pás se zvýrazněnými řádky.
+- Úkoly mise ve stylu GTA („Go to the garage.“) se poznají jako úkol, nemíchají se do rozhovoru a ukážou se žlutě. Titulek se posune nad úkol, aby se nepřekrývaly.
+- Telefon → Úpravy: vodicí čáry středu v náhledu; titulek i rámečky se do 2,5 % od středu přichytí (čára zežloutne).
+- Pozadí titulků jen pod řádky textu (ne obdélník přes celou šířku), když český titulek nezakrývá anglický (vlastní poloha z telefonu nebo „česky nad anglickými“). Při zakrývání anglických zůstává plný box.
+
 ## 0.20.1-fuki32
 - Režim Text (dopisy, SMS): stabilizace z PlayCaption 0.22 – víceřádkový text nebliká a neztrácí řádky.
 - Uložené texty pod kontrolou: v diagnostice tlačítko **Vymazat uložené texty** (paměť překladů, profil hry, záznamy; volitelně i tabulky) s přehledem velikostí. V telefonu → Pokročilé volba **Pamatovat si překlady / Nic neukládat**.
