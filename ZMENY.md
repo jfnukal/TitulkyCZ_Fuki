@@ -4,6 +4,9 @@
 Od verze 0.10 se vyvíjí jen jedna aplikace (dřívější NextGen, větev `master`) – umí „Jen televize“ i „S telefonem“.
 Při každé nové verzi se zvýší číslo v `app/build.gradle.kts` (versionCode + versionName) a sem se dopíše, co je nového.
 
+## 0.20.1-fuki37
+- Tabulky se už nikdy nevypnou kvůli tomu, že AI nebo Xbox pojmenuje hru jinak (dřív pak „Mount your horse“ šlo přes Google místo tabulky).
+
 ## 0.20.1-fuki36
 - Hra z Xboxu: když Xbox hlásí hru, pro kterou není tabulka (např. jinou hru z jiného zařízení), tabulky se už nevypnou – použijí se všechny. Při výběru hry má přednost konzole Xbox, hra na celé obrazovce a hra, pro kterou je nahraná tabulka.
 - Úkol mise těsně pod titulkem („Follow Javier“ v RDR2) se pozná jako úkol a přeloží se.

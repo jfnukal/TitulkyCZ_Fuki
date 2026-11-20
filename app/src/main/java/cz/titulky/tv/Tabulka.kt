@@ -125,7 +125,8 @@ object Tabulka {
         val shoda = indexy.filter { ix ->
             (listOf(ix.hra) + ix.aliasy).map { norm(it) }.any { a -> a.length >= 3 && (n.contains(a) || a.contains(n)) }
         }
-        aktivni = shoda
+        // [Fuki] žádná shoda (AI nebo Xbox pozná hru jinak, než se jmenuje tabulka) → nechat všechny tabulky
+        aktivni = shoda.ifEmpty { null }
         return shoda.firstOrNull()?.soubor
     }
 
