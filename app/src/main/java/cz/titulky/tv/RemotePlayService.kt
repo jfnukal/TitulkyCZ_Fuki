@@ -2058,7 +2058,9 @@ class RemotePlayService : Service() {
                     zapis("[Xbox: hraje se $nazev]")
                     if (Tabulka.pocet > 0) {
                         val t = Tabulka.nastavHru(nazev)
-                        zapis(if (t != null) "[tabulka pro tuto hru: $t]" else "[pro tuto hru tabulka není – tabulky vypnuty]")
+                        // [Fuki] bez shody nechat všechny tabulky (Xbox může hlásit jinou hru, než se hraje)
+                        if (t == null) Tabulka.vsechny()
+                        zapis(if (t != null) "[tabulka pro tuto hru: $t]" else "[pro tuto hru tabulka není – používám všechny]")
                     }
                     if (ai.zapnuto) ai.znamaHra(nazev, nast.jazykNeboCs)
                 }

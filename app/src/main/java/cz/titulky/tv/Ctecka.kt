@@ -152,6 +152,10 @@ class Ctecka {
                         !STAZENINA.containsMatchIn(r.text) && !JMENO.containsMatchIn(r.text)) {
                         val nadUkolem = hotoveRadky.getOrNull(hotoveRadky.size - 2) ?: return@takeIf true
                         if (r.top - nadUkolem.bottom > (r.bottom - r.top) * 0.6) return@takeIf true
+                        // [Fuki] RDR2: krátký úkol hned pod titulkem („Follow Javier“) – titulek nad ním je
+                        // ukončená věta a úkol nemá žádnou interpunkci → úkol, ne pokračování repliky
+                        if (VyberTitulku.pocetSlov(r.text) <= 5 && r.text.none { it in ".,!?\"…:;'" } && konci(nadUkolem.text))
+                            return@takeIf true
                     }
                     // úkol mise: krátký, bez jakékoli interpunkce ("Lead the horse to the hitching post");
                     // dialog má skoro vždy čárku, tečku nebo apostrof ("We're fixing to rob some train, …")

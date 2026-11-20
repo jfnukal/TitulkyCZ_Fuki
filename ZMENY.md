@@ -4,6 +4,10 @@
 Od verze 0.10 se vyvíjí jen jedna aplikace (dřívější NextGen, větev `master`) – umí „Jen televize“ i „S telefonem“.
 Při každé nové verzi se zvýší číslo v `app/build.gradle.kts` (versionCode + versionName) a sem se dopíše, co je nového.
 
+## 0.20.1-fuki36
+- Hra z Xboxu: když Xbox hlásí hru, pro kterou není tabulka (např. jinou hru z jiného zařízení), tabulky se už nevypnou – použijí se všechny. Při výběru hry má přednost konzole Xbox, hra na celé obrazovce a hra, pro kterou je nahraná tabulka.
+- Úkol mise těsně pod titulkem („Follow Javier“ v RDR2) se pozná jako úkol a přeloží se.
+
 ## 0.20.1-fuki35
 - **Tipy a tutoriály v rohu obrazu** (RDR2: tmavý rámeček vlevo nahoře): čtou se zvlášť, celý tip se přeloží (tabulka hry ho zná) a česky se ukáže přes anglický rámeček. Zmizí s originálem. Čte je i český hlas.
 - **Nápovědy a úkoly** („Hold ✕ near items…“) se překládají už od začátku (dřív byly vypnuté a nešlo je zapnout). V režimu Telefon se nově ukazují i na televizi na stejném místě jako ve hře.

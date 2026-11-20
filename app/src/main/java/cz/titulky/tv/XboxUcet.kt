@@ -222,18 +222,28 @@ object XboxUcet {
         if (s == 401 || s == 403) { xbl = null; error("presence $s") }
         if (s != 200) error("presence $s")
         val zarizeni = JSONObject(t).optJSONArray("devices") ?: return null
-        var nahradni: String? = null
+        // [Fuki] kandidáti se skóre: konzole Xbox > jiné zařízení, celá obrazovka + aktivní, shoda s nahranou tabulkou
+        val tabulky = Tabulka.hry().map { it.lowercase().filter(Char::isLetterOrDigit) }
+        var nej: String? = null
+        var nejSkore = -1
         for (i in 0 until zarizeni.length()) {
-            val tituly = zarizeni.getJSONObject(i).optJSONArray("titles") ?: continue
+            val dev = zarizeni.getJSONObject(i)
+            val naXboxu = dev.optString("type").contains("Xbox", ignoreCase = true) || dev.optString("type") == "Scarlett"
+            val tituly = dev.optJSONArray("titles") ?: continue
             for (k in 0 until tituly.length()) {
                 val ti = tituly.getJSONObject(k)
                 val nazev = ti.optString("name").trim()
                 if (nazev.isEmpty() || nazev.lowercase() in NEHRY || ti.optString("id") == "750323071") continue
-                if (ti.optString("placement") == "Full" && ti.optString("state", "Active") == "Active") return nazev
-                if (nahradni == null) nahradni = nazev
+                val n = nazev.lowercase().filter(Char::isLetterOrDigit)
+                var skore = 0
+                if (naXboxu) skore += 4
+                if (ti.optString("placement") == "Full") skore += 2
+                if (ti.optString("state", "Active") == "Active") skore += 1
+                if (tabulky.any { it.length >= 3 && (n.contains(it) || it.contains(n)) }) skore += 8
+                if (skore > nejSkore) { nejSkore = skore; nej = nazev }
             }
         }
-        return nahradni
+        return nej
     }
 
     /** Token pro streamování z vlastní konzole (platí ~4 h, drží se v paměti). Volat mimo hlavní vlákno. */
