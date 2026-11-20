@@ -25,6 +25,6 @@ class Nastaveni(context: Context) {
 
     /** Překládat nápovědu k ovládání a úkoly (žlutě). */
     var napovedy: Boolean
-        get() = prefs.getBoolean("napovedy", false)
+        get() = prefs.getBoolean("napovedy", true)  // [Fuki] nápovědy a úkoly mise se překládají už od začátku
         set(v) = prefs.edit().putBoolean("napovedy", v).apply()
 }

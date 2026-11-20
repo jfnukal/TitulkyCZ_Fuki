@@ -125,6 +125,42 @@ class OverlayService : Service() {
         runCatching { wm.addView(nap, lpN) }
     }
 
+    // [Fuki] tip / tutoriál (RDR2 vlevo nahoře): český text přes anglický rámeček
+    private var tipView: TextView? = null
+    private val schovejTip = Runnable { tipView?.apply { text = ""; visibility = android.view.View.INVISIBLE } }
+
+    private fun ukazTip(text: String, box: FloatArray?, radku: Int) {
+        ui.removeCallbacks(schovejTip)
+        if (text.isBlank() || box == null || box.size != 4) { schovejTip.run(); return }
+        val obr = resources.displayMetrics
+        val w = obr.widthPixels.toFloat(); val h = obr.heightPixels.toFloat()
+        val d = obr.density
+        val tv = tipView ?: TextView(this).also { v ->
+            v.setTextColor(Color.WHITE)
+            v.typeface = android.graphics.Typeface.DEFAULT_BOLD
+            v.setBackgroundColor(0xF0141414.toInt())
+            v.setShadowLayer(4f, 0f, 0f, Color.BLACK)
+            v.setLineSpacing(0f, 1.05f)
+            tipView = v
+            runCatching { wm.addView(v, oknoVoleb(true)) }
+        }
+        val okraj = 10 * d
+        val vyskaRadku = (box[3] - box[1]) * h / radku.coerceAtLeast(1)
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, (vyskaRadku * 0.66f).coerceIn(13 * obr.scaledDensity, 26 * obr.scaledDensity))
+        tv.setPadding(okraj.toInt(), (okraj / 2).toInt(), okraj.toInt(), (okraj / 2).toInt())
+        tv.text = text
+        val lp = (tv.layoutParams as? WindowManager.LayoutParams) ?: oknoVoleb(true)
+        lp.x = (box[0] * w - okraj).coerceAtLeast(0f).toInt()
+        lp.y = (box[1] * h - okraj / 2).coerceAtLeast(0f).toInt()
+        // čeština bývá delší → o něco širší než anglický rámeček, výška podle textu (aspoň jako originál)
+        lp.width = ((box[2] - box[0]) * w * 1.12f + 2 * okraj).coerceIn(w * 0.2f, w * 0.5f).toInt()
+        lp.height = WindowManager.LayoutParams.WRAP_CONTENT
+        tv.minHeight = ((box[3] - box[1]) * h + okraj).toInt()
+        runCatching { wm.updateViewLayout(tv, lp) }
+        tv.visibility = android.view.View.VISIBLE
+        ui.postDelayed(schovejTip, 30_000) // pojistka
+    }
+
     private var napoveda: TextView? = null
     private var layoutNapovedy: WindowManager.LayoutParams? = null
     private val schovejNapovedu = Runnable { napoveda?.apply { text = ""; visibility = android.view.View.INVISIBLE } }
@@ -133,7 +169,9 @@ class OverlayService : Service() {
         val tv = napoveda ?: return
         val lp = layoutNapovedy ?: return
         ui.removeCallbacks(schovejNapovedu)
-        if (text.isBlank() || box == null || box.size != 4) { schovejNapovedu.run(); return }
+        if (text.isBlank()) { schovejNapovedu.run(); return }
+        // [Fuki] poloha z telefonu, nebo dole uprostřed (tam ji hry ukazují nejčastěji)
+        val box = box?.takeIf { it.size == 4 } ?: napovedaBoxZTelefonu ?: floatArrayOf(0.2f, 0.9f, 0.8f, 0.95f)
         umisti(tv, lp, box, 1, sirsi = 1.08f, minSirka = 0.12f, maxSirka = 0.6f)
         tv.maxLines = 2
         runCatching { wm.updateViewLayout(tv, lp) }
@@ -454,6 +492,9 @@ class OverlayService : Service() {
                 intent.getBooleanExtra(EXTRA_RAMECEK, false),
                 intent.getBooleanExtra(EXTRA_RAMECEK_TRVALE, false))
         }
+        if (intent?.action == ACTION_SET_TIP) {
+            ukazTip(intent.getStringExtra(EXTRA_TEXT).orEmpty(), intent.getFloatArrayExtra(EXTRA_BOX), intent.getIntExtra(EXTRA_RADKU, 1))
+        }
         if (intent?.action == ACTION_SET_NAPOVEDA) {
             ukazNapovedu(intent.getStringExtra(EXTRA_TEXT).orEmpty(), intent.getFloatArrayExtra(EXTRA_BOX))
         }
@@ -521,6 +562,9 @@ class OverlayService : Service() {
         ramecekTitulku?.let { runCatching { wm.removeView(it) } }
         ramecekTitulku = null
         seznamVoleb?.let { runCatching { wm.removeView(it) } }
+        ui.removeCallbacks(schovejTip)
+        tipView?.let { runCatching { wm.removeView(it) } }
+        tipView = null
         ramecekVoleb = null
         seznamVoleb = null
         textView?.let { runCatching { wm.removeView(it) } }
@@ -536,6 +580,8 @@ class OverlayService : Service() {
         const val ACTION_SET_TEXT = "cz.titulky.tv.SET_TEXT"
         /** Spodní nápověda / úkol mise (žlutě, vlastní box). EXTRA_TEXT prázdný = schovat. */
         const val ACTION_SET_NAPOVEDA = "cz.titulky.tv.SET_NAPOVEDA"
+        /** [Fuki] tip / tutoriál v rohu obrazu – česky přes anglický rámeček */
+        const val ACTION_SET_TIP = "cz.titulky.tv.SET_TIP"
         /** Volby odpovědí (česky vedle anglických) + volitelně žlutý rámeček oblasti čtení. */
         const val ACTION_SET_VOLBY = "cz.titulky.tv.SET_VOLBY"
         /** Modrý rámeček ruční oblasti titulků (EXTRA_OBLAST + EXTRA_RAMECEK = ukázat). */
@@ -567,6 +613,8 @@ class OverlayService : Service() {
         const val ODSAZENI_ZDOLA = 0.07f
         /** [Fuki] Pozadí titulků poslané z telefonu (0..1), -1 = zatím nic → plně černé. */
         @Volatile var pozadiZTelefonu = -1f
+        /** [Fuki] Kde je nápověda ve hře podle telefonu (null = neznámo → dole uprostřed). */
+        @Volatile var napovedaBoxZTelefonu: FloatArray? = null
 
         /** Barva pozadí titulku – úplně neprůhledná. */
         val POZADI = 0xFF000000.toInt()

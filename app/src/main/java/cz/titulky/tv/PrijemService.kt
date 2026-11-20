@@ -134,7 +134,8 @@ class PrijemService : Service() {
             napovedaOd = System.currentTimeMillis()
             posli(Intent(this, OverlayService::class.java)
                 .setAction(OverlayService.ACTION_SET_NAPOVEDA)
-                .putExtra(OverlayService.EXTRA_TEXT, n))
+                .putExtra(OverlayService.EXTRA_TEXT, n)
+                .apply { OverlayService.napovedaBoxZTelefonu?.let { putExtra(OverlayService.EXTRA_BOX, it) } })
         }
     }
 

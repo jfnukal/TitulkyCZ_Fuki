@@ -84,6 +84,7 @@ object Propojeni {
         /** [Fuki] pro čtení nahlas na televizi */
         private val hlasCtx: Context = context.applicationContext
         @Volatile private var posledniMluv = 0L
+        @Volatile private var posledniTip = ""
         @Volatile private var bezi = true
         private val c = context.applicationContext
         private val zamek = zamekSite(c)
@@ -241,6 +242,26 @@ object Propojeni {
                                 Hlas.rekni(hlasCtx, odEscapuj(k[2]), rh[0].toFloatOrNull() ?: 1f, rh.getOrNull(1)?.toFloatOrNull() ?: 1f)
                             }
                         }
+                        // [Fuki] tip v rohu z telefonu ("T:řádků,l,t,r,b:text")
+                        casti.drop(5).firstOrNull { it.startsWith("T:") }?.let { tp ->
+                            val hlava = tp.removePrefix("T:").substringBefore(":")
+                            val txt = odEscapuj(tp.removePrefix("T:").substringAfter(":", ""))
+                            val c = hlava.split(",").mapNotNull { it.trim().toFloatOrNull() }
+                            if (txt != posledniTip) {
+                                posledniTip = txt
+                                runCatching {
+                                    hlasCtx.startService(android.content.Intent(hlasCtx, OverlayService::class.java)
+                                        .setAction(OverlayService.ACTION_SET_TIP)
+                                        .putExtra(OverlayService.EXTRA_TEXT, txt)
+                                        .putExtra(OverlayService.EXTRA_RADKU, c.firstOrNull()?.toInt() ?: 1)
+                                        .apply { if (c.size == 5) putExtra(OverlayService.EXTRA_BOX, c.drop(1).toFloatArray()) })
+                                }
+                            }
+                        }
+                        // [Fuki] poloha nápovědy z telefonu ("N:l,t,r,b")
+                        OverlayService.napovedaBoxZTelefonu = casti.drop(5).firstOrNull { it.startsWith("N:") }
+                            ?.removePrefix("N:")?.split(",")?.mapNotNull { it.trim().toFloatOrNull() }
+                            ?.takeIf { it.size == 4 }?.toFloatArray()
                         // [Fuki] pozadí titulků z telefonu ("P:0.6")
                         casti.drop(5).firstOrNull { it.startsWith("P:") }?.let { p ->
                             p.removePrefix("P:").trim().toFloatOrNull()?.let { OverlayService.pozadiZTelefonu = it.coerceIn(0f, 1f) }
@@ -444,10 +465,22 @@ object Propojeni {
         }
 
         /** Nový titulek / nápověda z telefonu. */
-        fun zmena(t: String, d: Long, n: String, b: IntArray? = null) {
+        @Volatile private var napovedaBox: FloatArray? = null
+        // [Fuki] tip / tutoriál v rohu obrazu
+        @Volatile private var tipText = ""
+        @Volatile private var tipBox: FloatArray? = null
+        @Volatile private var tipRadku = 0
+        fun tip(t: String, box: FloatArray?, radku: Int) {
             synchronized(zamek) {
-                if (t == text && n == napoveda && b.contentEquals(barvy)) return
-                text = t; doba = d; napoveda = n; barvy = b
+                if (t == tipText && box.contentEquals(tipBox)) return
+                tipText = t; tipBox = box; tipRadku = radku; cislo++
+            }
+            posliTed()
+        }
+        fun zmena(t: String, d: Long, n: String, b: IntArray? = null, nb: FloatArray? = null) {
+            synchronized(zamek) {
+                if (t == text && n == napoveda && b.contentEquals(barvy) && nb.contentEquals(napovedaBox)) return
+                text = t; doba = d; napoveda = n; barvy = b; napovedaBox = nb
                 cislo++
             }
             posliTed()
@@ -464,7 +497,13 @@ object Propojeni {
             val sPozadim = "\tP:$pozadi"
             // [Fuki] česky nahlas: číslo promluvy (televize přečte jen novou), rychlost, text
             val sHlasem = if (mluvCislo > 0) "\tM:$mluvCislo:$mluvRychlost/$mluvHlasitost:${escapuj(mluvText)}" else ""
-            "$TITULEK\t$cislo\t$doba\t${escapuj(text)}\t${escapuj(napoveda)}$konec$sBarvami$sPozadim$sHlasem".toByteArray(Charsets.UTF_8)
+            // [Fuki] poloha nápovědy ve hře ("N:l,t,r,b"), ať ji televize ukáže na stejném místě
+            val sNapovedou = napovedaBox?.takeIf { it.size == 4 && napoveda.isNotEmpty() }
+                ?.let { "\tN:" + it.joinToString(",") { v -> "%.3f".format(java.util.Locale.US, v) } } ?: ""
+            // [Fuki] tip v rohu: "T:<řádků>,<l>,<t>,<r>,<b>:<text>" (prázdný text = schovat)
+            val sTipem = "\tT:" + (tipBox?.takeIf { it.size == 4 && tipText.isNotEmpty() }
+                ?.let { b -> "$tipRadku," + b.joinToString(",") { v -> "%.3f".format(java.util.Locale.US, v) } + ":" + escapuj(tipText) } ?: "0:")
+            "$TITULEK\t$cislo\t$doba\t${escapuj(text)}\t${escapuj(napoveda)}$konec$sBarvami$sPozadim$sHlasem$sNapovedou$sTipem".toByteArray(Charsets.UTF_8)
         }
 
         private fun posliTed() = posliData(zprava())

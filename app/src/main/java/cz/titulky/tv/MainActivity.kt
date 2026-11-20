@@ -619,7 +619,16 @@ class MainActivity : Activity() {
             }
             ukazHlavni()
         }
-        mala(1, R.drawable.ik_chat, "Dialogy", if (nast.dialogy) "ZAP" else "VYP", nast.dialogy) { nast.dialogy = !nast.dialogy; ukazHlavni() }
+        // [Fuki] OK: dialogy + nápovědy → jen dialogy → jen nápovědy → dialogy + nápovědy
+        val prekStav = when { nast.dialogy && nast.napovedy -> "Dialogy + nápovědy"; nast.dialogy -> "Jen dialogy"; else -> "Jen nápovědy" }
+        mala(1, R.drawable.ik_chat, "Překládat", prekStav, true) {
+            when {
+                nast.dialogy && nast.napovedy -> nast.napovedy = false
+                nast.dialogy -> { nast.dialogy = false; nast.napovedy = true }
+                else -> { nast.dialogy = true; nast.napovedy = true }
+            }
+            ukazHlavni()
+        }
         mala(2, R.drawable.ik_widgets, "Zakrýt EN", if (nast.prekryvat) "Česky přes anglické" else "Česky nad anglickými", nast.prekryvat) { nast.prekryvat = !nast.prekryvat; ukazHlavni() }
         val aiZap = AiPrekladac.klic(c).isNotEmpty() && AiPrekladac.povoleno(c)
         mala(3, R.drawable.ik_auto_awesome, "AI překlad", if (aiZap) "ZAP" else "VYP", aiZap) { Nabidky.aiNastaveni(this) { ukazHlavni() } }

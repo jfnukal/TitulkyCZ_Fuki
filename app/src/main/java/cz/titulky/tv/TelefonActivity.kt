@@ -648,6 +648,14 @@ class TelefonActivity : Activity() {
         napoveda("Hlasitost je vůči hlasitosti zařízení – „Naplno“ = jako zvuk televize / telefonu. Přeložené titulky čte český hlas (jména postav vynechá). Když televize nemluví, chybí v ní český hlas – nastav ho v TV: Nastavení → Systém → Převod textu na řeč.")
 
         // ---- co překládat navíc (dialogy se překládají vždy)
+        stitek("Nápovědy a úkoly mise")
+        pridej(radekVoleb(listOf("Překládat" to nast.napovedy, "Nepřekládat" to !nast.napovedy)) { i ->
+            nast.napovedy = i == 0
+            if (i != 0) TelefonTitulky.napoveda = ""
+            obnovUpravy()
+        })
+        napoveda("„Hold ✕ near items…“ → žlutě česky na stejném místě. Platí i pro televizi.")
+
         stitek("Co překládat navíc k dialogům")
         val rezim = if (!Volby.zapnuto) 0 else if (Volby.rezimText) 2 else if (Volby.rezimMenu) 3 else 1
         fun nastavRezim(k: Int) {

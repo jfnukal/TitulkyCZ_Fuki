@@ -28,11 +28,13 @@ object Rezim {
 object TelefonTitulky {
     @Volatile var text: String = ""
         private set
+    /** [Fuki] Kde je nápověda ve hře (vlevo, nahoře, vpravo, dole jako podíl obrazovky) – posílá se do TV. */
+    @Volatile var napovedaBox: FloatArray? = null
     @Volatile var napoveda: String = ""
         set(v) {
             field = v
             // režim "telefon + televize": nápovědu poslat i do televize
-            Propojeni.Vysilac.zmena(text, posledniDoba, v, barvy)
+            Propojeni.Vysilac.zmena(text, posledniDoba, v, barvy, napovedaBox)
         }
     @Volatile private var posledniDoba = 0L
     /** PS5 si vzalo jiné zařízení (televize) → obrazovku zavřít. */
@@ -50,7 +52,7 @@ object TelefonTitulky {
         posledniDoba = doba
         doKdy = if (t.isNotEmpty() && doba > 0) System.currentTimeMillis() + doba else 0L
         // režim "telefon + televize": titulek poslat i do televize
-        Propojeni.Vysilac.zmena(t, doba, napoveda, barvyJmen)
+        Propojeni.Vysilac.zmena(t, doba, napoveda, barvyJmen, napovedaBox)
     }
 
     /** Text, který se má teď ukazovat (prošlý = prázdný). */

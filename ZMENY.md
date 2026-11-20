@@ -4,6 +4,11 @@
 Od verze 0.10 se vyvíjí jen jedna aplikace (dřívější NextGen, větev `master`) – umí „Jen televize“ i „S telefonem“.
 Při každé nové verzi se zvýší číslo v `app/build.gradle.kts` (versionCode + versionName) a sem se dopíše, co je nového.
 
+## 0.20.1-fuki35
+- **Tipy a tutoriály v rohu obrazu** (RDR2: tmavý rámeček vlevo nahoře): čtou se zvlášť, celý tip se přeloží (tabulka hry ho zná) a česky se ukáže přes anglický rámeček. Zmizí s originálem. Čte je i český hlas.
+- **Nápovědy a úkoly** („Hold ✕ near items…“) se překládají už od začátku (dřív byly vypnuté a nešlo je zapnout). V režimu Telefon se nově ukazují i na televizi na stejném místě jako ve hře.
+- Telefon → Úpravy: přepínač Nápovědy a úkoly mise. TV: dlaždice Dialogy → **Překládat** (Dialogy + nápovědy / Jen dialogy / Jen nápovědy).
+
 ## 0.20.1-fuki34
 - Krátké repliky („Hey“, „But“) se už nezahazují jako prázdné čtení (dřív se texty do 3 znaků ignorovaly).
 - Samotné jméno bez textu („Arthur:“) se neukazuje.

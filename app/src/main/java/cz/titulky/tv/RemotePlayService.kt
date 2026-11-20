@@ -479,6 +479,8 @@ class RemotePlayService : Service() {
                 } catch (e: Throwable) { chybaObrazu(e) }
                 // volby odpovědí (žlutý rámeček) – vlastní čtečka, titulky nijak nebrzdí
                 if (Volby.zapnuto) runCatching { ctiVolby(gl) }.onFailure { zapis("[CHYBA volby: ${it.message}]") }
+                // [Fuki] tip / tutoriál v rohu obrazu (RDR2 vlevo nahoře)
+                if (nast.napovedy) runCatching { ctiTip(gl.sirka, gl.vyska) { x, y, w, h -> gl.precti(x, y, w, h) } }
             }
             plocha = g.start()
             snimac = g
@@ -1011,7 +1013,7 @@ class RemotePlayService : Service() {
     }
 
     private fun ukazNapovedu(text: String, box: FloatArray?) {
-        if (telefon) { TelefonTitulky.napoveda = text; return }
+        if (telefon) { TelefonTitulky.napovedaBox = box; TelefonTitulky.napoveda = text; return }
         val i = Intent(this, OverlayService::class.java)
             .setAction(OverlayService.ACTION_SET_NAPOVEDA)
             .putExtra(OverlayService.EXTRA_TEXT, text)
@@ -1583,6 +1585,118 @@ class RemotePlayService : Service() {
         return Vyrez(Bitmap.createBitmap(pixely, w, vyska, Bitmap.Config.ARGB_8888), jas, w, vyska, uArr, vArr, uw, uh)
     }
 
+    // ---------------------------------------------------------------- [Fuki] tipy a tutoriály v rohu obrazu
+
+    /** Kde hry ukazují tipy (RDR2: tmavý rámeček vlevo nahoře). */
+    private val OBLAST_TIPU = floatArrayOf(0f, 0f, 0.4f, 0.32f)
+    private val cteckaTipu by lazy { Ctecka() }
+    @Volatile private var tipCtu = false
+    @Volatile private var tipOd = 0L
+    @Volatile private var tipDalsi = 0L
+    private var tipOtisk = 0L
+    private var tipPosledni = ""
+    private var tipPrazdnych = 0
+
+    private fun ctiTipXbox(f: org.webrtc.VideoFrame) {
+        val ted = System.currentTimeMillis()
+        if ((tipCtu && ted - tipOd < 3000) || ted < tipDalsi || pozastaveno) return
+        val i = f.buffer.toI420() ?: return
+        try {
+            ctiTip(i.width, i.height) { x, y, w, h ->
+                val px = IntArray(w * h)
+                for (r in 0 until h) for (c in 0 until w) {
+                    val yy = (i.dataY.get((y + r) * i.strideY + x + c).toInt() and 255) - 16
+                    val uu = (i.dataU.get((y + r) / 2 * i.strideU + (x + c) / 2).toInt() and 255) - 128
+                    val vv = (i.dataV.get((y + r) / 2 * i.strideV + (x + c) / 2).toInt() and 255) - 128
+                    val rr = ((298 * yy + 409 * vv + 128) shr 8).coerceIn(0, 255)
+                    val gg = ((298 * yy - 100 * uu - 208 * vv + 128) shr 8).coerceIn(0, 255)
+                    val bb = ((298 * yy + 516 * uu + 128) shr 8).coerceIn(0, 255)
+                    px[r * w + c] = (0xFF shl 24) or (rr shl 16) or (gg shl 8) or bb
+                }
+                px
+            }
+        } finally { i.release() }
+    }
+
+    /**
+     * Čte roh obrazu s tipy (vlastní čtečka; na TV jen jednou za 1,5 s, ať nebrzdí titulky).
+     * Celý tip se přeloží jako jedna věta (tabulka hry ho obvykle zná) a ukáže se přes anglický.
+     */
+    private fun ctiTip(sirka: Int, vyska: Int, precti: (Int, Int, Int, Int) -> IntArray) {
+        val ted = System.currentTimeMillis()
+        if ((tipCtu && ted - tipOd < 3000) || ted < tipDalsi || pozastaveno) return
+        tipDalsi = ted + if (telefon) 600 else 1500
+        val o = OBLAST_TIPU
+        val x = (o[0] * sirka).toInt(); val y = (o[1] * vyska).toInt()
+        val w = ((o[2] - o[0]) * sirka).toInt().coerceIn(16, sirka - x)
+        val h = ((o[3] - o[1]) * vyska).toInt().coerceIn(16, vyska - y)
+        val barvy = precti(x, y, w, h)
+        var otisk = 17L
+        var i = 0
+        while (i < barvy.size) { otisk = otisk * 31 + ((barvy[i] shr 4) and 0x0F0F0F); i += 97 }
+        // stejný obraz → nic nového (ale prázdno se musí potvrdit, proto jen když tip je vidět)
+        if (otisk == tipOtisk && tipPosledni.isNotEmpty()) return
+        tipOtisk = otisk
+        val bmp = Bitmap.createScaledBitmap(Bitmap.createBitmap(barvy, w, h, Bitmap.Config.ARGB_8888), w * 2, h * 2, true)
+        tipCtu = true
+        tipOd = ted
+        cteckaTipu.prectiVolby(bmp, { radky ->
+            tipCtu = false
+            // jen souvislý blok řádků od nejvyššího (tip), bez rozházeného textu pod ním
+            val serazene = radky.sortedBy { it.second.top }
+            val blok = mutableListOf<Pair<String, android.graphics.Rect>>()
+            for (r in serazene) {
+                val pred = blok.lastOrNull()
+                if (pred != null && r.second.top - pred.second.bottom > (pred.second.height() * 1.2f)) break
+                blok.add(r)
+            }
+            val text = blok.joinToString(" ") { it.first.trim() }.replace(Regex("\\s+"), " ").trim()
+            val slov = text.split(" ").count { it.any(Char::isLetter) }
+            val tip = slov >= 5 && !Ctecka.jeNesmysl(text) && Ctecka.anglickeSlovo(text)
+            val box = if (tip) floatArrayOf(
+                o[0] + blok.minOf { it.second.left } / 2f / sirka,
+                o[1] + blok.minOf { it.second.top } / 2f / vyska,
+                o[0] + blok.maxOf { it.second.right } / 2f / sirka,
+                o[1] + blok.maxOf { it.second.bottom } / 2f / vyska) else null
+            ui.post { zpracujTip(if (tip) text else "", box, blok.size) }
+        }, { tipCtu = false })
+    }
+
+    private fun zpracujTip(text: String, box: FloatArray?, radku: Int) {
+        if (text.isEmpty() || box == null) {
+            if (tipPosledni.isNotEmpty() && ++tipPrazdnych >= 2) {
+                tipPosledni = ""
+                ukazTip("", null, 0)
+                zapis("[tip zmizel]")
+            }
+            return
+        }
+        tipPrazdnych = 0
+        posledniAktivita = System.currentTimeMillis()
+        if (tipPosledni.isNotEmpty() && podobne(text, tipPosledni)) return
+        tipPosledni = text
+        zapis("[TIP: ${text.take(160)}]")
+        prekladac.preloz(text,
+            hotovo = { preklad ->
+                if (tipPosledni != text) return@preloz
+                val cesky = opravJmena(text, preklad)
+                zapis("  → TIP: $cesky")
+                ukazTip(cesky, box, radku)
+                hlasNapoveda(cesky)
+            },
+            chyba = {})
+    }
+
+    private fun ukazTip(text: String, box: FloatArray?, radku: Int) {
+        if (telefon) { Propojeni.Vysilac.tip(text, box, radku); return }
+        val i = Intent(this, OverlayService::class.java)
+            .setAction(OverlayService.ACTION_SET_TIP)
+            .putExtra(OverlayService.EXTRA_TEXT, text)
+            .putExtra(OverlayService.EXTRA_RADKU, radku)
+        if (box != null) i.putExtra(OverlayService.EXTRA_BOX, box)
+        runCatching { startService(i) }
+    }
+
     // ---------------------------------------------------------------- volby odpovědí (telefon)
 
     private val cteckaVoleb by lazy { Ctecka() }
@@ -2084,6 +2198,7 @@ class RemotePlayService : Service() {
     private fun snimekXbox(f: org.webrtc.VideoFrame) {
         // žlutý rámeček (volby, menu) – vlastní čtečka, titulky nijak nebrzdí
         if (Volby.zapnuto) runCatching { ctiVolbyXbox(f) }.onFailure { e -> ui.post { zapis("[CHYBA volby Xbox: ${e.message}]") } }
+        if (nast.napovedy) runCatching { ctiTipXbox(f) }
         try {
             val volna = volnaCteckaProSnimek() ?: return
             obsazeno[volna].set(true)
