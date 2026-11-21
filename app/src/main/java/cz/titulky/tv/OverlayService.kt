@@ -142,7 +142,7 @@ class OverlayService : Service() {
             tipView = v
             runCatching { wm.addView(v, oknoVoleb(true)) }
         }
-        tv.setTextColor(barvaTitulku())
+        tv.setTextColor(barvaOstatnich())
         // tip zakrývá anglický rámeček → aspoň 70 % tmavé, i když je pozadí ostatních slabší
         tv.setBackgroundColor(Color.argb((maxOf((if (pozadiOstatnichZTelefonu >= 0f) pozadiOstatnichZTelefonu else 0.94f), 0.7f) * 255).toInt(), 0x14, 0x14, 0x14))
         val okraj = 10 * d
