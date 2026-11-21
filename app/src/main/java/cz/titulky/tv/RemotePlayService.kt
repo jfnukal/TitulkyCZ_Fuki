@@ -1612,13 +1612,16 @@ class RemotePlayService : Service() {
 
     // ---------------------------------------------------------------- [Fuki] tipy a tutoriály v rohu obrazu
 
-    /** Kde hry ukazují tipy (RDR2: tmavý rámeček vlevo nahoře). */
-    private val OBLAST_TIPU = floatArrayOf(0f, 0f, 0.4f, 0.32f)
+    /** Kde hry ukazují informační tabulky / tipy: vlevo nahoře (RDR2, GTA) a vpravo nahoře – čtou se střídavě. */
+    private val OBLASTI_TIPU = listOf(floatArrayOf(0f, 0f, 0.4f, 0.34f), floatArrayOf(0.6f, 0f, 1f, 0.34f))
     private val cteckaTipu by lazy { Ctecka() }
     @Volatile private var tipCtu = false
     @Volatile private var tipOd = 0L
     @Volatile private var tipDalsi = 0L
-    private var tipOtisk = 0L
+    private var tipRoh = 0
+    private val tipOtisk = LongArray(2)
+    /** Který roh právě ukazuje tip (-1 = žádný) a jeho text. */
+    private var tipRohUkazany = -1
     private var tipPosledni = ""
     private var tipPrazdnych = 0
 
@@ -1650,8 +1653,11 @@ class RemotePlayService : Service() {
     private fun ctiTip(sirka: Int, vyska: Int, precti: (Int, Int, Int, Int) -> IntArray) {
         val ted = System.currentTimeMillis()
         if ((tipCtu && ted - tipOd < 3000) || ted < tipDalsi || pozastaveno) return
-        tipDalsi = ted + if (telefon) 600 else 1500
-        val o = OBLAST_TIPU
+        tipDalsi = ted + if (telefon) 400 else 1200
+        // když je tip vidět, hlídat hlavně jeho roh (zmizení), jinak střídat rohy
+        val roh = if (tipRohUkazany >= 0 && tipRoh % 3 != 2) tipRohUkazany else tipRoh % 2
+        tipRoh++
+        val o = OBLASTI_TIPU[roh]
         val x = (o[0] * sirka).toInt(); val y = (o[1] * vyska).toInt()
         val w = ((o[2] - o[0]) * sirka).toInt().coerceIn(16, sirka - x)
         val h = ((o[3] - o[1]) * vyska).toInt().coerceIn(16, vyska - y)
@@ -1660,8 +1666,8 @@ class RemotePlayService : Service() {
         var i = 0
         while (i < barvy.size) { otisk = otisk * 31 + ((barvy[i] shr 4) and 0x0F0F0F); i += 97 }
         // stejný obraz → nic nového (ale prázdno se musí potvrdit, proto jen když tip je vidět)
-        if (otisk == tipOtisk && tipPosledni.isNotEmpty()) return
-        tipOtisk = otisk
+        if (otisk == tipOtisk[roh] && (tipPosledni.isNotEmpty() || roh != tipRohUkazany)) return
+        tipOtisk[roh] = otisk
         val bmp = Bitmap.createScaledBitmap(Bitmap.createBitmap(barvy, w, h, Bitmap.Config.ARGB_8888), w * 2, h * 2, true)
         tipCtu = true
         tipOd = ted
@@ -1683,14 +1689,17 @@ class RemotePlayService : Service() {
                 o[1] + blok.minOf { it.second.top } / 2f / vyska,
                 o[0] + blok.maxOf { it.second.right } / 2f / sirka,
                 o[1] + blok.maxOf { it.second.bottom } / 2f / vyska) else null
-            ui.post { zpracujTip(if (tip) text else "", box, blok.size) }
+            ui.post { zpracujTip(if (tip) text else "", box, blok.size, roh) }
         }, { tipCtu = false })
     }
 
-    private fun zpracujTip(text: String, box: FloatArray?, radku: Int) {
+    private fun zpracujTip(text: String, box: FloatArray?, radku: Int, roh: Int) {
         if (text.isEmpty() || box == null) {
+            // prázdný jiný roh neschovává tip, který je vidět
+            if (roh != tipRohUkazany) return
             if (tipPosledni.isNotEmpty() && ++tipPrazdnych >= 2) {
                 tipPosledni = ""
+                tipRohUkazany = -1
                 ukazTip("", null, 0)
                 zapis("[tip zmizel]")
             }
@@ -1698,8 +1707,11 @@ class RemotePlayService : Service() {
         }
         tipPrazdnych = 0
         posledniAktivita = System.currentTimeMillis()
+        // tip, který je ve skutečnosti replika (titulky nahoře u některých her) → nic
+        if (jeKusRepliky(text)) return
         if (tipPosledni.isNotEmpty() && podobne(text, tipPosledni)) return
         tipPosledni = text
+        tipRohUkazany = roh
         zapis("[TIP: ${text.take(160)}]")
         prekladac.preloz(text,
             hotovo = { preklad ->

@@ -4,6 +4,10 @@
 Od verze 0.10 se vyvíjí jen jedna aplikace (dřívější NextGen, větev `master`) – umí „Jen televize“ i „S telefonem“.
 Při každé nové verzi se zvýší číslo v `app/build.gradle.kts` (versionCode + versionName) a sem se dopíše, co je nového.
 
+## 0.20.1-fuki39
+- Informační tabulky a tipy se čtou v obou horních rozích (vlevo i vpravo), častěji (telefon 0,4 s, TV 1,2 s); celý víceřádkový blok se přeloží najednou a česky se položí přes originál.
+- Delší nápověda se už neuřízne po 2 řádcích (až 4 řádky).
+
 ## 0.20.1-fuki38
 - Replika se už nepřekládá dvakrát (bílý titulek + žlutá „nápověda“ přes originál): nápověda, která je kusem nedávné repliky, se zahodí; nápověda podle výšky jen u krátkých textů bez čárky a apostrofu. Tím přestane i skákání titulků mezi dvěma překlady.
 - Úkoly a nápovědy vždy na tmavém pozadí (aspoň 75 %), čitelné i na světlém obraze.

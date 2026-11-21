@@ -172,8 +172,9 @@ class OverlayService : Service() {
         if (text.isBlank()) { schovejNapovedu.run(); return }
         // [Fuki] poloha z telefonu, nebo dole uprostřed (tam ji hry ukazují nejčastěji)
         val box = box?.takeIf { it.size == 4 } ?: napovedaBoxZTelefonu ?: floatArrayOf(0.2f, 0.9f, 0.8f, 0.95f)
+        // [Fuki] delší nápověda (vysvětlující věta) se nesmí uříznout – až 4 řádky
         umisti(tv, lp, box, 1, sirsi = 1.08f, minSirka = 0.12f, maxSirka = 0.6f)
-        tv.maxLines = 2
+        tv.maxLines = 4
         runCatching { wm.updateViewLayout(tv, lp) }
         tv.text = text
         tv.visibility = android.view.View.VISIBLE
