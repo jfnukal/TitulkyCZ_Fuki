@@ -144,7 +144,9 @@ class Ctecka {
                     // ve výšce, kde už dřív byla nápověda, a bez interpunkce → nápověda (i zkomolená:
                     // "G neur iterms to pick therm up…")
                     val stredY = (r.top + r.bottom) / 2
-                    if (pasmaNapovedy.any { stredY in it } && r.text.none { it in ".!?…" }) return@takeIf true
+                    if (pasmaNapovedy.any { stredY in it } && r.text.none { it in ".!?…,'’\"" } &&
+                        VyberTitulku.pocetSlov(r.text) <= 10 && r.text.trim().firstOrNull()?.isLowerCase() != true &&
+                        !STAZENINA.containsMatchIn(r.text) && !JMENO.containsMatchIn(r.text)) return@takeIf true
                     // [z PlayCaption, PR 37] úkol mise ve stylu GTA – rozkaz, často s tečkou na konci
                     // ("Go to the garage.", "Lose the cops.", "Follow Lucia."), bez čárky, uvozovek a stažení
                     if (UKOL_GTA.containsMatchIn(r.text) && VyberTitulku.pocetSlov(r.text) in 2..10 &&

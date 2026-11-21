@@ -654,7 +654,13 @@ class TelefonActivity : Activity() {
             if (i != 0) TelefonTitulky.napoveda = ""
             obnovUpravy()
         })
-        napoveda("„Hold ✕ near items…“ → žlutě česky na stejném místě. Platí i pro televizi.")
+        if (nast.napovedy) {
+            val pol = prefs.getString(RemotePlayService.PREF_POLOHA_UKOLU, "misto")
+            pridej(radekVoleb(listOf("Na místě originálu" to (pol == "misto"), "Nahoře" to (pol == "nahore"), "Vlevo" to (pol == "vlevo"))) { i ->
+                prefs.edit().putString(RemotePlayService.PREF_POLOHA_UKOLU, listOf("misto", "nahore", "vlevo")[i]).apply(); obnovUpravy()
+            }, 4)
+        }
+        napoveda("„Hold ✕ near items…“ → žlutě česky, vždy na tmavém pozadí. Na místě originálu zakryje anglický text; Nahoře / Vlevo nechá originál vidět. Platí i pro televizi.")
 
         stitek("Co překládat navíc k dialogům")
         val rezim = if (!Volby.zapnuto) 0 else if (Volby.rezimText) 2 else if (Volby.rezimMenu) 3 else 1

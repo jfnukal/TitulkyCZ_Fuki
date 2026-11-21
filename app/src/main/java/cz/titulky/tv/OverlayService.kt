@@ -266,7 +266,8 @@ class OverlayService : Service() {
         val stin = if (p < 0.5f) 10f else 6f
         textView?.apply { setBackgroundColor(barvaBoxu()); setShadowLayer(stin, 0f, 0f, Color.BLACK) }
         podklad?.setBackgroundColor(if (jenPodRadky) Color.TRANSPARENT else POZADI)
-        napoveda?.setBackgroundColor(barva)
+        // [Fuki] úkoly a nápovědy vždy na tmavém (aspoň 75 %), jinak jsou na světlém obraze nečitelné
+        napoveda?.setBackgroundColor(Color.argb((maxOf(p, 0.75f) * 255).toInt(), 0x14, 0x14, 0x14))
         layout?.let { lp -> lp.format = format; textView?.let { tv -> runCatching { wm.updateViewLayout(tv, lp) } } }
         layoutNapovedy?.let { lp -> lp.format = format; napoveda?.let { n -> runCatching { wm.updateViewLayout(n, lp) } } }
         srovnejPodklad()

@@ -965,6 +965,8 @@ class RemotePlayService : Service() {
         }
         bezNapovedy = 0
         posledniAktivita = System.currentTimeMillis()
+        // [Fuki] „nápověda“, která je ve skutečnosti replika (nebo její kus) → nepřekládat dvakrát
+        if (jeKusRepliky(text)) { zapis("  [nápověda = replika, přeskakuji: ${text.take(60)}]"); return }
         if (podobne(text, posledniNapoveda)) return
         posledniNapoveda = text
         val (cista, tlacitko) = tlacitko(text)
@@ -1012,7 +1014,29 @@ class RemotePlayService : Service() {
         return "$sloveso $zbytekTextu".trim() to "[$znak]"
     }
 
-    private fun ukazNapovedu(text: String, box: FloatArray?) {
+    /** Text se shoduje s nedávnou replikou (nebo je její částí). */
+    private fun jeKusRepliky(text: String): Boolean {
+        val n = text.lowercase().filter { it.isLetter() }
+        if (n.length < 6) return false
+        val nedavne = synchronized(nedavneRepliky) { nedavneRepliky.filter { System.currentTimeMillis() - it.second < 15_000 }.map { it.first } }
+        return nedavne.any { r -> r.contains(n) || n.contains(r) || podobne(text, r) || (n.length >= 14 && r.contains(n.take(14))) }
+    }
+    private val nedavneRepliky = ArrayDeque<Pair<String, Long>>()
+    private fun zapamatujRepliku(t: String) {
+        val n = t.lowercase().filter { it.isLetter() }
+        if (n.length < 6) return
+        synchronized(nedavneRepliky) { nedavneRepliky.addLast(n to System.currentTimeMillis()); while (nedavneRepliky.size > 12) nedavneRepliky.removeFirst() }
+    }
+
+    /** [Fuki] Kde ukazovat úkoly a nápovědy: na místě originálu / nahoře uprostřed / vlevo nahoře. */
+    private fun polohaNapovedy(box: FloatArray?): FloatArray? = when (getSharedPreferences("gamelingo", MODE_PRIVATE).getString(PREF_POLOHA_UKOLU, "misto")) {
+        "nahore" -> floatArrayOf(0.25f, 0.04f, 0.75f, 0.09f)
+        "vlevo" -> floatArrayOf(0.02f, 0.30f, 0.32f, 0.35f)
+        else -> box
+    }
+
+    private fun ukazNapovedu(text: String, box0: FloatArray?) {
+        val box = if (text.isBlank()) box0 else polohaNapovedy(box0)
         if (telefon) { TelefonTitulky.napovedaBox = box; TelefonTitulky.napoveda = text; return }
         val i = Intent(this, OverlayService::class.java)
             .setAction(OverlayService.ACTION_SET_NAPOVEDA)
@@ -1050,6 +1074,7 @@ class RemotePlayService : Service() {
         posledniAktivita = System.currentTimeMillis()
         if (!nast.dialogy) return
         if (cislo > posledniPrekladany) posledniPrekladany = cislo
+        surove.forEach { zapamatujRepliku(it.substringAfter(": ", it)) }
         synchronized(casyPosledni) { casyPosledni.clear() }
         // číslice nalepená před slovem ("3Miss Grimshaw..") je smetí ze čtení
         val puvodni = surove.map { Regex("^[0-9](?=[A-Z][a-z])").replace(it, "") }
@@ -2553,6 +2578,8 @@ class RemotePlayService : Service() {
         @Volatile var rychlostPrumer = ""
         /** [Fuki] Násobek doby zobrazení titulků (0,7 kratší / 1 normálně / 1,6 déle). */
         const val PREF_DOBA = "dobaTitulku"
+        /** [Fuki] Poloha úkolů a nápověd: misto / nahore / vlevo */
+        const val PREF_POLOHA_UKOLU = "polohaUkolu"
         /** Služba běží (připojená, nebo čeká na PS5). */
         @Volatile var aktivni = false
         /** Překlad vypnutý tlačítkem v aplikaci (spojení s PS5 drží dál → zapnutí je okamžité). */
