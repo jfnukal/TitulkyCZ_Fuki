@@ -262,6 +262,13 @@ object Propojeni {
                         OverlayService.napovedaBoxZTelefonu = casti.drop(5).firstOrNull { it.startsWith("N:") }
                             ?.removePrefix("N:")?.split(",")?.mapNotNull { it.trim().toFloatOrNull() }
                             ?.takeIf { it.size == 4 }?.toFloatArray()
+                        // [Fuki] vzhled ostatních textů z telefonu ("S:pozadí,barvaTitulků,barvaOstatních")
+                        casti.drop(5).firstOrNull { it.startsWith("S:") }?.let { st ->
+                            val k = st.removePrefix("S:").split(",")
+                            k.getOrNull(0)?.toFloatOrNull()?.let { OverlayService.pozadiOstatnichZTelefonu = it.coerceIn(0f, 1f) }
+                            k.getOrNull(1)?.toIntOrNull()?.let { OverlayService.barvaTitulkuZTelefonu = it }
+                            k.getOrNull(2)?.toIntOrNull()?.let { OverlayService.barvaOstatnichZTelefonu = it }
+                        }
                         // [Fuki] pozadí titulků z telefonu ("P:0.6")
                         casti.drop(5).firstOrNull { it.startsWith("P:") }?.let { p ->
                             p.removePrefix("P:").trim().toFloatOrNull()?.let { OverlayService.pozadiZTelefonu = it.coerceIn(0f, 1f) }
@@ -441,6 +448,14 @@ object Propojeni {
             posliTed()
         }
 
+        // [Fuki] vzhled ostatních textů: pozadí nápověd/tipů/voleb a barvy písma
+        @Volatile var styl = ""
+        fun nastavStyl(pozadiOstatnich: Float, barvaTitulku: Int, barvaOstatnich: Int) {
+            styl = "S:%.2f,%d,%d".format(java.util.Locale.US, pozadiOstatnich, barvaTitulku, barvaOstatnich)
+            synchronized(zamek) { cislo++ }
+            posliTed()
+        }
+
         fun nastavPozadi(p: Float) {
             synchronized(zamek) { pozadi = p.coerceIn(0f, 1f); cislo++ }
             posliTed()
@@ -494,7 +509,7 @@ object Propojeni {
             val b = barvy
             val sBarvami = if (b != null && b.any { it != 0 }) "\tB:" + b.joinToString(",") else ""
             // [Fuki] pozadí titulků se značkou "P:" – starší televize ho přeskočí
-            val sPozadim = "\tP:$pozadi"
+            val sPozadim = "\tP:$pozadi" + if (styl.isNotEmpty()) "\t$styl" else ""
             // [Fuki] česky nahlas: číslo promluvy (televize přečte jen novou), rychlost, text
             val sHlasem = if (mluvCislo > 0) "\tM:$mluvCislo:$mluvRychlost/$mluvHlasitost:${escapuj(mluvText)}" else ""
             // [Fuki] poloha nápovědy ve hře ("N:l,t,r,b"), ať ji televize ukáže na stejném místě

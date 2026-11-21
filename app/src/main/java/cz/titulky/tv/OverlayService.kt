@@ -136,14 +136,15 @@ class OverlayService : Service() {
         val w = obr.widthPixels.toFloat(); val h = obr.heightPixels.toFloat()
         val d = obr.density
         val tv = tipView ?: TextView(this).also { v ->
-            v.setTextColor(Color.WHITE)
             v.typeface = android.graphics.Typeface.DEFAULT_BOLD
-            v.setBackgroundColor(0xF0141414.toInt())
             v.setShadowLayer(4f, 0f, 0f, Color.BLACK)
             v.setLineSpacing(0f, 1.05f)
             tipView = v
             runCatching { wm.addView(v, oknoVoleb(true)) }
         }
+        tv.setTextColor(barvaTitulku())
+        // tip zakrývá anglický rámeček → aspoň 70 % tmavé, i když je pozadí ostatních slabší
+        tv.setBackgroundColor(Color.argb((maxOf((if (pozadiOstatnichZTelefonu >= 0f) pozadiOstatnichZTelefonu else 0.94f), 0.7f) * 255).toInt(), 0x14, 0x14, 0x14))
         val okraj = 10 * d
         val vyskaRadku = (box[3] - box[1]) * h / radku.coerceAtLeast(1)
         tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, (vyskaRadku * 0.66f).coerceIn(13 * obr.scaledDensity, 26 * obr.scaledDensity))
@@ -256,9 +257,22 @@ class OverlayService : Service() {
      * + podkladová vrstva). Méně = průhledné okno, podklad schovaný (jinak by se pozadí zdvojilo)
      * a výraznější stín písma, ať jde číst i bez pozadí.
      */
+    private fun barvaTitulku() = if (barvaTitulkuZTelefonu != 0) barvaTitulkuZTelefonu else Color.WHITE
+    private fun barvaOstatnich() = if (barvaOstatnichZTelefonu != 0) barvaOstatnichZTelefonu else ZLUTA
+    private fun pozadiOstatnich(): Int {
+        val q = (if (pozadiOstatnichZTelefonu >= 0f) pozadiOstatnichZTelefonu else 0.85f).coerceIn(0f, 1f)
+        return Color.argb((q * 255).toInt(), 0x14, 0x14, 0x14)
+    }
+
     private fun pouzijPozadi() {
         val p = (if (pozadiZTelefonu >= 0f) pozadiZTelefonu else 1f).coerceIn(0f, 1f)
-        val klic = p + if (jenPodRadky) 10f else 0f
+        // barvy písma (titulky, nápovědy, tipy)
+        textView?.setTextColor(barvaTitulku())
+        napoveda?.setTextColor(barvaOstatnich())
+        napoveda?.setBackgroundColor(pozadiOstatnich())
+        tipView?.setTextColor(barvaOstatnich())
+        tipView?.setBackgroundColor(pozadiOstatnich())
+        val klic = p + (if (jenPodRadky) 10f else 0f) + barvaTitulku() * 1e-12f + (pozadiOstatnichZTelefonu * 100f) + barvaOstatnich() * 1e-13f
         if (kotlin.math.abs(klic - pouzityVzhled) < 0.005f) return
         pouzityVzhled = klic
         aktualniPozadi = p
@@ -267,8 +281,8 @@ class OverlayService : Service() {
         val stin = if (p < 0.5f) 10f else 6f
         textView?.apply { setBackgroundColor(barvaBoxu()); setShadowLayer(stin, 0f, 0f, Color.BLACK) }
         podklad?.setBackgroundColor(if (jenPodRadky) Color.TRANSPARENT else POZADI)
-        // [Fuki] úkoly a nápovědy vždy na tmavém (aspoň 75 %), jinak jsou na světlém obraze nečitelné
-        napoveda?.setBackgroundColor(Color.argb((maxOf(p, 0.75f) * 255).toInt(), 0x14, 0x14, 0x14))
+        // [Fuki] úkoly a nápovědy mají vlastní pozadí (nastavení „Pozadí nápověd, tipů a voleb“)
+        napoveda?.setBackgroundColor(pozadiOstatnich())
         layout?.let { lp -> lp.format = format; textView?.let { tv -> runCatching { wm.updateViewLayout(tv, lp) } } }
         layoutNapovedy?.let { lp -> lp.format = format; napoveda?.let { n -> runCatching { wm.updateViewLayout(n, lp) } } }
         srovnejPodklad()
@@ -432,7 +446,7 @@ class OverlayService : Service() {
         val seznam = seznamVoleb ?: android.widget.LinearLayout(this).also { v ->
             v.orientation = android.widget.LinearLayout.VERTICAL
             v.background = android.graphics.drawable.GradientDrawable().apply {
-                setColor(0xE6000000.toInt()); cornerRadius = 10 * d
+                setColor(pozadiOstatnich()); cornerRadius = 10 * d
             }
             v.setPadding((12 * d).toInt(), (8 * d).toInt(), (12 * d).toInt(), (8 * d).toInt())
             v.visibility = android.view.View.INVISIBLE
@@ -440,6 +454,7 @@ class OverlayService : Service() {
             runCatching { wm.addView(v, oknoVoleb(true)) }
         }
         if (volby.isEmpty()) { seznam.visibility = android.view.View.INVISIBLE; return }
+        (seznam.background as? android.graphics.drawable.GradientDrawable)?.setColor(pozadiOstatnich())
         seznam.removeAllViews()
         volby.forEachIndexed { i, text ->
             val vybrano = i == vybrana
@@ -450,8 +465,8 @@ class OverlayService : Service() {
                 setPadding((10 * d).toInt(), (5 * d).toInt(), (10 * d).toInt(), (5 * d).toInt())
                 if (vybrano) {
                     setTextColor(Color.BLACK)
-                    background = android.graphics.drawable.GradientDrawable().apply { setColor(ZLUTA); cornerRadius = 6 * d }
-                } else setTextColor(ZLUTA)
+                    background = android.graphics.drawable.GradientDrawable().apply { setColor(barvaOstatnich()); cornerRadius = 6 * d }
+                } else setTextColor(barvaOstatnich())
                 maxWidth = (w * 0.42f).toInt()
             }, android.widget.LinearLayout.LayoutParams(
                 android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -615,6 +630,11 @@ class OverlayService : Service() {
         const val ODSAZENI_ZDOLA = 0.07f
         /** [Fuki] Pozadí titulků poslané z telefonu (0..1), -1 = zatím nic → plně černé. */
         @Volatile var pozadiZTelefonu = -1f
+        /** [Fuki] Vzhled ostatních textů z telefonu: pozadí nápověd/tipů/voleb (0..1, -1 = výchozí 0,85),
+         *  barva písma titulků a barva nápověd/tipů/voleb (0 = výchozí bílá / žlutá). */
+        @Volatile var pozadiOstatnichZTelefonu = -1f
+        @Volatile var barvaTitulkuZTelefonu = 0
+        @Volatile var barvaOstatnichZTelefonu = 0
         /** [Fuki] Kde je nápověda ve hře podle telefonu (null = neznámo → dole uprostřed). */
         @Volatile var napovedaBoxZTelefonu: FloatArray? = null
 

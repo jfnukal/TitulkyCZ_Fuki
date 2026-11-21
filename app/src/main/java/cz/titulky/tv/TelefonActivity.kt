@@ -63,6 +63,7 @@ class TelefonActivity : Activity() {
         // Otočení obrazovku nestaví znovu (configChanges v manifestu) → spojení se nepřeruší.
         nastavOtaceni(Propojeni.Vysilac.cilIp != null)
         Propojeni.Vysilac.pozadi = prefs.getInt(PREF_POZADI, 100) / 100f
+        posliStyl()
         // [Fuki] tabulky překladů načíst hned (ať je v Úpravách vidět jejich stav)
         Tabulka.nacti(getExternalFilesDir("tabulky"), hotovo = { ui.post { if (::upravy.isInitialized) obnovUpravy() } })
         Pady.hlidej(this)
@@ -388,6 +389,14 @@ class TelefonActivity : Activity() {
         if (ukazat) Propojeni.Vysilac.ukazka(t("tvUkazka"))
     }
 
+    // [Fuki] vzhled ostatních textů (pozadí nápověd/tipů/voleb, barvy písma)
+    private val BARVY_TITULKU = listOf("Bílá" to Color.WHITE, "Žlutá" to 0xFFFFD54A.toInt(), "Azurová" to 0xFF8FE3FF.toInt())
+    private val BARVY_OSTATNICH = listOf("Žlutá" to 0xFFFFD54A.toInt(), "Bílá" to Color.WHITE, "Azurová" to 0xFF8FE3FF.toInt())
+    private fun posliStyl() = Propojeni.Vysilac.nastavStyl(
+        prefs.getInt("pozadiOstatnich", 85) / 100f,
+        prefs.getInt("barvaTitulku", Color.WHITE),
+        prefs.getInt("barvaOstatnich", 0xFFFFD54A.toInt()))
+
     /** [Fuki] Rozbalené „Pokročilé“ v úpravách. */
     private var pokrocile = false
     /** [Fuki] Živé údaje v úpravách: hra z Xboxu a rychlost překladu (obnovuje se každou sekundu). */
@@ -486,6 +495,7 @@ class TelefonActivity : Activity() {
             ukazka.textSize = (7.5f * rozvrh[3]).coerceIn(5f, 18f)
             val a = prefs.getInt(PREF_POZADI, 100) / 100f
             ukazka.setBackgroundColor(Color.argb((a * 255).toInt(), 0, 0, 0))
+            ukazka.setTextColor(prefs.getInt("barvaTitulku", Color.WHITE))
             ukazka.setPadding(dp(6), dp(3), dp(6), dp(3))
             ukazka.measure(View.MeasureSpec.makeMeasureSpec(bw.toInt(), View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED))
             val bh = ukazka.measuredHeight.toFloat()
@@ -605,6 +615,13 @@ class TelefonActivity : Activity() {
             ulozAPosliRozvrh(); ui.removeCallbacks(konecUprav); ui.postDelayed(konecUprav, 2000); obnovUpravy()
         })
 
+        // ---- barva písma titulků
+        stitek("Barva písma titulků")
+        val tedBT = prefs.getInt("barvaTitulku", Color.WHITE)
+        pridej(radekVoleb(BARVY_TITULKU.map { (n, b) -> n to (b == tedBT) }) { i ->
+            prefs.edit().putInt("barvaTitulku", BARVY_TITULKU[i].second).apply(); posliStyl(); obnovUpravy()
+        })
+
         // ---- jak dlouho nechat titulky (chytrá doba podle délky × násobek)
         stitek("Jak dlouho nechat titulky")
         val doby = listOf("Kratší" to 0.7f, "Normálně" to 1f, "Déle (děti)" to 1.6f)
@@ -660,7 +677,20 @@ class TelefonActivity : Activity() {
                 prefs.edit().putString(RemotePlayService.PREF_POLOHA_UKOLU, listOf("misto", "nahore", "vlevo")[i]).apply(); obnovUpravy()
             }, 4)
         }
-        napoveda("„Hold ✕ near items…“ → žlutě česky, vždy na tmavém pozadí. Na místě originálu zakryje anglický text; Nahoře / Vlevo nechá originál vidět. Platí i pro televizi.")
+        if (nast.napovedy) {
+            stitek("Pozadí nápověd, tipů a voleb")
+            val poz = listOf("Žádné" to 0, "Slabé" to 50, "Tmavé" to 85, "Plné" to 100)
+            val tedPO = prefs.getInt("pozadiOstatnich", 85)
+            pridej(radekVoleb(poz.map { (n, v) -> n to (v == tedPO) }) { i ->
+                prefs.edit().putInt("pozadiOstatnich", poz[i].second).apply(); posliStyl(); obnovUpravy()
+            })
+            stitek("Barva písma nápověd, tipů a voleb")
+            val tedBO = prefs.getInt("barvaOstatnich", 0xFFFFD54A.toInt())
+            pridej(radekVoleb(BARVY_OSTATNICH.map { (n, b) -> n to (b == tedBO) }) { i ->
+                prefs.edit().putInt("barvaOstatnich", BARVY_OSTATNICH[i].second).apply(); posliStyl(); obnovUpravy()
+            })
+        }
+        napoveda("„Hold ✕ near items…“ → česky na tmavém pozadí. Na místě originálu zakryje anglický text; Nahoře / Vlevo nechá originál vidět. Platí i pro televizi.")
 
         stitek("Co překládat navíc k dialogům")
         val rezim = if (!Volby.zapnuto) 0 else if (Volby.rezimText) 2 else if (Volby.rezimMenu) 3 else 1

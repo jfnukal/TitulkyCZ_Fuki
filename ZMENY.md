@@ -4,6 +4,10 @@
 Od verze 0.10 se vyvíjí jen jedna aplikace (dřívější NextGen, větev `master`) – umí „Jen televize“ i „S telefonem“.
 Při každé nové verzi se zvýší číslo v `app/build.gradle.kts` (versionCode + versionName) a sem se dopíše, co je nového.
 
+## 0.20.1-fuki40
+- Telefon → Úpravy: **barva písma titulků** (Bílá / Žlutá / Azurová, vidět i v náhledu).
+- Telefon → Úpravy → Nápovědy a úkoly: **pozadí nápověd, tipů a voleb** (Žádné / Slabé / Tmavé / Plné) a **barva jejich písma** (Žlutá / Bílá / Azurová). Tip přes anglický rámeček má vždy aspoň 70 % pozadí, aby originál neprosvítal.
+
 ## 0.20.1-fuki39
 - Informační tabulky a tipy se čtou v obou horních rozích (vlevo i vpravo), častěji (telefon 0,4 s, TV 1,2 s); celý víceřádkový blok se přeloží najednou a česky se položí přes originál.
 - Delší nápověda se už neuřízne po 2 řádcích (až 4 řádky).
